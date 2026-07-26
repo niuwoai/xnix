@@ -73,11 +73,19 @@ type DesktopExternalWinAppLaunchPacket struct {
 }
 
 func (plan Plan) DesktopExternalWinAppLaunchPacketPreview(activationRoot string, runRecordPath string, mode string) (DesktopExternalWinAppLaunchPacket, error) {
-	if strings.TrimSpace(activationRoot) == "" {
-		return DesktopExternalWinAppLaunchPacket{}, errors.New("desktop external Windows app launch packet requires --activation-root")
-	}
 	if strings.TrimSpace(runRecordPath) == "" {
 		return DesktopExternalWinAppLaunchPacket{}, errors.New("desktop external Windows app launch packet requires --run-record")
+	}
+	runRecord, err := loadExternalWinAppRunRecord(runRecordPath)
+	if err != nil {
+		return DesktopExternalWinAppLaunchPacket{}, err
+	}
+	return plan.DesktopExternalWinAppLaunchPacketPreviewFromRunResult(activationRoot, runRecord, mode)
+}
+
+func (plan Plan) DesktopExternalWinAppLaunchPacketPreviewFromRunResult(activationRoot string, runRecord ExternalWinAppRunResult, mode string) (DesktopExternalWinAppLaunchPacket, error) {
+	if strings.TrimSpace(activationRoot) == "" {
+		return DesktopExternalWinAppLaunchPacket{}, errors.New("desktop external Windows app launch packet requires --activation-root")
 	}
 	status, err := plan.DesktopActivationStatusPreviewWithReceipt(activationRoot, mode)
 	if err != nil {
@@ -89,10 +97,6 @@ func (plan Plan) DesktopExternalWinAppLaunchPacketPreview(activationRoot string,
 	}
 	if strings.TrimSpace(receipt.ExternalAppHandle) != plan.ApplicationID {
 		return DesktopExternalWinAppLaunchPacket{}, errors.New("desktop external Windows app launch packet receipt handle does not match the application id")
-	}
-	runRecord, err := loadExternalWinAppRunRecord(runRecordPath)
-	if err != nil {
-		return DesktopExternalWinAppLaunchPacket{}, err
 	}
 	if runRecord.SchemaVersion != ExternalWinAppRunSchemaVersion ||
 		runRecord.RequestType != ExternalWinAppRunRequestType {
@@ -173,6 +177,23 @@ func (plan Plan) DesktopExternalWinAppLaunchPacketPreview(activationRoot string,
 		return DesktopExternalWinAppLaunchPacket{}, err
 	}
 	return packet, nil
+}
+
+func ExternalAppPlanFromRunResult(runRecord ExternalWinAppRunResult) (Plan, error) {
+	recipe := Recipe{
+		ID:      strings.TrimSpace(runRecord.ApplicationID),
+		Name:    strings.TrimSpace(runRecord.DisplayName),
+		Version: strings.TrimSpace(runRecord.AppVersion),
+		Icon:    "application-x-executable",
+		Mode:    "automatic",
+	}
+	provenance := Provenance{
+		Source:          "external-winapp-import-record",
+		RegistryName:    "runtime-managed-external-apps",
+		DigestVerified:  runRecord.ImportedArtifactDigestVerified,
+		SignatureStatus: "local-import-digest-verified",
+	}
+	return NewPlanWithProvenance(recipe, provenance)
 }
 
 func loadExternalWinAppRunRecord(path string) (ExternalWinAppRunResult, error) {

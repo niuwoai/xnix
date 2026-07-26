@@ -356,6 +356,9 @@ launcher_env = {
 launcher_argv = [
   staged_launcher.to_s,
   *desktop_tokens.drop(1),
+  "--activation-root", stage_root.to_s,
+  "--desktop-launch-packet-output", launch_packet_output.to_s,
+  "--desktop-launch-packet-mode", "development",
   "--image", options.fetch(:image),
   "--docker", docker_bin,
   "--timeout", options.fetch(:timeout)
@@ -382,16 +385,9 @@ assert(payload.fetch("broad_host_mount_required") == false, "launcher smoke must
 assert(payload.fetch("host_root_modified") == false, "launcher smoke must not mutate the host root")
 assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, docker_bin], "staged launcher output")
 
-launch_packet, launch_packet_stdout = run_json(
-  go_env,
-  "go", "run", "./cmd/xnix-runtime-go",
-  "desktop-external-winapp-launch-packet-preview",
-  "--external-app-import-record", import_record_path.to_s,
-  "--activation-root", stage_root.to_s,
-  "--run-record", delegated_output.to_s,
-  "--mode", "development",
-  "--output", launch_packet_output.to_s
-)
+assert(launch_packet_output.file?, "staged launcher must write the desktop launch packet sidecar")
+launch_packet_text = launch_packet_output.read
+launch_packet = JSON.parse(launch_packet_text)
 assert(launch_packet.fetch("request_type") == "desktop-external-winapp-launch-packet-preview", "desktop launch packet must use the external launch packet request type")
 assert(launch_packet.fetch("status") == "passed", "desktop launch packet must pass")
 assert(launch_packet.fetch("application_id") == APP_ID, "desktop launch packet must target the imported app")
@@ -424,8 +420,7 @@ assert(launch_packet.fetch("raw_executable_path_exposed") == false, "desktop lau
 assert(launch_packet.fetch("host_root_modified") == false, "desktop launch packet must not mutate the host root")
 assert(launch_packet.fetch("docker_socket_mounted") == false, "desktop launch packet must not mount the Docker socket")
 assert(launch_packet.fetch("broad_host_mount_required") == false, "desktop launch packet must not require broad host mounts")
-assert(launch_packet_output.file?, "desktop launch packet file must be written")
-assert_no_forbidden(launch_packet_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, delegated_output.to_s, executable_path.to_s, docker_bin, "notepad.exe", "wine ", "docker run", "/var/run/docker.sock"], "desktop launch packet output")
+assert_no_forbidden(launch_packet_text, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, delegated_output.to_s, executable_path.to_s, docker_bin, "notepad.exe", "wine ", "docker run", "/var/run/docker.sock"], "desktop launch packet output")
 
 runtime_packet, = run_json(
   go_env,

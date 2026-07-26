@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -52,6 +53,9 @@ func run(args []string, stdout io.Writer) error {
 	var registryPath string
 	var externalAppImportRecord string
 	var externalAppHandle string
+	var externalDesktopActivationRoot string
+	var externalDesktopLaunchPacketOutput string
+	var externalDesktopLaunchPacketMode string
 	var containerImage string
 	var containerPlatform string
 	var containerDockerPath string
@@ -79,6 +83,9 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&registryPath, "registry", "", "digest-verified recipe registry path for recipe-backed container GUI dispatch")
 	flags.StringVar(&externalAppImportRecord, "external-app-import-record", "", "Runtime import record for an imported external Windows GUI app")
 	flags.StringVar(&externalAppHandle, "external-app-handle", "", "opaque external Windows GUI app handle; currently the imported reverse-DNS app id")
+	flags.StringVar(&externalDesktopActivationRoot, "activation-root", "", "staged desktop activation root used only when writing an external Windows app desktop launch packet sidecar")
+	flags.StringVar(&externalDesktopLaunchPacketOutput, "desktop-launch-packet-output", "", "optional JSON sidecar path for a KDE-safe external Windows app desktop launch packet")
+	flags.StringVar(&externalDesktopLaunchPacketMode, "desktop-launch-packet-mode", "development", "desktop launch packet activation mode: production or development")
 	flags.StringVar(&containerImage, "image", winapp.DefaultContainerImage, "local Wine X GUI container image for recipe-backed container GUI dispatch")
 	flags.StringVar(&containerPlatform, "platform", "", "container platform for recipe-backed container GUI dispatch; empty uses the local image platform")
 	flags.StringVar(&containerDockerPath, "docker", "", "explicit docker runner path for recipe-backed container GUI dispatch")
@@ -101,6 +108,12 @@ func run(args []string, stdout io.Writer) error {
 		if strings.TrimSpace(externalAppImportRecord) != "" && strings.TrimSpace(externalAppHandle) != "" {
 			return fmt.Errorf("--external-app-import-record cannot be combined with --external-app-handle")
 		}
+		if strings.TrimSpace(externalDesktopLaunchPacketOutput) != "" && strings.TrimSpace(externalDesktopActivationRoot) == "" {
+			return fmt.Errorf("--desktop-launch-packet-output requires --activation-root")
+		}
+		if strings.TrimSpace(externalDesktopActivationRoot) != "" && strings.TrimSpace(externalDesktopLaunchPacketOutput) == "" {
+			return fmt.Errorf("--activation-root requires --desktop-launch-packet-output")
+		}
 		timeout, err := time.ParseDuration(timeoutText)
 		if err != nil {
 			return fmt.Errorf("parse timeout: %w", err)
@@ -116,6 +129,11 @@ func run(args []string, stdout io.Writer) error {
 		})
 		if err != nil {
 			return err
+		}
+		if strings.TrimSpace(externalDesktopLaunchPacketOutput) != "" {
+			if err := writeExternalDesktopLaunchPacketSidecar(result, externalDesktopActivationRoot, externalDesktopLaunchPacketOutput, externalDesktopLaunchPacketMode); err != nil {
+				return err
+			}
 		}
 		return encode(stdout, result)
 	}
@@ -312,6 +330,31 @@ func run(args []string, stdout io.Writer) error {
 		ControlledSessionHostRootModified:      controlledSession.HostRootModified,
 		ControlledSessionBackendProcessStart:   controlledSession.BackendProcessStarted,
 	})
+}
+
+func writeExternalDesktopLaunchPacketSidecar(result appidentity.ExternalWinAppRunResult, activationRoot string, outputPath string, mode string) error {
+	plan, err := appidentity.ExternalAppPlanFromRunResult(result)
+	if err != nil {
+		return err
+	}
+	packet, err := plan.DesktopExternalWinAppLaunchPacketPreviewFromRunResult(activationRoot, result, mode)
+	if err != nil {
+		return err
+	}
+	var buffer bytes.Buffer
+	encoder := json.NewEncoder(&buffer)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(packet); err != nil {
+		return err
+	}
+	cleanedOutputPath := filepath.Clean(strings.TrimSpace(outputPath))
+	if err := os.MkdirAll(filepath.Dir(cleanedOutputPath), 0o755); err != nil {
+		return fmt.Errorf("create external desktop launch packet output directory: %w", err)
+	}
+	if err := os.WriteFile(cleanedOutputPath, buffer.Bytes(), 0o600); err != nil {
+		return fmt.Errorf("write external desktop launch packet: %w", err)
+	}
+	return nil
 }
 
 func consumeControlledExecutionSessionForLaunch(appID string, stateRoot string, sessionID string) (appidentity.KnownAppControlledExecutionSessionConsumePreview, error) {

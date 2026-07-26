@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc149`.
+The project is currently at `v0.2.640-rc150`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc149`.
 
 ## Current Checkpoint
 
-v0.2.640-rc149 adds the Go Runtime `desktop-external-winapp-launch-packet-preview` read model for the actual imported Windows app desktop path. It consumes a staged activation receipt plus the real `windows-external-app-run` record from the handle-only launcher path, verifies receipt safety, handle consumption, digest verification, observed-window evidence, network isolation, zero host mounts, and closed raw path/backend exposure, then emits a KDE-safe launch packet for desktop surfaces.
+v0.2.640-rc150 lets the real `xnix-compat-launch --external-app-handle APPID` path write a KDE-safe desktop launch packet sidecar through `--activation-root ROOT --desktop-launch-packet-output FILE`. The launcher still returns the actual external app run record on stdout, but it can now persist the Go Runtime packet from the same in-memory run result after the Windows GUI app runs, proving handle routing, receipt safety, digest verification, observed-window evidence, network isolation, zero host mounts, and closed raw path/backend exposure without requiring Ruby to reconstruct the packet.
+
+The previous v0.2.640-rc149 checkpoint added the Go Runtime `desktop-external-winapp-launch-packet-preview` read model for the actual imported Windows app desktop path. It consumes a staged activation receipt plus the real `windows-external-app-run` record from the handle-only launcher path, verifies receipt safety, handle consumption, digest verification, observed-window evidence, network isolation, zero host mounts, and closed raw path/backend exposure, then emits a KDE-safe launch packet for desktop surfaces.
 
 The previous v0.2.640-rc148 checkpoint persisted imported external Windows app desktop-handle evidence into the activation manifest and receipt files. `desktop-activation-status-preview --external-app-import-record RECORD.json --activation-root ROOT` now reads those receipt fields back as `external_app_handle`, `desktop_exec_uses_external_app_handle`, `external_app_desktop_handle_ready`, and closed raw import-record/state-root Exec routing, so KDE-facing status surfaces can consume durable Runtime activation evidence instead of relying on transient stage stdout.
 

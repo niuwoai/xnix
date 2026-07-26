@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"xnix.local/xnix/internal/runtime/activation"
 	"xnix.local/xnix/internal/runtime/appidentity"
 	"xnix.local/xnix/internal/runtime/execution"
 	"xnix.local/xnix/internal/runtime/winapp"
@@ -181,12 +182,32 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 	if err != nil {
 		t.Fatalf("RecordExternalWinAppImport returned error: %v", err)
 	}
+	recipe, provenance, err := appidentity.ExternalAppRecipeFromImportRecord(record)
+	if err != nil {
+		t.Fatalf("ExternalAppRecipeFromImportRecord returned error: %v", err)
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		t.Fatalf("NewPlanWithProvenance returned error: %v", err)
+	}
+	stageRoot := filepath.Join(tempDir, "stage")
+	if _, err := activation.Stage(activation.StageRequest{
+		Root: stageRoot,
+		Mode: "development",
+		Plan: plan,
+	}); err != nil {
+		t.Fatalf("Stage returned error: %v", err)
+	}
 	dockerPath, dockerLog := writeExternalImportedFakeDocker(t, tempDir)
+	launchPacketOutput := filepath.Join(tempDir, "sidecars", "external-launch-packet.json")
 
 	var output bytes.Buffer
 	err = run([]string{
 		"--state-root", stateRoot,
 		"--external-app-handle", "org.xnix.external.gui",
+		"--activation-root", stageRoot,
+		"--desktop-launch-packet-output", launchPacketOutput,
+		"--desktop-launch-packet-mode", "development",
 		"--image", "local/wine-x-gui:test",
 		"--platform", "linux/amd64",
 		"--docker", dockerPath,
@@ -226,6 +247,40 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		!strings.Contains(string(dockerInvocation), "ExternalGui.exe") {
 		t.Fatalf("fake Docker did not receive copied imported executable flow: %s", string(dockerInvocation))
 	}
+	packetBytes, err := os.ReadFile(launchPacketOutput)
+	if err != nil {
+		t.Fatalf("ReadFile launch packet sidecar returned error: %v", err)
+	}
+	var launchPacket map[string]any
+	if err := json.Unmarshal(packetBytes, &launchPacket); err != nil {
+		t.Fatalf("Unmarshal launch packet returned error: %v\n%s", err, string(packetBytes))
+	}
+	if launchPacket["schema_version"] != appidentity.DesktopExternalWinAppLaunchPacketSchemaVersion ||
+		launchPacket["request_type"] != appidentity.DesktopExternalWinAppLaunchPacketRequestType ||
+		launchPacket["status"] != "passed" ||
+		launchPacket["application_id"] != "org.xnix.external.gui" ||
+		launchPacket["external_app_handle"] != "org.xnix.external.gui" ||
+		launchPacket["activation_receipt_backed"] != true ||
+		launchPacket["activation_receipt_safe_for_kde"] != true ||
+		launchPacket["desktop_exec_uses_external_app_handle"] != true ||
+		launchPacket["external_app_desktop_handle_ready"] != true ||
+		launchPacket["run_record_consumed"] != true ||
+		launchPacket["external_app_handle_consumed"] != true ||
+		launchPacket["imported_artifact_digest_verified"] != true ||
+		launchPacket["runtime_launch_executed"] != true ||
+		launchPacket["window_observed"] != true ||
+		launchPacket["x_window_observed"] != true ||
+		launchPacket["desktop_launch_packet_ready"] != true ||
+		launchPacket["safe_for_kde"] != true ||
+		launchPacket["runtime_launch_authority"] != true ||
+		launchPacket["kde_launch_authority"] != false ||
+		launchPacket["raw_import_record_path_exposed"] != false ||
+		launchPacket["raw_state_root_path_exposed"] != false ||
+		launchPacket["raw_executable_path_exposed"] != false ||
+		launchPacket["host_root_modified"] != false {
+		t.Fatalf("unexpected launch packet sidecar: %#v", launchPacket)
+	}
+	assertCompatLaunchContainerGUIDispatchSafe(t, string(packetBytes), stageRoot, stateRoot, executablePath, dockerPath)
 	assertCompatLaunchContainerGUIDispatchSafe(t, output.String(), stateRoot, executablePath, dockerPath)
 }
 

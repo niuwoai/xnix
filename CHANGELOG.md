@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc150] - 2026-07-26
+
+### Changed
+
+- Let `xnix-compat-launch` write an optional desktop external Windows app launch packet sidecar after handle-routed runs.
+- Reused the Go Runtime launch packet read model directly from the launcher's in-memory external app run result.
+- Updated the staged external Windows GUI desktop smoke to require the real launcher to write the desktop launch packet sidecar.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc150`.
+
 ## [0.2.640-rc149] - 2026-07-26
 
 ### Added
