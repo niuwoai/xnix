@@ -1,7 +1,7 @@
 {
   "id": "org.xnix.apps.messagebox",
   "name": "Xnix MessageBox",
-  "version": "0.2.640-rc147",
+  "version": "0.2.640-rc148",
   "icon": "dialog-information",
   "mode": "automatic",
   "supported_extensions": []

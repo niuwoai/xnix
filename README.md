@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc147`.
+The project is currently at `v0.2.640-rc148`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc147`.
 
 ## Current Checkpoint
 
-v0.2.640-rc147 moves the imported external Windows app desktop-handle staging proof into the Go Runtime activation result. `desktop-activation-stage --external-app-import-record RECORD.json` now reports `external_app_handle`, `desktop_exec_uses_external_app_handle`, `external_app_desktop_handle_ready`, and closed raw import-record/state-root Exec routing, so the staged desktop smoke can rely on Runtime-owned activation evidence instead of parsing the `.desktop` file by itself.
+v0.2.640-rc148 persists imported external Windows app desktop-handle evidence into the activation manifest and receipt files. `desktop-activation-status-preview --external-app-import-record RECORD.json --activation-root ROOT` now reads those receipt fields back as `external_app_handle`, `desktop_exec_uses_external_app_handle`, `external_app_desktop_handle_ready`, and closed raw import-record/state-root Exec routing, so KDE-facing status surfaces can consume durable Runtime activation evidence instead of relying on transient stage stdout.
+
+The previous v0.2.640-rc147 checkpoint moved the imported external Windows app desktop-handle staging proof into the Go Runtime activation result. `desktop-activation-stage --external-app-import-record RECORD.json` now reports `external_app_handle`, `desktop_exec_uses_external_app_handle`, `external_app_desktop_handle_ready`, and closed raw import-record/state-root Exec routing, so the staged desktop smoke can rely on Runtime-owned activation evidence instead of parsing the `.desktop` file by itself.
 
 The previous v0.2.640-rc146 checkpoint made the KDE Compatibility Center plasmoid explicitly consume the real imported Windows GUI app evidence fields. The QML card contract now names `external_app_run_record_consumed`, `external_app_handle_consumed`, `external_app_import_record_consumed`, `imported_artifact_digest_verified`, `window_observed`, and `x_window_observed`, and the layout verifier locks those fields so the desktop shell stays aligned with the Go Runtime read model.
 

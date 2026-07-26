@@ -119,20 +119,25 @@ type DesktopActivationStatusKDESurfaceSummary struct {
 }
 
 type DesktopActivationStatusReceiptEvidence struct {
-	EvidenceState         string   `json:"evidence_state"`
-	SchemaVersion         string   `json:"schema_version"`
-	ReceiptType           string   `json:"receipt_type"`
-	ReceiptRelativePath   string   `json:"receipt_relative_path"`
-	ApplicationID         string   `json:"application_id"`
-	InstalledFileCount    int      `json:"installed_file_count"`
-	InstalledFileIDs      []string `json:"installed_file_ids"`
-	DigestGateReady       bool     `json:"digest_gate_ready"`
-	RollbackReceiptReady  bool     `json:"rollback_receipt_ready"`
-	RuntimeOwned          bool     `json:"runtime_owned"`
-	RootPathExposed       bool     `json:"root_path_exposed"`
-	HostRootModified      bool     `json:"host_root_modified"`
-	BackendDetailsExposed bool     `json:"backend_details_exposed"`
-	SafeForKDE            bool     `json:"safe_for_kde"`
+	EvidenceState                    string   `json:"evidence_state"`
+	SchemaVersion                    string   `json:"schema_version"`
+	ReceiptType                      string   `json:"receipt_type"`
+	ReceiptRelativePath              string   `json:"receipt_relative_path"`
+	ApplicationID                    string   `json:"application_id"`
+	ExternalAppHandle                string   `json:"external_app_handle,omitempty"`
+	InstalledFileCount               int      `json:"installed_file_count"`
+	InstalledFileIDs                 []string `json:"installed_file_ids"`
+	DesktopExecUsesExternalAppHandle bool     `json:"desktop_exec_uses_external_app_handle"`
+	ExternalAppDesktopHandleReady    bool     `json:"external_app_desktop_handle_ready"`
+	DesktopExecUsesRawImportRecord   bool     `json:"desktop_exec_uses_raw_import_record"`
+	DesktopExecUsesStateRoot         bool     `json:"desktop_exec_uses_state_root"`
+	DigestGateReady                  bool     `json:"digest_gate_ready"`
+	RollbackReceiptReady             bool     `json:"rollback_receipt_ready"`
+	RuntimeOwned                     bool     `json:"runtime_owned"`
+	RootPathExposed                  bool     `json:"root_path_exposed"`
+	HostRootModified                 bool     `json:"host_root_modified"`
+	BackendDetailsExposed            bool     `json:"backend_details_exposed"`
+	SafeForKDE                       bool     `json:"safe_for_kde"`
 }
 
 type DesktopActivationStatusSignal struct {
@@ -157,9 +162,18 @@ type desktopActivationStatusReceiptFile struct {
 	SchemaVersion string                                    `json:"schema_version"`
 	ReceiptType   string                                    `json:"receipt_type"`
 	ApplicationID string                                    `json:"application_id"`
+	DesktopLaunch desktopActivationStatusDesktopLaunch      `json:"desktop_launch"`
 	Installed     []desktopActivationStatusReceiptInstalled `json:"installed"`
 	Rollback      desktopActivationStatusReceiptRollback    `json:"rollback"`
 	Safety        desktopActivationStatusReceiptSafety      `json:"safety"`
+}
+
+type desktopActivationStatusDesktopLaunch struct {
+	ExternalAppHandle                string `json:"external_app_handle"`
+	DesktopExecUsesExternalAppHandle bool   `json:"desktop_exec_uses_external_app_handle"`
+	ExternalAppDesktopHandleReady    bool   `json:"external_app_desktop_handle_ready"`
+	DesktopExecUsesRawImportRecord   bool   `json:"desktop_exec_uses_raw_import_record"`
+	DesktopExecUsesStateRoot         bool   `json:"desktop_exec_uses_state_root"`
 }
 
 type desktopActivationStatusReceiptInstalled struct {
@@ -369,6 +383,14 @@ func (plan Plan) DesktopActivationReceiptEvidence(root string) (DesktopActivatio
 	if receipt.ApplicationID != plan.ApplicationID {
 		return DesktopActivationStatusReceiptEvidence{}, fmt.Errorf("desktop activation receipt application mismatch: %s", receipt.ApplicationID)
 	}
+	if receipt.DesktopLaunch.ExternalAppDesktopHandleReady &&
+		strings.TrimSpace(receipt.DesktopLaunch.ExternalAppHandle) != plan.ApplicationID {
+		return DesktopActivationStatusReceiptEvidence{}, errors.New("desktop activation receipt external app handle does not match the application id")
+	}
+	if (receipt.DesktopLaunch.DesktopExecUsesExternalAppHandle || receipt.DesktopLaunch.ExternalAppDesktopHandleReady) &&
+		(receipt.DesktopLaunch.DesktopExecUsesRawImportRecord || receipt.DesktopLaunch.DesktopExecUsesStateRoot) {
+		return DesktopActivationStatusReceiptEvidence{}, errors.New("desktop activation receipt external app handle evidence contains unsafe Exec routing")
+	}
 	ids := make([]string, 0, len(receipt.Installed))
 	for _, installed := range receipt.Installed {
 		if installed.ID == "" || !installed.Written || installed.HostRootModified || installed.BackendDetailsExposed {
@@ -383,20 +405,25 @@ func (plan Plan) DesktopActivationReceiptEvidence(root string) (DesktopActivatio
 		ids = append(ids, installed.ID)
 	}
 	evidence := DesktopActivationStatusReceiptEvidence{
-		EvidenceState:         "receipt-backed",
-		SchemaVersion:         receipt.SchemaVersion,
-		ReceiptType:           receipt.ReceiptType,
-		ReceiptRelativePath:   relativePath,
-		ApplicationID:         receipt.ApplicationID,
-		InstalledFileCount:    len(receipt.Installed),
-		InstalledFileIDs:      ids,
-		DigestGateReady:       receipt.Rollback.RequiresMatchingSHA256,
-		RollbackReceiptReady:  receipt.Rollback.RequiresMatchingSHA256 && !receipt.Rollback.HostRootModified,
-		RuntimeOwned:          receipt.Safety.RuntimeOwned,
-		RootPathExposed:       false,
-		HostRootModified:      receipt.Rollback.HostRootModified || receipt.Safety.HostRootModified,
-		BackendDetailsExposed: receipt.Safety.BackendDetailsExposed,
-		SafeForKDE:            receipt.Safety.RuntimeOwned && receipt.Rollback.RequiresMatchingSHA256 && !receipt.Rollback.HostRootModified && !receipt.Safety.HostRootModified && !receipt.Safety.BackendDetailsExposed,
+		EvidenceState:                    "receipt-backed",
+		SchemaVersion:                    receipt.SchemaVersion,
+		ReceiptType:                      receipt.ReceiptType,
+		ReceiptRelativePath:              relativePath,
+		ApplicationID:                    receipt.ApplicationID,
+		ExternalAppHandle:                receipt.DesktopLaunch.ExternalAppHandle,
+		InstalledFileCount:               len(receipt.Installed),
+		InstalledFileIDs:                 ids,
+		DesktopExecUsesExternalAppHandle: receipt.DesktopLaunch.DesktopExecUsesExternalAppHandle,
+		ExternalAppDesktopHandleReady:    receipt.DesktopLaunch.ExternalAppDesktopHandleReady,
+		DesktopExecUsesRawImportRecord:   receipt.DesktopLaunch.DesktopExecUsesRawImportRecord,
+		DesktopExecUsesStateRoot:         receipt.DesktopLaunch.DesktopExecUsesStateRoot,
+		DigestGateReady:                  receipt.Rollback.RequiresMatchingSHA256,
+		RollbackReceiptReady:             receipt.Rollback.RequiresMatchingSHA256 && !receipt.Rollback.HostRootModified,
+		RuntimeOwned:                     receipt.Safety.RuntimeOwned,
+		RootPathExposed:                  false,
+		HostRootModified:                 receipt.Rollback.HostRootModified || receipt.Safety.HostRootModified,
+		BackendDetailsExposed:            receipt.Safety.BackendDetailsExposed,
+		SafeForKDE:                       receipt.Safety.RuntimeOwned && receipt.Rollback.RequiresMatchingSHA256 && !receipt.Rollback.HostRootModified && !receipt.Safety.HostRootModified && !receipt.Safety.BackendDetailsExposed && !receipt.DesktopLaunch.DesktopExecUsesRawImportRecord && !receipt.DesktopLaunch.DesktopExecUsesStateRoot,
 	}
 	if !evidence.SafeForKDE {
 		return DesktopActivationStatusReceiptEvidence{}, errors.New("desktop activation receipt is not safe for KDE status consumption")

@@ -163,10 +163,53 @@ func TestDesktopActivationStageCommandStagesExternalImportedAppHandleLauncher(t 
 		bytes.Contains(desktopEntry, []byte("MimeType=")) {
 		t.Fatalf("unexpected external imported app desktop entry:\n%s", desktopEntry)
 	}
+	manifestPath := filepath.Join(stagingRoot, "usr/share/xnix/compatibility/manifests/org.xnix.external.gui.json")
+	manifest, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatalf("external imported app manifest was not staged: %v", err)
+	}
+	receiptPath := filepath.Join(stagingRoot, "usr/share/xnix/compatibility/activation-receipts/org.xnix.external.gui.json")
+	receipt, err := os.ReadFile(receiptPath)
+	if err != nil {
+		t.Fatalf("external imported app receipt was not staged: %v", err)
+	}
+	for label, content := range map[string][]byte{"manifest": manifest, "receipt": receipt} {
+		if !bytes.Contains(content, []byte(`"external_app_handle": "org.xnix.external.gui"`)) ||
+			!bytes.Contains(content, []byte(`"desktop_exec_uses_external_app_handle": true`)) ||
+			!bytes.Contains(content, []byte(`"external_app_desktop_handle_ready": true`)) ||
+			!bytes.Contains(content, []byte(`"desktop_exec_uses_raw_import_record": false`)) ||
+			!bytes.Contains(content, []byte(`"desktop_exec_uses_state_root": false`)) {
+			t.Fatalf("external imported app %s lacks desktop handle evidence:\n%s", label, content)
+		}
+	}
+	var statusOutput bytes.Buffer
+	err = run([]string{
+		"desktop-activation-status-preview",
+		"--external-app-import-record", recordPath,
+		"--mode", "development",
+		"--activation-root", stagingRoot,
+	}, &statusOutput)
+	if err != nil {
+		t.Fatalf("status run returned error: %v", err)
+	}
+	var statusPayload map[string]any
+	if err := json.Unmarshal(statusOutput.Bytes(), &statusPayload); err != nil {
+		t.Fatalf("Unmarshal status returned error: %v", err)
+	}
+	receiptEvidence := statusPayload["receipt_evidence"].(map[string]any)
+	if receiptEvidence["external_app_handle"] != "org.xnix.external.gui" ||
+		receiptEvidence["desktop_exec_uses_external_app_handle"] != true ||
+		receiptEvidence["external_app_desktop_handle_ready"] != true ||
+		receiptEvidence["desktop_exec_uses_raw_import_record"] != false ||
+		receiptEvidence["desktop_exec_uses_state_root"] != false ||
+		receiptEvidence["safe_for_kde"] != true {
+		t.Fatalf("unexpected external imported app receipt evidence: %#v", receiptEvidence)
+	}
 	for _, forbidden := range []string{recordPath, stateRoot, stagingRoot, executablePath, "ExternalGui.exe", "wine ", "docker", "qemu-system", "--state-root", "--external-app-import-record"} {
 		if strings.Contains(strings.ToLower(output.String()), strings.ToLower(forbidden)) ||
-			strings.Contains(strings.ToLower(string(desktopEntry)), strings.ToLower(forbidden)) {
-			t.Fatalf("external imported app staging exposed forbidden term %q\noutput=%s\nentry=%s", forbidden, output.String(), string(desktopEntry))
+			strings.Contains(strings.ToLower(string(desktopEntry)), strings.ToLower(forbidden)) ||
+			strings.Contains(strings.ToLower(statusOutput.String()), strings.ToLower(forbidden)) {
+			t.Fatalf("external imported app staging exposed forbidden term %q\noutput=%s\nentry=%s\nstatus=%s", forbidden, output.String(), string(desktopEntry), statusOutput.String())
 		}
 	}
 }

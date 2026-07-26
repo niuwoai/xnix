@@ -103,12 +103,13 @@ type stageArtifact struct {
 }
 
 type manifestFile struct {
-	SchemaVersion string       `json:"schema_version"`
-	ManifestType  string       `json:"manifest_type"`
-	Desktop       string       `json:"desktop"`
-	Application   manifestApp  `json:"application"`
-	Files         []StagedFile `json:"files"`
-	Safety        safety       `json:"safety"`
+	SchemaVersion string        `json:"schema_version"`
+	ManifestType  string        `json:"manifest_type"`
+	Desktop       string        `json:"desktop"`
+	Application   manifestApp   `json:"application"`
+	DesktopLaunch desktopLaunch `json:"desktop_launch"`
+	Files         []StagedFile  `json:"files"`
+	Safety        safety        `json:"safety"`
 }
 
 type manifestApp struct {
@@ -119,12 +120,21 @@ type manifestApp struct {
 }
 
 type receiptFile struct {
-	SchemaVersion string       `json:"schema_version"`
-	ReceiptType   string       `json:"receipt_type"`
-	ApplicationID string       `json:"application_id"`
-	Installed     []StagedFile `json:"installed"`
-	Rollback      rollback     `json:"rollback"`
-	Safety        safety       `json:"safety"`
+	SchemaVersion string        `json:"schema_version"`
+	ReceiptType   string        `json:"receipt_type"`
+	ApplicationID string        `json:"application_id"`
+	DesktopLaunch desktopLaunch `json:"desktop_launch"`
+	Installed     []StagedFile  `json:"installed"`
+	Rollback      rollback      `json:"rollback"`
+	Safety        safety        `json:"safety"`
+}
+
+type desktopLaunch struct {
+	ExternalAppHandle                string `json:"external_app_handle,omitempty"`
+	DesktopExecUsesExternalAppHandle bool   `json:"desktop_exec_uses_external_app_handle"`
+	ExternalAppDesktopHandleReady    bool   `json:"external_app_desktop_handle_ready"`
+	DesktopExecUsesRawImportRecord   bool   `json:"desktop_exec_uses_raw_import_record"`
+	DesktopExecUsesStateRoot         bool   `json:"desktop_exec_uses_state_root"`
 }
 
 type rollback struct {
@@ -460,7 +470,8 @@ func renderManifest(plan appidentity.Plan, files []StagedFile) (string, error) {
 			DesktopFile: plan.DesktopFile,
 			MIMETypes:   append([]string{}, plan.MIMETypes...),
 		},
-		Files: files,
+		DesktopLaunch: desktopLaunchEvidence(plan),
+		Files:         files,
 		Safety: safety{
 			RuntimeOwned:          true,
 			HostRootModified:      false,
@@ -475,6 +486,7 @@ func renderReceipt(plan appidentity.Plan, files []StagedFile) (string, error) {
 		SchemaVersion: receiptSchemaVersion,
 		ReceiptType:   "desktop-activation-receipt",
 		ApplicationID: plan.ApplicationID,
+		DesktopLaunch: desktopLaunchEvidence(plan),
 		Installed:     files,
 		Rollback: rollback{
 			Command:                "xnix-rollback-desktop-integration",
@@ -488,6 +500,17 @@ func renderReceipt(plan appidentity.Plan, files []StagedFile) (string, error) {
 		},
 	}
 	return encodeJSON(receipt)
+}
+
+func desktopLaunchEvidence(plan appidentity.Plan) desktopLaunch {
+	externalAppHandleReady := desktopExecUsesExternalAppHandle(plan)
+	return desktopLaunch{
+		ExternalAppHandle:                desktopActivationExternalAppHandle(plan, externalAppHandleReady),
+		DesktopExecUsesExternalAppHandle: externalAppHandleReady,
+		ExternalAppDesktopHandleReady:    externalAppHandleReady,
+		DesktopExecUsesRawImportRecord:   false,
+		DesktopExecUsesStateRoot:         false,
+	}
 }
 
 func encodeJSON(value any) (string, error) {

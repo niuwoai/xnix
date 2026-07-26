@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc148] - 2026-07-26
+
+### Changed
+
+- Persisted imported external Windows app desktop handle evidence into desktop activation manifest and receipt files.
+- Extended desktop activation status preview to consume external app import records and surface receipt-backed handle routing evidence.
+- Updated the staged external Windows GUI desktop smoke to persist and verify activation-status receipt evidence before launching the real handle route.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc148`.
+
 ## [0.2.640-rc147] - 2026-07-26
 
 ### Changed
