@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc130] - 2026-07-26
+
+### Added
+
+- Added `external-winapp-import-record` for validating and copying an external Windows `.exe` into a controlled Runtime state root with digest, relative-path, and closed safety-gate evidence.
+- Added `kde-center-page-preview --external-app-import-record RECORD.json` so an imported external Windows app can render as its own KDE Compatibility Center page before it has a registry recipe.
+- Added targeted Runtime and CLI coverage proving import records hide state-root and raw executable paths while keeping launch, backend, network, Docker socket, package-manager, and host-root mutation gates closed.
+
 ## [0.2.640-rc129] - 2026-07-26
 
 ### Added

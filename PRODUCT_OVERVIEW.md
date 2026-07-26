@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc129
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc130
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc130 checkpoint candidate turns an external Windows executable into a Runtime-managed import record. `external-winapp-import-record` validates the `.exe` MZ header, copies the file into a controlled state root under an app-scoped relative path, records digest and size evidence, and keeps the original host path out of desktop output. `kde-center-page-preview --external-app-import-record RECORD.json` can render the imported app as its own KDE Compatibility Center page without a registry entry, while launch, backend start, writes, network, Docker socket access, broad host mounts, package-manager invocation, and host-root mutation remain disabled.
 
 The v0.2.640-rc129 checkpoint candidate gives an observed external Windows GUI app its own desktop page. `kde-center-page-preview --external-app-evidence-file PACKET.json` consumes a passed `real-winapp-gui-evidence-packet-preview` file, derives a temporary non-registry recipe from the evidence app id, display name, version, and copied `.exe` signal, and renders a KDE Compatibility Center page whose primary application identity matches the external app. This avoids borrowing the sample Notepad page while still keeping launch/write/backend actions blocked and hiding local report paths, backend commands, host mounts, Docker socket mounts, host networking, backend launch enablement, and host-root mutation.
 

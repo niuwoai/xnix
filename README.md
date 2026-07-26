@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc129`.
+The project is currently at `v0.2.640-rc130`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc129`.
 
 ## Current Checkpoint
 
-v0.2.640-rc129 lets `kde-center-page-preview --external-app-evidence-file PACKET.json` render a Compatibility Center page for the external Windows app itself. The page is backed by a passed real GUI evidence packet, derives a temporary non-registry app identity from the observed Runtime payload, shows the matching GUI evidence card, and keeps launch/write/backend actions blocked without exposing local report paths, backend commands, host mounts, Docker socket mounts, host networking, or host-root mutation.
+v0.2.640-rc130 adds a Go-owned external Windows app import record. `external-winapp-import-record --state-root ROOT --executable FILE.exe --app-id APP --display-name NAME` validates an MZ executable, copies it into a Runtime-managed state root, records the artifact digest and relative paths, and lets `kde-center-page-preview --external-app-import-record RECORD.json` render the imported app as its own Compatibility Center page while keeping launch/write/backend actions blocked and hiding the original host path.
+
+The previous v0.2.640-rc129 checkpoint let `kde-center-page-preview --external-app-evidence-file PACKET.json` render a Compatibility Center page for the external Windows app itself. The page is backed by a passed real GUI evidence packet, derives a temporary non-registry app identity from the observed Runtime payload, shows the matching GUI evidence card, and keeps launch/write/backend actions blocked without exposing local report paths, backend commands, host mounts, Docker socket mounts, host networking, or host-root mutation.
 
 The previous v0.2.640-rc128 checkpoint let the Go Runtime persist an external executable container X GUI smoke through `windows-app-container-x-gui-smoke --output FILE`, then consume that raw payload directly through `real-winapp-gui-evidence-packet-preview`. Non-recipe external `.exe` evidence now carries the raw payload app identity, executable name, copied-artifact signal, network-isolated container state, zero host mounts, and observed X window into the Runtime packet and KDE GUI evidence card without exposing local report paths, backend commands, host mounts, Docker socket mounts, host networking, or host-root mutation.
 

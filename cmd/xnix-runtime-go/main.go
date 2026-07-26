@@ -123,6 +123,8 @@ func run(args []string, stdout io.Writer) error {
 		return runEngineCatalogPreview(args[1:], stdout)
 	case "execution-decision-preview":
 		return runExecutionDecisionPreview(args[1:], stdout)
+	case "external-winapp-import-record":
+		return runExternalWinAppImportRecord(args[1:], stdout)
 	case "execution-ledger-record":
 		return runExecutionLedgerRecord(args[1:], stdout)
 	case "execution-preflight-preview":
@@ -2738,6 +2740,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
 	externalAppEvidenceFile := flags.String("external-app-evidence-file", "", "real GUI evidence packet for a non-recipe external Windows application")
+	externalAppImportRecord := flags.String("external-app-import-record", "", "Runtime external Windows app import record")
 	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
 	sessionRoot := flags.String("session-root", "", "read execution session status record evidence from this explicit root")
 	sessionRequestID := flags.String("session-request-id", "", "execution session request id to read from --session-root")
@@ -2790,8 +2793,11 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	if *externalAppEvidenceFile != "" {
 		sourceCount++
 	}
+	if *externalAppImportRecord != "" {
+		sourceCount++
+	}
 	if sourceCount != 1 {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview requires exactly one source: --recipe, --registry, or --external-app-evidence-file")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview requires exactly one source: --recipe, --registry, --external-app-evidence-file, or --external-app-import-record")
 	}
 	if *registryPath != "" && *applicationID == "" {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview requires --app when --registry is used")
@@ -2801,6 +2807,9 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	}
 	if *externalAppEvidenceFile != "" && (*applicationID != "" || *recipeRoot != "") {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview --external-app-evidence-file cannot be combined with --app or --recipe-root")
+	}
+	if *externalAppImportRecord != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview --external-app-import-record cannot be combined with --app or --recipe-root")
 	}
 	fileURIs := flags.Args()
 
@@ -2831,6 +2840,26 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 			ApplicationReadinessPortalOperation: *readinessPortalOperation,
 			ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
 			KnownAppSmokeEvidence:               []appidentity.KnownAppSmokeEvidenceSummary{evidence},
+		}, nil
+	}
+	if *externalAppImportRecord != "" {
+		record, err := appidentity.LoadExternalWinAppImportRecord(*externalAppImportRecord)
+		if err != nil {
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+		}
+		recipe, provenance, err := appidentity.ExternalAppRecipeFromImportRecord(record)
+		if err != nil {
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+		}
+		return recipe, provenance, *decision, fileURIs, appidentity.KDECenterPageOptions{
+			ActivationRoot:                      *activationRoot,
+			ExecutionSessionRoot:                *sessionRoot,
+			ExecutionSessionRequestID:           *sessionRequestID,
+			ApplicationReadinessRoot:            *readinessRoot,
+			ApplicationReadinessStateRoot:       *readinessStateRoot,
+			ApplicationReadinessArtifactReceipt: receipt,
+			ApplicationReadinessPortalOperation: *readinessPortalOperation,
+			ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
 		}, nil
 	}
 
