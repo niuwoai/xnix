@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc172`.
+The project is currently at `v0.2.640-rc173`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc172`.
 
 ## Current Checkpoint
 
-v0.2.640-rc172 adds `scripts/remote_go_test.rb`, an execute-gated q4 targeted Go test runner for small-version validation. The script defaults to q4, syncs only constrained Runtime sources unless explicitly told to do a full sync, excludes `docs/claude-code-implementation-packages.md`, keeps Go build/module/temp caches under `/home/xnix-build-cache`, and reports `host_compilation_avoided=true` so routine Go validation does not compile or test on the macOS host. This gives the project a repeatable path for focused Go checks while real Windows app compatibility work continues through the q4 Runtime binaries and GUI smokes.
+v0.2.640-rc173 adds the Go Runtime `real-winapp-run-receipt-summary-preview` command. It consumes a passed q4 remote Wine guest GUI smoke execute-result and emits a compact receipt summary proving that a known Windows GUI app really ran, an X window was observed, owner-controlled file-open evidence was verified, Runtime/KDE evidence was consumed, and unsafe host/container gates stayed closed. The summary hides report paths, q4 connection details, raw launcher output, raw window titles, executable names, and backend command details, giving future KDE and AI surfaces a safer "this app actually ran" signal.
+
+The previous v0.2.640-rc172 checkpoint added `scripts/remote_go_test.rb`, an execute-gated q4 targeted Go test runner for small-version validation. The script defaults to q4, syncs only constrained Runtime sources unless explicitly told to do a full sync, excludes `docs/claude-code-implementation-packages.md`, keeps Go build/module/temp caches under `/home/xnix-build-cache`, and reports `host_compilation_avoided=true` so routine Go validation does not compile or test on the macOS host. This gives the project a repeatable path for focused Go checks while real Windows app compatibility work continues through the q4 Runtime binaries and GUI smokes.
 
 The previous v0.2.640-rc171 checkpoint made the q4 owner-controlled file-open GUI smoke use the Runtime-owner environment contract for the static `xnix-compat-open %U` entrypoint. When the remote Sample Notepad path enables `--file-open-entrypoint`, `wine_guest_gui_smoke.rb` now supplies the full `XNIX_COMPAT_OPEN_*` execution context to `xnix-compat-open` through the Runtime owner environment, while the remote q4 plan and execute-result summary expose only safe key names, readiness flags, and the static entrypoint. Backend values, state roots, receipt values, guest connection details, owner service arguments, and raw launcher output remain hidden from KDE-facing summaries.
 

@@ -25,7 +25,7 @@ DEFAULT_PACKAGES = %w[
   ./internal/runtime/appidentity
   ./cmd/xnix-runtime-go
 ].freeze
-DEFAULT_RUN_REGEX = "TestServiceCallDispatchesShowRuntimeControlledLaunch|TestRuntimeOwnerCommandRendersShowRuntimeControlledLaunch|TestCompatOpen|TestCompatLaunchPassesFileArgumentToGuestGUINotepad|TestPreviewKDEControlledLaunchAction|TestKDEControlledLaunchActionPreviewCommand"
+DEFAULT_RUN_REGEX = "TestServiceCallDispatchesShowRuntimeControlledLaunch|TestRuntimeOwnerCommandRendersShowRuntimeControlledLaunch|TestCompatOpen|TestCompatLaunchPassesFileArgumentToGuestGUINotepad|TestPreviewKDEControlledLaunchAction|TestKDEControlledLaunchActionPreviewCommand|TestPreviewRealWinAppRunReceiptSummary|TestRealWinAppRunReceiptSummaryPreviewCommand"
 
 options = {
   execute: false,

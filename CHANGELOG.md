@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc173] - 2026-07-26
+
+### Added
+
+- Added the Go Runtime `real-winapp-run-receipt-summary-preview` command to consume a passed q4 remote Wine guest GUI smoke execute-result and emit a compact real Windows app run receipt summary for Runtime, KDE, and AI consumers.
+- Added fail-closed Go tests proving the receipt summary requires observed execution, owner-controlled file-open evidence, KDE page/action evidence, and closed unsafe host/container gates before reporting `receipt_ready=true`.
+
+### Changed
+
+- Extended the q4 targeted Go test runner default regex to cover the new real run receipt summary model and CLI command.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc173`.
+
 ## [0.2.640-rc172] - 2026-07-26
 
 ### Added

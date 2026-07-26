@@ -1,0 +1,124 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+func TestRealWinAppRunReceiptSummaryPreviewCommandConsumesRemoteQ4Smoke(t *testing.T) {
+	tempDir := t.TempDir()
+	reportPath := filepath.Join(tempDir, "q4-remote-smoke.json")
+	if err := os.WriteFile(reportPath, []byte(realWinAppRunReceiptSummaryCLIFixture(currentProjectVersion(t))), 0o600); err != nil {
+		t.Fatalf("WriteFile report returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"real-winapp-run-receipt-summary-preview",
+		"--remote-smoke-report", reportPath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.real_winapp_run_receipt_summary.v1" ||
+		payload["request_type"] != "real-winapp-run-receipt-summary-preview" ||
+		payload["receipt_type"] != "real-windows-app-run-receipt-summary" ||
+		payload["report_consumed"] != true ||
+		payload["report_path_exposed"] != false ||
+		payload["remote_host_exposed"] != false ||
+		payload["app_id"] != "org.xnix.sample.notepad" ||
+		payload["display_name"] != "Sample Notepad" ||
+		payload["gui_app_name"] != "known-gui-app" ||
+		payload["execution_host_class"] != "q4-remote-validation-host" ||
+		payload["backend_class"] != "managed-guest-gui" ||
+		payload["run_passed"] != true ||
+		payload["real_execution_observed"] != true ||
+		payload["window_observed"] != true ||
+		payload["file_open_verified"] != true ||
+		payload["owner_controlled_launch_verified"] != true ||
+		payload["owner_file_open_entrypoint_invoked"] != true ||
+		payload["runtime_evidence_consumed"] != true ||
+		payload["kde_page_evidence_consumed"] != true ||
+		payload["kde_action_evidence_consumed"] != true ||
+		payload["receipt_ready"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_launcher_output_exposed"] != false {
+		t.Fatalf("unexpected real run receipt summary CLI payload: %#v", payload)
+	}
+	lower := strings.ToLower(output.String())
+	for _, forbidden := range []string{strings.ToLower(reportPath), "root@q4", "/home/xnix-", "notepad.exe", "qemu-system", "/var/run/docker.sock"} {
+		if strings.Contains(lower, forbidden) {
+			t.Fatalf("real run receipt summary CLI exposed forbidden term %q: %s", forbidden, output.String())
+		}
+	}
+}
+
+func TestRealWinAppRunReceiptSummaryPreviewCommandRequiresReport(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"real-winapp-run-receipt-summary-preview"}, &output); err == nil {
+		t.Fatalf("real-winapp-run-receipt-summary-preview must require --remote-smoke-report")
+	}
+	if err := run([]string{"real-winapp-run-receipt-summary-preview", "--remote-smoke-report", "missing.json", "extra"}, &output); err == nil {
+		t.Fatalf("real-winapp-run-receipt-summary-preview must reject positional arguments")
+	}
+}
+
+func realWinAppRunReceiptSummaryCLIFixture(version string) string {
+	return strings.ReplaceAll(`{
+  "schema_version": "xnix.scripts.remote_wine_guest_gui_smoke.execute_result.v1",
+  "request_type": "remote-wine-guest-gui-smoke",
+  "version": "VERSION_PLACEHOLDER",
+  "status": "passed",
+  "remote_host": "root@q4",
+  "smoke_status": "passed",
+  "launch_mode": "owner-controlled-launch",
+  "known_app_id": "org.xnix.sample.notepad",
+  "known_app_name": "Sample Notepad",
+  "known_app_version": "VERSION_PLACEHOLDER",
+  "gui_app_name": "notepad.exe",
+  "file_argument_count": 1,
+  "file_argument_copied_count": 1,
+  "file_arguments_passed": true,
+  "file_argument_winepath_translated": true,
+  "file_argument_winepath_translated_count": 1,
+  "raw_file_argument_path_exposed": false,
+  "window_match": "sample-document.txt",
+  "window_match_observed": true,
+  "x_window_observed": true,
+  "runtime_evidence_report_consumed": true,
+  "runtime_evidence_window_observed": true,
+  "runtime_evidence_owner_file_open_verified": true,
+  "runtime_evidence_owner_file_open_entrypoint_invoked": true,
+  "kde_page_output_written": true,
+  "kde_page_known_app_gui_evidence_count": 1,
+  "kde_action_output_written": true,
+  "kde_action_owner_file_open_verified": true,
+  "kde_action_owner_file_open_entrypoint_invoked": true,
+  "owner_controlled_launch_requested": true,
+  "owner_evidence_handoff_ready": true,
+  "owner_managed_launcher_invoked": true,
+  "owner_file_open_entrypoint_invoked": true,
+  "owner_delegated_smoke_passed": true,
+  "owner_delegated_file_arguments_passed": true,
+  "owner_delegated_file_argument_winepath_translated": true,
+  "owner_delegated_raw_file_argument_path_exposed": false,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false
+}`, "VERSION_PLACEHOLDER", version)
+}

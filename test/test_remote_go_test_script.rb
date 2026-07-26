@@ -60,6 +60,8 @@ assert(payload["remote_build_root"].start_with?("/home/xnix-"), "remote Go test 
 assert(payload["package_count"] == 6, "remote Go test must expose default package count")
 assert(payload["packages"] == %w[./internal/runtime/owner ./cmd/xnix-runtime-owner ./cmd/xnix-compat-open ./cmd/xnix-compat-launch ./internal/runtime/appidentity ./cmd/xnix-runtime-go], "remote Go test must expose default package order")
 assert(payload["run_regex"].include?("TestCompatOpen"), "remote Go test must expose default test regex")
+assert(payload["run_regex"].include?("TestPreviewRealWinAppRunReceiptSummary"), "remote Go test must include real run receipt summary model tests")
+assert(payload["run_regex"].include?("TestRealWinAppRunReceiptSummaryPreviewCommand"), "remote Go test must include real run receipt summary CLI tests")
 assert(payload["count"] == 1, "remote Go test must default to count 1")
 assert(payload["go_test_timeout"] == "5m", "remote Go test must default to a bounded Go test timeout")
 assert(payload["remote_test_planned"] == true, "remote Go test must plan remote test")

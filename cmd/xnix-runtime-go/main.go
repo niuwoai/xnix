@@ -257,6 +257,8 @@ func run(args []string, stdout io.Writer) error {
 		return runGUISmokeEvidencePreview(args[1:], stdout)
 	case "real-winapp-gui-evidence-packet-preview":
 		return runRealWinAppGUIEvidencePacketPreview(args[1:], stdout)
+	case "real-winapp-run-receipt-summary-preview":
+		return runRealWinAppRunReceiptSummaryPreview(args[1:], stdout)
 	case "known-app-runtime-status-launch-owner-fixture-record":
 		return runKnownAppRuntimeStatusLaunchOwnerFixtureRecord(args[1:], stdout)
 	case "known-app-runtime-status-launch-owner-trigger-preview":

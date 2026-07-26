@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc172
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc173
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc173 checkpoint turns q4 real GUI smoke output into a compact Go-owned run receipt summary. `xnix-runtime-go real-winapp-run-receipt-summary-preview --remote-smoke-report REPORT.json` consumes the passed remote execute-result from the owner-controlled Sample Notepad file-open lane and emits a safe receipt stating that the app really ran, a window was observed, owner-controlled file-open evidence was verified, Runtime evidence was consumed, KDE page/action evidence was consumed, and unsafe host/container gates remained closed. The summary deliberately hides report paths, q4 connection details, raw launcher output, raw window titles, executable names, and backend command details, making it a cleaner substrate for future Compatibility Center and AI decisions than asking product surfaces to inspect the full smoke JSON.
 
 The v0.2.640-rc172 checkpoint adds `scripts/remote_go_test.rb` as the q4-first path for targeted Go validation. Small-version checks can now run `ruby scripts/remote_go_test.rb --execute --package ... --run ...` to sync constrained Runtime sources to `root@q4`, use q4 Go caches, execute selected Go packages and test regexes remotely, and report `host_compilation_avoided=true`. The default package and regex set covers the current owner-controlled file-open path through Runtime owner, `xnix-compat-open`, `xnix-compat-launch`, appidentity, and `xnix-runtime-go`, while plans remain non-executing by default and source sync excludes `docs/claude-code-implementation-packages.md`. This keeps the macOS host for lightweight Ruby/layout checks and gives future small versions a repeatable targeted test lane before q4 real GUI smokes.
 
