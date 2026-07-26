@@ -4,6 +4,20 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc206] - 2026-07-27
+
+### Added
+
+- Added optional `--gui-evidence-packet` consumption to `known-app-verified-catalog-preview` so real Windows GUI evidence packets can add review-only GUI application entries to the verified Runtime catalog alongside the existing q4 matrix-backed console entries.
+- Added GUI catalog metadata for evidence source, GUI evidence status, window observation, and owner file-open verification, plus GUI-specific catalog counts for verified GUI apps and observed windows.
+- Added GUI-aware verified-catalog run planning so MessageBox GUI entries point operators to the q4 MessageBox smoke while other GUI entries can use the generic q4 Windows app smoke.
+
+### Changed
+
+- Kept the original required 7zr and BusyBox matrix evidence gate intact while allowing GUI evidence to extend, not replace, the verified catalog.
+- Verified the rc206 GUI evidence source on q4 with the real MessageBox Windows GUI fixture: q4 built the Windows `.exe`, QEMU/Wine observed the expected window, owner-controlled file-open and document-content marker evidence passed, Go-owned q4 acceptance was ready, and host compilation remained avoided.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc206`.
+
 ## [0.2.640-rc205] - 2026-07-27
 
 ### Added

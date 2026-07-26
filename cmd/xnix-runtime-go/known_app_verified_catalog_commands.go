@@ -21,6 +21,7 @@ func runKnownAppVerifiedCatalogPreview(args []string, stdout io.Writer) error {
 	flags.SetOutput(io.Discard)
 
 	matrixEvidence := flags.String("matrix-evidence", "", "Go-owned known app matrix evidence JSON path")
+	guiEvidencePacket := flags.String("gui-evidence-packet", "", "optional Go-owned real Windows app GUI evidence packet JSON path")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -29,7 +30,8 @@ func runKnownAppVerifiedCatalogPreview(args []string, stdout io.Writer) error {
 	}
 
 	preview, err := appidentity.PreviewKnownAppVerifiedCatalog(appidentity.KnownAppVerifiedCatalogRequest{
-		MatrixEvidencePath: *matrixEvidence,
+		MatrixEvidencePath:    *matrixEvidence,
+		GUIEvidencePacketPath: *guiEvidencePacket,
 	})
 	if err != nil {
 		return err

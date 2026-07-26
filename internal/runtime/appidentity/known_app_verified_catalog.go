@@ -20,7 +20,8 @@ const (
 var knownAppVerifiedCatalogRequiredAppIDs = []string{"7zr", "busybox-w32"}
 
 type KnownAppVerifiedCatalogRequest struct {
-	MatrixEvidencePath string
+	MatrixEvidencePath    string
+	GUIEvidencePacketPath string
 }
 
 type KnownAppVerifiedCatalogRunPlanRequest struct {
@@ -42,11 +43,15 @@ type KnownAppVerifiedCatalogPreview struct {
 	ReadMethod                         string                               `json:"read_method"`
 	VerificationSource                 string                               `json:"verification_source"`
 	MatrixEvidenceConsumed             bool                                 `json:"matrix_evidence_consumed"`
+	GUIEvidencePacketConsumed          bool                                 `json:"gui_evidence_packet_consumed"`
 	MatrixStatus                       string                               `json:"matrix_status"`
 	RequiredAppIDs                     []string                             `json:"required_app_ids"`
 	ApplicationIDs                     []string                             `json:"application_ids"`
+	GUIEvidenceApplicationIDs          []string                             `json:"gui_evidence_application_ids"`
 	ApplicationCount                   int                                  `json:"application_count"`
 	VerifiedApplicationCount           int                                  `json:"verified_application_count"`
+	GUIVerifiedApplicationCount        int                                  `json:"gui_verified_application_count"`
+	GUIWindowObservedCount             int                                  `json:"gui_window_observed_count"`
 	QEMUExecutedCount                  int                                  `json:"qemu_executed_count"`
 	WineExecutedCount                  int                                  `json:"wine_executed_count"`
 	ChecksumVerifiedCount              int                                  `json:"checksum_verified_count"`
@@ -81,6 +86,10 @@ type KnownAppVerifiedCatalogApplication struct {
 	VerificationState      string   `json:"verification_state"`
 	CompatibilityState     string   `json:"compatibility_state"`
 	DesktopCatalogState    string   `json:"desktop_catalog_state"`
+	EvidenceSource         string   `json:"evidence_source,omitempty"`
+	GUIEvidence            bool     `json:"gui_evidence"`
+	WindowObserved         bool     `json:"window_observed"`
+	FileOpenVerified       bool     `json:"file_open_verified"`
 	LauncherSurface        string   `json:"launcher_surface"`
 	LaunchRequestCommand   []string `json:"launch_request_command"`
 	PrimaryActionID        string   `json:"primary_action_id"`
@@ -211,10 +220,21 @@ func PreviewKnownAppVerifiedCatalog(request KnownAppVerifiedCatalogRequest) (Kno
 	if err != nil {
 		return KnownAppVerifiedCatalogPreview{}, fmt.Errorf("read known app matrix evidence: %w", err)
 	}
-	return PreviewKnownAppVerifiedCatalogJSON(content)
+	var guiPacketContent []byte
+	if request.GUIEvidencePacketPath != "" {
+		guiPacketContent, err = os.ReadFile(request.GUIEvidencePacketPath)
+		if err != nil {
+			return KnownAppVerifiedCatalogPreview{}, fmt.Errorf("read real Windows app GUI evidence packet: %w", err)
+		}
+	}
+	return PreviewKnownAppVerifiedCatalogWithGUIEvidenceJSON(content, guiPacketContent)
 }
 
 func PreviewKnownAppVerifiedCatalogJSON(content []byte) (KnownAppVerifiedCatalogPreview, error) {
+	return PreviewKnownAppVerifiedCatalogWithGUIEvidenceJSON(content, nil)
+}
+
+func PreviewKnownAppVerifiedCatalogWithGUIEvidenceJSON(content []byte, guiPacketContent []byte) (KnownAppVerifiedCatalogPreview, error) {
 	var evidence KnownAppMatrixEvidencePreview
 	if err := json.Unmarshal(content, &evidence); err != nil {
 		return KnownAppVerifiedCatalogPreview{}, fmt.Errorf("parse known app matrix evidence: %w", err)
@@ -231,20 +251,45 @@ func PreviewKnownAppVerifiedCatalogJSON(content []byte) (KnownAppVerifiedCatalog
 		applications = append(applications, knownAppVerifiedCatalogApplication(app))
 	}
 
+	guiApplicationIDs := []string{}
+	guiVerifiedApplicationCount := 0
+	guiWindowObservedCount := 0
+	guiPacketConsumed := false
+	if len(guiPacketContent) > 0 {
+		var packet RealWinAppGUIEvidencePacket
+		if err := json.Unmarshal(guiPacketContent, &packet); err != nil {
+			return KnownAppVerifiedCatalogPreview{}, fmt.Errorf("parse real Windows app GUI evidence packet: %w", err)
+		}
+		if err := validateKnownAppVerifiedCatalogGUIEvidencePacket(packet); err != nil {
+			return KnownAppVerifiedCatalogPreview{}, err
+		}
+		guiPacketConsumed = true
+		applications = append(applications, knownAppVerifiedCatalogGUIApplication(packet))
+		guiApplicationIDs = append(guiApplicationIDs, packet.AppID)
+		guiVerifiedApplicationCount = packet.KnownAppGUIEvidenceVerifiedCount
+		if packet.WindowObserved {
+			guiWindowObservedCount = 1
+		}
+	}
+
 	return KnownAppVerifiedCatalogPreview{
 		SchemaVersion:                      KnownAppVerifiedCatalogPreviewSchemaVersion,
 		RequestType:                        KnownAppVerifiedCatalogPreviewRequestType,
-		Source:                             "known-app-matrix-evidence+runtime-verified-catalog",
+		Source:                             knownAppVerifiedCatalogSource(guiPacketConsumed),
 		Desktop:                            "KDE Plasma",
 		RuntimeMethod:                      "ListKnownVerifiedApplications",
 		ReadMethod:                         "ListKnownVerifiedApplicationsPreview",
 		VerificationSource:                 KnownAppMatrixEvidencePreviewRequestType,
 		MatrixEvidenceConsumed:             true,
+		GUIEvidencePacketConsumed:          guiPacketConsumed,
 		MatrixStatus:                       evidence.MatrixStatus,
 		RequiredAppIDs:                     append([]string(nil), knownAppVerifiedCatalogRequiredAppIDs...),
 		ApplicationIDs:                     knownAppVerifiedCatalogApplicationIDs(applications),
+		GUIEvidenceApplicationIDs:          guiApplicationIDs,
 		ApplicationCount:                   len(applications),
 		VerifiedApplicationCount:           len(applications),
+		GUIVerifiedApplicationCount:        guiVerifiedApplicationCount,
+		GUIWindowObservedCount:             guiWindowObservedCount,
 		QEMUExecutedCount:                  evidence.QEMUExecutedCount,
 		WineExecutedCount:                  evidence.WineExecutedCount,
 		ChecksumVerifiedCount:              evidence.ChecksumVerifiedCount,
@@ -275,7 +320,7 @@ func PreviewKnownAppVerifiedCatalogJSON(content []byte) (KnownAppVerifiedCatalog
 			"expose remote q4 paths from catalog preview",
 			"expose raw app output from catalog preview",
 		},
-		DesktopSafeSummary: fmt.Sprintf("%d known Windows apps are verified by q4 matrix evidence and visible as review-only Runtime catalog entries.", len(applications)),
+		DesktopSafeSummary: knownAppVerifiedCatalogSummary(len(applications), guiPacketConsumed),
 	}, nil
 }
 
@@ -315,7 +360,7 @@ func PreviewKnownAppVerifiedCatalogRunPlanJSON(content []byte, appID string) (Kn
 		return KnownAppVerifiedCatalogRunPlanPreview{}, fmt.Errorf("known app verified catalog run plan cannot find app %s", appID)
 	}
 
-	remoteSmokeCommand := []string{"ruby", "scripts/remote_known_winapp_guest_wine_smoke.rb", "--execute", "--app", selected.AppID}
+	remoteSmokeCommand, remoteSmokeRequestType := knownAppVerifiedCatalogRemoteSmokeCommand(selected)
 	preview := KnownAppVerifiedCatalogRunPlanPreview{
 		SchemaVersion:                   KnownAppVerifiedCatalogRunPlanSchemaVersion,
 		RequestType:                     KnownAppVerifiedCatalogRunPlanRequestType,
@@ -334,7 +379,7 @@ func PreviewKnownAppVerifiedCatalogRunPlanJSON(content []byte, appID string) (Kn
 		LauncherSurface:                 selected.LauncherSurface,
 		LaunchRequestCommand:            append([]string(nil), selected.LaunchRequestCommand...),
 		RemoteSmokeCommand:              remoteSmokeCommand,
-		RemoteSmokeRequestType:          "remote-known-winapp-guest-wine-smoke",
+		RemoteSmokeRequestType:          remoteSmokeRequestType,
 		Q4ExecutionRequired:             true,
 		Q4ExecutionPlanned:              true,
 		Q4ExecutionStarted:              false,
@@ -646,6 +691,10 @@ func knownAppVerifiedCatalogApplication(app KnownAppMatrixEvidenceApp) KnownAppV
 		VerificationState:      "verified-real-q4-matrix-run",
 		CompatibilityState:     app.CompatibilityState,
 		DesktopCatalogState:    "visible-review-only",
+		EvidenceSource:         "known-app-matrix-evidence",
+		GUIEvidence:            false,
+		WindowObserved:         false,
+		FileOpenVerified:       false,
 		LauncherSurface:        "xnix-compat-launch",
 		LaunchRequestCommand:   []string{"xnix-compat-launch", "--app", app.AppID},
 		PrimaryActionID:        "review-known-app-matrix-evidence",
@@ -670,6 +719,43 @@ func knownAppVerifiedCatalogApplication(app KnownAppMatrixEvidenceApp) KnownAppV
 	}
 }
 
+func knownAppVerifiedCatalogGUIApplication(packet RealWinAppGUIEvidencePacket) KnownAppVerifiedCatalogApplication {
+	evidence := packet.KnownAppSmokeEvidence
+	return KnownAppVerifiedCatalogApplication{
+		AppID:                  packet.AppID,
+		DisplayName:            packet.DisplayName,
+		AppVersion:             packet.AppVersion,
+		VerificationState:      "verified-real-gui-q4-run",
+		CompatibilityState:     packet.CompatibilityState,
+		DesktopCatalogState:    "visible-review-only",
+		EvidenceSource:         packet.EvidenceSource,
+		GUIEvidence:            true,
+		WindowObserved:         packet.WindowObserved,
+		FileOpenVerified:       evidence.OwnerFileOpenVerified,
+		LauncherSurface:        "xnix-compat-launch",
+		LaunchRequestCommand:   []string{"xnix-compat-launch", "--app", packet.AppID},
+		PrimaryActionID:        "review-known-app-gui-evidence",
+		PrimaryActionKind:      "review",
+		DirectLaunchEnabled:    false,
+		OperatorReviewRequired: true,
+		RuntimeOwned:           true,
+		GoRuntimeBacked:        true,
+		KDEPolicyOwner:         false,
+		QEMUExecuted:           packet.EvidenceSource == GUISmokeEvidenceSourceWineGuest,
+		WineExecuted:           true,
+		ChecksumVerified:       packet.ImportedArtifactDigestVerified,
+		MarkerObserved:         packet.WindowObserved,
+		RawOutputRedacted:      true,
+		SerialLogEvidence:      packet.EvidenceSource == GUISmokeEvidenceSourceWineGuest,
+		BackendLaunchEnabled:   false,
+		BackendDetailsExposed:  false,
+		RawOutputExposed:       false,
+		RemotePathExposed:      false,
+		HostRootModified:       false,
+		DesktopSafeSummary:     packet.DisplayName + " has real Windows GUI evidence and is available as a review-only Runtime catalog entry.",
+	}
+}
+
 func knownAppVerifiedCatalogApplicationIDs(applications []KnownAppVerifiedCatalogApplication) []string {
 	ids := make([]string, 0, len(applications))
 	for _, app := range applications {
@@ -677,4 +763,62 @@ func knownAppVerifiedCatalogApplicationIDs(applications []KnownAppVerifiedCatalo
 	}
 	slices.Sort(ids)
 	return ids
+}
+
+func knownAppVerifiedCatalogRemoteSmokeCommand(app KnownAppVerifiedCatalogApplication) ([]string, string) {
+	if app.GUIEvidence {
+		if app.AppID == "org.xnix.apps.messagebox" {
+			return []string{"ruby", "scripts/q4_messagebox_smoke.rb", "--execute", "--owner-file-open"}, "q4-messagebox-smoke"
+		}
+		return []string{"ruby", "scripts/q4_winapp_smoke.rb", "--execute", "--known-app-id", app.AppID}, "q4-winapp-smoke"
+	}
+	return []string{"ruby", "scripts/remote_known_winapp_guest_wine_smoke.rb", "--execute", "--app", app.AppID}, "remote-known-winapp-guest-wine-smoke"
+}
+
+func validateKnownAppVerifiedCatalogGUIEvidencePacket(packet RealWinAppGUIEvidencePacket) error {
+	if packet.SchemaVersion != RealWinAppGUIEvidencePacketSchemaVersion ||
+		packet.RequestType != RealWinAppGUIEvidencePacketRequestType ||
+		packet.PacketType != "real-windows-app-gui-evidence" {
+		return errors.New("known app verified catalog GUI lane requires a real Windows app GUI evidence packet")
+	}
+	if packet.ReportStatus != "passed" ||
+		!packet.ReportConsumed ||
+		packet.ReportPathExposed ||
+		packet.KnownAppGUIEvidenceVerifiedCount < 1 ||
+		!packet.WindowObserved ||
+		!packet.XWindowObserved ||
+		!packet.CompatibilityCenterProjectionReady ||
+		!packet.KDECenterProjectionReady ||
+		!packet.RuntimeOwned ||
+		!packet.GoRuntimeBacked ||
+		packet.KDEPolicyOwner ||
+		packet.DesktopLaunchEnabled ||
+		packet.BackendLaunchEnabled ||
+		packet.ActionExecutionEnabled {
+		return errors.New("known app verified catalog GUI lane requires passed Runtime-owned GUI evidence")
+	}
+	if packet.HostRootModified ||
+		packet.PrivilegedContainerRequired ||
+		packet.HostNetworkingRequired ||
+		packet.DockerSocketMounted ||
+		packet.BroadHostMountRequired ||
+		packet.BackendDetailsExposed ||
+		packet.RawOutputExposed {
+		return errors.New("known app verified catalog GUI lane requires closed host/container/output gates")
+	}
+	return nil
+}
+
+func knownAppVerifiedCatalogSource(guiPacketConsumed bool) string {
+	if guiPacketConsumed {
+		return "known-app-matrix-evidence+real-winapp-gui-evidence-packet+runtime-verified-catalog"
+	}
+	return "known-app-matrix-evidence+runtime-verified-catalog"
+}
+
+func knownAppVerifiedCatalogSummary(applicationCount int, guiPacketConsumed bool) string {
+	if guiPacketConsumed {
+		return fmt.Sprintf("%d known Windows apps are verified by q4 matrix and GUI evidence and visible as review-only Runtime catalog entries.", applicationCount)
+	}
+	return fmt.Sprintf("%d known Windows apps are verified by q4 matrix evidence and visible as review-only Runtime catalog entries.", applicationCount)
 }

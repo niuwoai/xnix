@@ -2744,6 +2744,7 @@ func normalizeKnownAppVerifiedCatalog(catalog *KnownAppVerifiedCatalogPreview) (
 	result := *catalog
 	result.RequiredAppIDs = append([]string(nil), catalog.RequiredAppIDs...)
 	result.ApplicationIDs = append([]string(nil), catalog.ApplicationIDs...)
+	result.GUIEvidenceApplicationIDs = append([]string(nil), catalog.GUIEvidenceApplicationIDs...)
 	result.BlockedActions = append([]string(nil), catalog.BlockedActions...)
 	result.Applications = knownAppVerifiedCatalogApplications(catalog)
 	sort.Slice(result.Applications, func(left int, right int) bool {
@@ -2753,9 +2754,8 @@ func normalizeKnownAppVerifiedCatalog(catalog *KnownAppVerifiedCatalogPreview) (
 }
 
 func knownAppVerifiedCatalogApplicationReadyForCenter(app KnownAppVerifiedCatalogApplication) bool {
-	return app.AppID != "" &&
+	baseReady := app.AppID != "" &&
 		app.DisplayName != "" &&
-		app.VerificationState == "verified-real-q4-matrix-run" &&
 		app.DesktopCatalogState == "visible-review-only" &&
 		app.LauncherSurface == "xnix-compat-launch" &&
 		len(app.LaunchRequestCommand) == 3 &&
@@ -2766,18 +2766,30 @@ func knownAppVerifiedCatalogApplicationReadyForCenter(app KnownAppVerifiedCatalo
 		app.RuntimeOwned &&
 		app.GoRuntimeBacked &&
 		!app.KDEPolicyOwner &&
-		app.QEMUExecuted &&
-		app.WineExecuted &&
-		app.ChecksumVerified &&
-		app.MarkerObserved &&
-		app.RawOutputRedacted &&
-		app.SerialLogEvidence &&
 		!app.DirectLaunchEnabled &&
 		!app.BackendLaunchEnabled &&
 		!app.BackendDetailsExposed &&
 		!app.RawOutputExposed &&
 		!app.RemotePathExposed &&
 		!app.HostRootModified
+	if !baseReady {
+		return false
+	}
+	if app.GUIEvidence {
+		return app.VerificationState == "verified-real-gui-q4-run" &&
+			app.EvidenceSource != "" &&
+			app.WindowObserved &&
+			app.WineExecuted &&
+			app.MarkerObserved &&
+			app.RawOutputRedacted
+	}
+	return app.VerificationState == "verified-real-q4-matrix-run" &&
+		app.QEMUExecuted &&
+		app.WineExecuted &&
+		app.ChecksumVerified &&
+		app.MarkerObserved &&
+		app.RawOutputRedacted &&
+		app.SerialLogEvidence
 }
 
 func knownAppVerifiedCatalogApplications(catalog *KnownAppVerifiedCatalogPreview) []KnownAppVerifiedCatalogApplication {

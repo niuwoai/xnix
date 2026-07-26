@@ -91,6 +91,66 @@ func TestKnownAppVerifiedCatalogPreviewCommandConsumesMatrixEvidence(t *testing.
 	}
 }
 
+func TestKnownAppVerifiedCatalogPreviewCommandConsumesGUIEvidencePacket(t *testing.T) {
+	tempDir := t.TempDir()
+	matrixEvidencePath := filepath.Join(tempDir, "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+	guiPacketPath := filepath.Join(tempDir, "gui-evidence-packet.json")
+	if err := os.WriteFile(guiPacketPath, []byte(knownAppVerifiedCatalogCLIGUIEvidencePacketFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile GUI packet returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"known-app-verified-catalog-preview",
+		"--matrix-evidence", matrixEvidencePath,
+		"--gui-evidence-packet", guiPacketPath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["source"] != "known-app-matrix-evidence+real-winapp-gui-evidence-packet+runtime-verified-catalog" ||
+		payload["matrix_evidence_consumed"] != true ||
+		payload["gui_evidence_packet_consumed"] != true ||
+		payload["application_count"] != float64(3) ||
+		payload["verified_application_count"] != float64(3) ||
+		payload["gui_verified_application_count"] != float64(1) ||
+		payload["gui_window_observed_count"] != float64(1) ||
+		payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["raw_output_exposed"] != false ||
+		payload["remote_path_exposed"] != false {
+		t.Fatalf("unexpected GUI catalog payload: %#v", payload)
+	}
+	applications := payload["applications"].([]any)
+	messagebox := applications[2].(map[string]any)
+	if messagebox["app_id"] != "org.xnix.apps.messagebox" ||
+		messagebox["verification_state"] != "verified-real-gui-q4-run" ||
+		messagebox["evidence_source"] != "wine-guest-gui-smoke" ||
+		messagebox["gui_evidence"] != true ||
+		messagebox["window_observed"] != true ||
+		messagebox["file_open_verified"] != true ||
+		messagebox["direct_launch_enabled"] != false ||
+		messagebox["backend_launch_enabled"] != false ||
+		messagebox["backend_details_exposed"] != false ||
+		messagebox["raw_output_exposed"] != false ||
+		messagebox["remote_path_exposed"] != false ||
+		messagebox["host_root_modified"] != false {
+		t.Fatalf("unexpected GUI application entry: %#v", messagebox)
+	}
+	if strings.Contains(output.String(), matrixEvidencePath) ||
+		strings.Contains(output.String(), guiPacketPath) ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") {
+		t.Fatalf("GUI verified catalog exposed evidence paths: %s", output.String())
+	}
+}
+
 func TestKnownAppVerifiedCatalogPreviewCommandRequiresMatrixEvidence(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"known-app-verified-catalog-preview"}, &output)
@@ -757,4 +817,83 @@ func knownAppVerifiedCatalogCLIApp(appID string, displayName string, appVersion 
 		RemotePathExposed:     false,
 		HostRootModified:      false,
 	}
+}
+
+func knownAppVerifiedCatalogCLIGUIEvidencePacketFixture() string {
+	return `{
+  "version": "0.2.640-test",
+  "schema_version": "xnix.runtime.real_winapp_gui_evidence_packet.v1",
+  "request_type": "real-winapp-gui-evidence-packet-preview",
+  "packet_type": "real-windows-app-gui-evidence",
+  "source": "wine-guest-gui-smoke+runtime-evidence-consumer+real-winapp-desktop-packet",
+  "runtime_method": "PreviewRealWinAppGUIEvidencePacket",
+  "read_method": "GetRealWinAppGUIEvidencePacket",
+  "report_status": "passed",
+  "report_consumed": true,
+  "report_path_exposed": false,
+  "app_id": "org.xnix.apps.messagebox",
+  "display_name": "Xnix MessageBox",
+  "app_version": "0.2.640-test",
+  "gui_app_name": "xnix-messagebox-smoke.exe",
+  "evidence_source": "wine-guest-gui-smoke",
+  "compatibility_state": "owner-controlled-gui-qemu-wine-verified",
+  "center_card_state": "validated-owner-controlled-gui-runtime-run",
+  "known_app_gui_evidence_count": 1,
+  "known_app_gui_evidence_verified_count": 1,
+  "known_app_smoke_evidence": {
+    "app_id": "org.xnix.apps.messagebox",
+    "display_name": "Xnix MessageBox",
+    "app_version": "0.2.640-test",
+    "evidence_kind": "known-application-gui-smoke",
+    "evidence_source": "wine-guest-gui-smoke",
+    "smoke_status": "passed",
+    "x_window_observed": true,
+    "window_observed": true,
+    "compatibility_state": "owner-controlled-gui-qemu-wine-verified",
+    "center_card_state": "validated-owner-controlled-gui-runtime-run",
+    "owner_file_open_verified": true,
+    "owner_file_open_entrypoint_invoked": true,
+    "owner_delegated_file_argument_count": 1,
+    "owner_delegated_file_argument_copied_count": 1,
+    "owner_delegated_file_arguments_passed": true,
+    "owner_delegated_file_argument_winepath_translated": true,
+    "owner_delegated_file_argument_winepath_translated_count": 1,
+    "owner_delegated_raw_file_argument_path_exposed": false,
+    "owner_delegated_window_match_observed": true,
+    "marker_observed": true,
+    "execution_evidence_recorded": true,
+    "runtime_dispatch_verified": true,
+    "launch_authorization_required": true,
+    "desktop_launch_enabled": false,
+    "runtime_owned": true,
+    "kde_policy_owner": false,
+    "action_execution_enabled": false,
+    "backend_launch_enabled": false,
+    "host_root_modified": false,
+    "backend_details_exposed": false,
+    "raw_artifact_path_exposed": false
+  },
+  "wineboot_invoked": true,
+  "x_window_observed": true,
+  "window_observed": true,
+  "x_window_child_count": 1,
+  "compatibility_center_projection_ready": true,
+  "kde_center_projection_ready": true,
+  "container_runtime_used": false,
+  "container_host_mount_count": 0,
+  "runtime_owned": true,
+  "go_runtime_backed": true,
+  "kde_policy_owner": false,
+  "desktop_launch_enabled": false,
+  "backend_launch_enabled": false,
+  "action_execution_enabled": false,
+  "backend_details_exposed": false,
+  "raw_output_exposed": false,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "desktop_safe_summary": "Xnix MessageBox produced owner-controlled GUI evidence."
+}`
 }
