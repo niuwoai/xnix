@@ -67,6 +67,7 @@ options = {
   real_run_receipt_summary_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REAL_RUN_RECEIPT_SUMMARY", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-real-run-receipt-summary-#{VERSION}.json"),
   real_run_receipt_summary_center_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REAL_RUN_RECEIPT_CENTER", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-real-run-receipt-center-#{VERSION}.json"),
   real_run_receipt_summary_kde_page_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REAL_RUN_RECEIPT_KDE_PAGE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-real-run-receipt-kde-page-#{VERSION}.json"),
+  real_run_acceptance_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REAL_RUN_ACCEPTANCE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-real-run-acceptance-#{VERSION}.json"),
   known_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_KNOWN_APP_ID", ""),
   file_open_entrypoint: ENV.fetch("XNIX_WINE_GUI_REMOTE_FILE_OPEN_ENTRYPOINT", "0") == "1",
   evidence_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_ID", "org.xnix.apps.mines"),
@@ -105,6 +106,7 @@ OptionParser.new do |parser|
   parser.on("--real-run-receipt-summary-output PATH", "Remote real Windows app run receipt summary JSON output path under /home/xnix*.") { |value| options[:real_run_receipt_summary_output] = value }
   parser.on("--real-run-receipt-center-output PATH", "Remote Compatibility Center projection output for the real run receipt under /home/xnix*.") { |value| options[:real_run_receipt_summary_center_output] = value }
   parser.on("--real-run-receipt-kde-page-output PATH", "Remote KDE Center projection output for the real run receipt under /home/xnix*.") { |value| options[:real_run_receipt_summary_kde_page_output] = value }
+  parser.on("--real-run-acceptance-output PATH", "Remote Go acceptance summary output for the real run under /home/xnix*.") { |value| options[:real_run_acceptance_output] = value }
   parser.on("--known-app-id ID", "Known Windows GUI app id resolved by the remote Go Runtime.") { |value| options[:known_app_id] = value }
   parser.on("--file-open-entrypoint", "Route owner-controlled file-open runs through xnix-compat-open --execute before xnix-compat-launch.") { options[:file_open_entrypoint] = true }
   parser.on("--evidence-app-id ID", "Application id for the Runtime GUI evidence projection.") { |value| options[:evidence_app_id] = value }
@@ -225,6 +227,7 @@ execute_result_output = ensure_remote_xnix_path!("execute result output", option
 real_run_receipt_summary_output = ensure_remote_xnix_path!("real run receipt summary output", options.fetch(:real_run_receipt_summary_output))
 real_run_receipt_summary_center_output = ensure_remote_xnix_path!("real run receipt center output", options.fetch(:real_run_receipt_summary_center_output))
 real_run_receipt_summary_kde_page_output = ensure_remote_xnix_path!("real run receipt KDE page output", options.fetch(:real_run_receipt_summary_kde_page_output))
+real_run_acceptance_output = ensure_remote_xnix_path!("real run acceptance output", options.fetch(:real_run_acceptance_output))
 state_root = ensure_remote_xnix_path!("state root", options.fetch(:state_root))
 sample_file_argument_value = options.fetch(:sample_file_argument).strip
 abort "use either --remote-file-argument or --sample-file-argument, not both" if !options.fetch(:remote_file_argument).strip.empty? && !sample_file_argument_value.empty?
@@ -289,6 +292,8 @@ plan = {
   "real_run_receipt_summary_output" => real_run_receipt_summary_output,
   "real_run_receipt_summary_center_output" => real_run_receipt_summary_center_output,
   "real_run_receipt_summary_kde_page_output" => real_run_receipt_summary_kde_page_output,
+  "real_run_acceptance_preview_planned" => real_run_receipt_summary_planned,
+  "real_run_acceptance_output" => real_run_acceptance_output,
   "kde_action_state_root" => "#{state_root}/owner-controlled-launch-state",
   "known_app_id" => options.fetch(:known_app_id),
   "known_app_selection_planned" => !options.fetch(:known_app_id).strip.empty?,
@@ -545,6 +550,12 @@ summary_reader = <<~RUBY
     "real_run_receipt_summary_kde_page_known_app_gui_evidence_count" => 0,
     "real_run_receipt_summary_kde_page_owner_file_open_verified_count" => 0,
     "real_run_receipt_summary_kde_page_owner_file_open_entrypoint_count" => 0,
+    "real_run_acceptance_preview_planned" => ARGV.fetch(15) == "true",
+    "real_run_acceptance_output" => ARGV.fetch(16),
+    "real_run_acceptance_output_written" => false,
+    "real_run_acceptance_ready" => false,
+    "real_run_acceptance_center_projection_consumed" => false,
+    "real_run_acceptance_kde_page_projection_consumed" => false,
     "report_output" => ARGV.fetch(0),
     "evidence_output" => ARGV.fetch(1),
     "kde_page_output" => ARGV.fetch(2),
@@ -643,7 +654,9 @@ summary_args = [
   real_run_receipt_summary_planned.to_s,
   real_run_receipt_summary_output,
   real_run_receipt_summary_center_output,
-  real_run_receipt_summary_kde_page_output
+  real_run_receipt_summary_kde_page_output,
+  real_run_receipt_summary_planned.to_s,
+  real_run_acceptance_output
 ]
 summary_stdout, summary_stderr, summary_status = run_shell(
   options.fetch(:local_shell),
@@ -738,6 +751,48 @@ if real_run_receipt_summary_planned
   )
   warn final_summary_stderr unless final_summary_stderr.empty?
   exit 1 unless final_summary_status.zero?
+
+  acceptance_args = [
+    remote_runtime_bin,
+    "real-winapp-run-acceptance-preview",
+    "--remote-execute-result", execute_result_output
+  ]
+  acceptance_stdout, acceptance_stderr, acceptance_status = run_shell(
+    options.fetch(:local_shell),
+    shell_join(ssh_command(remote_host, remote_json_command(remote_source_root, real_run_acceptance_output, acceptance_args))),
+    timeout_seconds: options.fetch(:remote_timeout_seconds)
+  )
+  warn acceptance_stdout unless acceptance_stdout.empty?
+  warn acceptance_stderr unless acceptance_stderr.empty?
+  exit 1 unless acceptance_status.zero?
+
+  acceptance_summary_reader = <<~RUBY
+    summary = JSON.parse(File.read(ARGV.fetch(0)))
+    acceptance = JSON.parse(File.read(ARGV.fetch(1)))
+    summary.merge!(
+      "real_run_acceptance_output_written" => File.exist?(ARGV.fetch(1)),
+      "real_run_acceptance_ready" => acceptance.fetch("acceptance_ready"),
+      "real_run_acceptance_center_projection_consumed" => acceptance.fetch("compatibility_center_projection_consumed"),
+      "real_run_acceptance_kde_page_projection_consumed" => acceptance.fetch("kde_page_projection_consumed")
+    )
+    File.write(ARGV.fetch(0), JSON.pretty_generate(summary) + "\\n")
+    puts JSON.pretty_generate(summary)
+  RUBY
+  acceptance_summary_args = [
+    "ruby",
+    "-rjson",
+    "-e",
+    acceptance_summary_reader,
+    execute_result_output,
+    real_run_acceptance_output
+  ]
+  final_summary_stdout, acceptance_summary_stderr, acceptance_summary_status = run_shell(
+    options.fetch(:local_shell),
+    shell_join(ssh_command(remote_host, ["set -eu", shell_join(acceptance_summary_args)].join("\n"))),
+    timeout_seconds: options.fetch(:remote_timeout_seconds)
+  )
+  warn acceptance_summary_stderr unless acceptance_summary_stderr.empty?
+  exit 1 unless acceptance_summary_status.zero?
 end
 
 puts final_summary_stdout

@@ -61,6 +61,8 @@ assert(payload["real_run_receipt_summary_preview_planned"] == false, "remote GUI
 assert(payload["real_run_receipt_summary_output"].start_with?("/home/xnix-"), "remote real run receipt summary output must stay under /home/xnix-*")
 assert(payload["real_run_receipt_summary_center_output"].start_with?("/home/xnix-"), "remote real run receipt Center output must stay under /home/xnix-*")
 assert(payload["real_run_receipt_summary_kde_page_output"].start_with?("/home/xnix-"), "remote real run receipt KDE page output must stay under /home/xnix-*")
+assert(payload["real_run_acceptance_preview_planned"] == false, "remote GUI smoke direct mode must not plan a real run acceptance")
+assert(payload["real_run_acceptance_output"].start_with?("/home/xnix-"), "remote real run acceptance output must stay under /home/xnix-*")
 assert(script.read.include?("xnix.scripts.remote_wine_guest_gui_smoke.execute_result.v1"), "remote GUI smoke must expose an execute-result summary schema")
 assert(script.read.include?("remote_build_completed"), "remote GUI smoke execute result must expose remote build completion")
 assert(script.read.include?("execute_result_output_written"), "remote GUI smoke execute result must persist the execute-result summary")
@@ -72,6 +74,11 @@ assert(script.read.include?("real_run_receipt_summary_ready"), "remote GUI smoke
 assert(script.read.include?("real_run_receipt_summary_center_known_app_smoke_evidence_count"), "remote GUI smoke execute result must expose receipt summary Compatibility Center consumption")
 assert(script.read.include?("real_run_receipt_summary_kde_page_known_app_gui_evidence_count"), "remote GUI smoke execute result must expose receipt summary KDE page GUI consumption")
 assert(script.read.include?("real_run_receipt_summary_kde_page_owner_file_open_entrypoint_count"), "remote GUI smoke execute result must expose receipt summary KDE file-open entrypoint consumption")
+assert(script.read.include?("real-winapp-run-acceptance-preview"), "remote GUI smoke must call the Go real run acceptance preview")
+assert(script.read.include?("real_run_acceptance_output_written"), "remote GUI smoke execute result must expose acceptance output")
+assert(script.read.include?("real_run_acceptance_ready"), "remote GUI smoke execute result must expose acceptance readiness")
+assert(script.read.include?("real_run_acceptance_center_projection_consumed"), "remote GUI smoke execute result must expose acceptance Center consumption")
+assert(script.read.include?("real_run_acceptance_kde_page_projection_consumed"), "remote GUI smoke execute result must expose acceptance KDE page consumption")
 assert(script.read.include?("kde_page_known_app_gui_evidence_count"), "remote GUI smoke execute result must expose KDE GUI evidence consumption")
 assert(script.read.include?("runtime_evidence_report_consumed"), "remote GUI smoke execute result must expose Runtime report consumption")
 assert(script.read.include?("runtime_evidence_owner_file_open_verified"), "remote GUI smoke execute result must expose Runtime owner file-open evidence")
@@ -161,6 +168,8 @@ assert(file_open_receipt_payload["execute_result_output"].end_with?("/wine-gui-e
 assert(file_open_receipt_payload["real_run_receipt_summary_output"].end_with?("/wine-gui-real-run-receipt-summary-#{file_open_receipt_payload.fetch("version")}.json"), "remote GUI smoke file-open receipt plan must expose receipt summary output")
 assert(file_open_receipt_payload["real_run_receipt_summary_center_output"].end_with?("/wine-gui-real-run-receipt-center-#{file_open_receipt_payload.fetch("version")}.json"), "remote GUI smoke file-open receipt plan must expose receipt Center output")
 assert(file_open_receipt_payload["real_run_receipt_summary_kde_page_output"].end_with?("/wine-gui-real-run-receipt-kde-page-#{file_open_receipt_payload.fetch("version")}.json"), "remote GUI smoke file-open receipt plan must expose receipt KDE page output")
+assert(file_open_receipt_payload["real_run_acceptance_preview_planned"] == true, "remote GUI smoke file-open receipt plan must schedule the Go acceptance summary")
+assert(file_open_receipt_payload["real_run_acceptance_output"].end_with?("/wine-gui-real-run-acceptance-#{file_open_receipt_payload.fetch("version")}.json"), "remote GUI smoke file-open receipt plan must expose acceptance output")
 
 bad_launch_mode_stdout, bad_launch_mode_stderr, bad_launch_mode_status = Open3.capture3(
   "ruby", script.to_s,

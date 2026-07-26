@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc176
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc177
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc177 checkpoint makes the q4 real GUI smoke pipeline emit the Go-owned acceptance summary automatically. `scripts/remote_wine_guest_gui_smoke.rb --execute --launch-mode owner-controlled-launch --file-open-entrypoint --sample-file-argument ... --window-match ...` now persists the execute-result JSON, generates the real run receipt summary, feeds that receipt through Compatibility Center and KDE Center, invokes `real-winapp-run-acceptance-preview`, and merges safe top-level acceptance fields back into the final execute-result. The final remote summary exposes whether the acceptance output was written, whether `acceptance_ready=true`, and whether the Center/KDE receipt projections were consumed, while keeping q4 connection details, remote paths, executable names, raw window evidence, raw launcher output, and backend command details hidden. Compile-heavy build/test and real GUI validation remain q4-first; the macOS host remains limited to lightweight Ruby/layout checks unless explicitly overridden.
 
 The v0.2.640-rc176 checkpoint adds a Go-owned acceptance read model for the real Windows app path. `xnix-runtime-go real-winapp-run-acceptance-preview --remote-execute-result RESULT.json` consumes the q4 remote GUI smoke execute-result after it has generated a real run receipt summary and projected that receipt into Compatibility Center and KDE Center. The command accepts only passed owner-controlled file-open entrypoint runs with observed-window evidence, Runtime evidence consumption, ready receipt summary, positive Center/KDE projection counts, and closed host/container safety gates. Its output hides q4 connection details, remote paths, executable names, raw window evidence, raw launcher output, and backend command details, giving CI, KDE, and AI consumers a single safe `acceptance_ready=true` signal for the real Sample Notepad compatibility lane.
 

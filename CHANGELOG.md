@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc177] - 2026-07-26
+
+### Added
+
+- Added automatic Go Runtime real Windows app run acceptance generation to the q4 remote Wine guest GUI smoke after receipt summary and desktop projections complete.
+- Added execute-result fields for acceptance output persistence, readiness, and Compatibility Center/KDE Center projection consumption.
+- Added script and layout coverage for the new acceptance output path while preserving non-executing plan mode and direct-smoke behavior.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc177`.
+
 ## [0.2.640-rc176] - 2026-07-26
 
 ### Added
