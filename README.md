@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc199`.
+The project is currently at `v0.2.640-rc200`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc199`.
 
 ## Current Checkpoint
 
-v0.2.640-rc199 lets the q4 real app smoke return verified catalog run acceptance directly. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json` syncs the run plan to q4, runs 7zr through Go-started QEMU and guest Wine, and returns `known-app-verified-catalog-run-acceptance-preview` JSON that Compatibility Center and KDE Center page previews can consume. rc199 validation returned `acceptance_ready=true` and `run_plan_matched=true`.
+v0.2.640-rc200 lets the q4 real app smoke return desktop consumption evidence directly. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json --desktop-consumption-json` runs 7zr through Go-started QEMU and guest Wine, creates Go-owned verified catalog run acceptance, feeds it into Compatibility Center and KDE Center page previews, and returns a desktop-safe packet proving both read models consumed the fresh evidence. The rc200 q4 validation returned `compatibility_center_consumed=true`, `kde_center_page_consumed=true`, and `host_compilation_avoided=true`.
+
+The previous v0.2.640-rc199 checkpoint lets the q4 real app smoke return verified catalog run acceptance directly. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json` syncs the run plan to q4, runs 7zr through Go-started QEMU and guest Wine, and returns `known-app-verified-catalog-run-acceptance-preview` JSON that Compatibility Center and KDE Center page previews can consume. rc199 validation returned `acceptance_ready=true` and `run_plan_matched=true`.
 
 The previous v0.2.640-rc198 checkpoint makes the real known Windows app acceptance path a one-command q4 operation. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --acceptance-json` builds and runs on q4, starts QEMU from the Go Runtime, executes the app through guest Wine, persists the report and serial log, and returns the Go-owned `known-existing-winapp-acceptance-preview` JSON instead of requiring a second manual command. rc198 validation ran 7zr 26.02 through this path and returned `acceptance_ready=true`.
 

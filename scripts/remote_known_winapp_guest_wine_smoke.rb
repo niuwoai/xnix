@@ -6,6 +6,7 @@ require "open3"
 require "optparse"
 require "pathname"
 require "shellwords"
+require "tempfile"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
@@ -33,6 +34,8 @@ options = {
   acceptance_json: false,
   verified_catalog_acceptance_json: false,
   verified_catalog_run_plan: "",
+  desktop_consumption_json: false,
+  desktop_app: "org.xnix.sample.notepad",
   timeout: ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
   boot_timeout: ENV.fetch("XNIX_KNOWN_WINAPP_QEMU_BOOT_TIMEOUT", "180s")
 }
@@ -52,6 +55,8 @@ OptionParser.new do |parser|
   parser.on("--acceptance-json", "Return Go-owned known existing Windows app acceptance JSON after a passed q4 run.") { options[:acceptance_json] = true }
   parser.on("--verified-catalog-run-plan PATH", "Local Go-owned verified catalog run-plan JSON to sync to q4 for run acceptance.") { |value| options[:verified_catalog_run_plan] = value }
   parser.on("--verified-catalog-acceptance-json", "Return Go-owned verified catalog run acceptance JSON after a passed q4 run.") { options[:verified_catalog_acceptance_json] = true }
+  parser.on("--desktop-consumption-json", "Return a desktop-safe Compatibility Center and KDE page consumption packet for verified catalog run acceptance.") { options[:desktop_consumption_json] = true }
+  parser.on("--desktop-app APP_ID", "Recipe app id used to render the KDE page consumption preview.") { |value| options[:desktop_app] = value }
   parser.on("--timeout DURATION", "Guest Wine execution timeout.") { |value| options[:timeout] = value }
   parser.on("--qemu-boot-timeout DURATION", "QEMU SSH boot timeout.") { |value| options[:boot_timeout] = value }
 end.parse!
@@ -59,6 +64,7 @@ end.parse!
 abort "remote known Windows app smoke does not accept positional arguments" unless ARGV.empty?
 abort "remote known Windows app smoke accepts only one acceptance JSON mode" if options.fetch(:acceptance_json) && options.fetch(:verified_catalog_acceptance_json)
 abort "remote known Windows app verified catalog acceptance requires --verified-catalog-run-plan" if options.fetch(:verified_catalog_acceptance_json) && options.fetch(:verified_catalog_run_plan).strip.empty?
+abort "remote known Windows app desktop consumption requires --verified-catalog-acceptance-json" if options.fetch(:desktop_consumption_json) && !options.fetch(:verified_catalog_acceptance_json)
 
 if !ENV.key?("XNIX_REMOTE_SOURCE_ROOT") && options.fetch(:remote_source_root) == DEFAULT_REMOTE_SOURCE_ROOT
   options[:remote_source_root] = "/home/xnix-build/xnix-runtime-source-#{options.fetch(:source_sync_mode)}-#{VERSION}"
@@ -111,6 +117,8 @@ remote_key = "#{remote_materials_root}/ssh/id_ed25519"
 remote_kernel = "#{remote_materials_root}/wine-guest/bzImage"
 remote_cache_root = "#{remote_materials_root}/known-winapps"
 remote_run_plan = "#{remote_materials_root}/state/known-run-plan-#{VERSION}-#{safe_app_id(options.fetch(:app_id))}.json"
+remote_acceptance = "#{remote_materials_root}/state/known-run-acceptance-#{VERSION}-#{safe_app_id(options.fetch(:app_id))}.json"
+remote_registry = "#{remote_source_root}/runtime/recipes/registry.json"
 local_run_plan = options.fetch(:verified_catalog_run_plan).strip
 
 runtime_args = [
@@ -164,6 +172,9 @@ plan = {
   "verified_catalog_acceptance_json_planned" => options.fetch(:verified_catalog_acceptance_json),
   "verified_catalog_run_plan_sync_planned" => options.fetch(:verified_catalog_acceptance_json),
   "verified_catalog_run_plan_remote_path" => options.fetch(:verified_catalog_acceptance_json) ? remote_run_plan : "",
+  "desktop_consumption_json_planned" => options.fetch(:desktop_consumption_json),
+  "desktop_consumption_request_type" => "remote-known-winapp-verified-catalog-desktop-consumption",
+  "desktop_app_id" => options.fetch(:desktop_app),
   "acceptance_request_type" => "known-existing-winapp-acceptance-preview",
   "verified_catalog_acceptance_request_type" => "known-app-verified-catalog-run-acceptance-preview",
   "backend" => "guest-wine",
@@ -275,7 +286,8 @@ when "passed"
                           "--known-winapp-run", remote_report
                         ]
                       end
-    acceptance_stdout, acceptance_stderr, acceptance_status = run_shell(options.fetch(:local_shell), shell_join(["ssh", remote_host, shell_join(acceptance_args)]))
+    acceptance_command = "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(acceptance_args)}"
+    acceptance_stdout, acceptance_stderr, acceptance_status = run_shell(options.fetch(:local_shell), shell_join(["ssh", remote_host, acceptance_command]))
     unless acceptance_status.zero?
       warn acceptance_stdout unless acceptance_stdout.empty?
       warn acceptance_stderr unless acceptance_stderr.empty?
@@ -303,7 +315,103 @@ when "passed"
                                                                        acceptance.fetch("docker_socket_mounted") == false &&
                                                                        acceptance.fetch("broad_host_mount_required") == false
 
-    puts JSON.pretty_generate(acceptance)
+    if options.fetch(:desktop_consumption_json)
+      Tempfile.create(["xnix-known-winapp-acceptance-", ".json"]) do |file|
+        file.write(acceptance_stdout)
+        file.flush
+
+        acceptance_rsync_args = [
+          "rsync",
+          "-az",
+          file.path,
+          "#{remote_host}:#{remote_acceptance}"
+        ]
+        acceptance_rsync_stdout, acceptance_rsync_stderr, acceptance_rsync_status = run_shell(options.fetch(:local_shell), shell_join(acceptance_rsync_args))
+        unless acceptance_rsync_status.zero?
+          warn acceptance_rsync_stdout unless acceptance_rsync_stdout.empty?
+          warn acceptance_rsync_stderr unless acceptance_rsync_stderr.empty?
+          warn "FAIL: remote known Windows app verified catalog acceptance sync failed"
+          exit 1
+        end
+      end
+
+      compatibility_args = [
+        remote_bin,
+        "compatibility-center-preview",
+        "--registry", remote_registry,
+        "--known-app-verified-catalog-run-acceptance", remote_acceptance
+      ]
+      compatibility_command = "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(compatibility_args)}"
+      compatibility_stdout, compatibility_stderr, compatibility_status = run_shell(options.fetch(:local_shell), shell_join(["ssh", remote_host, compatibility_command]))
+      unless compatibility_status.zero?
+        warn compatibility_stdout unless compatibility_stdout.empty?
+        warn compatibility_stderr unless compatibility_stderr.empty?
+        warn "FAIL: remote Compatibility Center verified catalog acceptance consumption failed"
+        exit 1
+      end
+
+      kde_args = [
+        remote_bin,
+        "kde-center-page-preview",
+        "--registry", remote_registry,
+        "--app", options.fetch(:desktop_app),
+        "--decision", "approved",
+        "--known-app-verified-catalog-run-acceptance", remote_acceptance
+      ]
+      kde_command = "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(kde_args)}"
+      kde_stdout, kde_stderr, kde_status = run_shell(options.fetch(:local_shell), shell_join(["ssh", remote_host, kde_command]))
+      unless kde_status.zero?
+        warn kde_stdout unless kde_stdout.empty?
+        warn kde_stderr unless kde_stderr.empty?
+        warn "FAIL: remote KDE Center page verified catalog acceptance consumption failed"
+        exit 1
+      end
+
+      compatibility = JSON.parse(compatibility_stdout)
+      kde = JSON.parse(kde_stdout)
+      cards = kde.fetch("known_app_matrix_evidence_cards")
+      first_card = cards.fetch(0)
+      packet = {
+        "schema_version" => "xnix.scripts.remote_known_windows_app_verified_catalog_desktop_consumption.v1",
+        "request_type" => "remote-known-winapp-verified-catalog-desktop-consumption",
+        "version" => VERSION,
+        "status" => "passed",
+        "app_id" => acceptance.fetch("app_id"),
+        "desktop_app_id" => options.fetch(:desktop_app),
+        "acceptance_request_type" => acceptance.fetch("request_type"),
+        "acceptance_ready" => acceptance.fetch("acceptance_ready"),
+        "run_plan_matched" => acceptance.fetch("run_plan_matched"),
+        "compatibility_center_consumed" => compatibility.fetch("known_app_smoke_evidence_count") == 1 &&
+                                           compatibility.fetch("known_app_smoke_passed_count") == 1,
+        "compatibility_center_summary_headline" => compatibility.fetch("summary").fetch("headline"),
+        "kde_center_page_consumed" => kde.fetch("known_app_matrix_evidence_count") == 1 &&
+                                      kde.fetch("source").include?("known-app-verified-catalog-run-acceptance"),
+        "kde_center_page_request_type" => kde.fetch("request_type"),
+        "kde_center_card_app_id" => first_card.fetch("app_id"),
+        "kde_center_card_state" => first_card.fetch("center_card_state"),
+        "kde_center_card_primary_action_id" => first_card.fetch("primary_action_id"),
+        "host_compilation_avoided" => acceptance.fetch("host_compilation_avoided"),
+        "run_plan_path_exposed" => false,
+        "acceptance_path_exposed" => false,
+        "remote_host_exposed" => false,
+        "raw_path_exposed" => false,
+        "raw_output_exposed" => false,
+        "runtime_argv_exposed" => false,
+        "runner_path_exposed" => false,
+        "host_root_modified" => false,
+        "privileged_container_required" => false,
+        "host_networking_required" => false,
+        "docker_socket_mounted" => false,
+        "broad_host_mount_required" => false
+      }
+      abort "remote desktop consumption did not accept the verified catalog run" unless packet.fetch("compatibility_center_consumed") &&
+                                                                                      packet.fetch("kde_center_page_consumed") &&
+                                                                                      packet.fetch("kde_center_card_app_id") == acceptance.fetch("app_id")
+
+      puts JSON.pretty_generate(packet)
+    else
+      puts JSON.pretty_generate(acceptance)
+    end
   else
     puts "PASS: remote known Windows app QEMU guest Wine smoke (#{payload.fetch("app_id")} #{payload.fetch("app_version")})"
   end

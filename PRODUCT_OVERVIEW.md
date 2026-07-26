@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc199
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc200
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc200 checkpoint lets one q4 command prove the full current real-app desktop evidence path. `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json --desktop-consumption-json` runs 7zr through Go-started QEMU and guest Wine, creates Go-owned verified catalog run acceptance, feeds that acceptance into `compatibility-center-preview` and `kde-center-page-preview`, and returns a compact desktop-safe packet proving both read models consumed the fresh evidence. The rc200 q4 validation returned `compatibility_center_consumed=true`, `kde_center_page_consumed=true`, and `host_compilation_avoided=true`. The packet keeps q4 paths, acceptance paths, raw output, runner arguments, backend details, and unsafe host/container gates hidden.
 
 The v0.2.640-rc199 checkpoint lets the q4 real app smoke return the same verified-catalog acceptance envelope that desktop read models already consume. `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json` syncs the run plan into the managed q4 materials directory, runs the app through Go-started QEMU and guest Wine, then asks `xnix-runtime-go known-app-verified-catalog-run-acceptance-preview` to consume the synced run plan and the fresh run report. This removes another manual JSON stitching step between the real q4 app run and KDE-visible accepted catalog evidence while keeping output redacted and host/container gates closed. rc199 validation ran 7zr 26.02 through this one-command verified catalog acceptance path and returned `acceptance_ready=true` with `run_plan_matched=true`.
 

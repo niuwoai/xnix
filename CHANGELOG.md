@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc200] - 2026-07-27
+
+### Added
+
+- Added `--desktop-consumption-json` to `scripts/remote_known_winapp_guest_wine_smoke.rb` so a q4 verified catalog run can return a desktop-safe Compatibility Center and KDE Center page consumption packet.
+- Added dry-run coverage that proves desktop consumption requires verified catalog acceptance, preserves the default KDE page host app, and rejects unsafe standalone desktop consumption requests.
+
+### Changed
+
+- The q4 known Windows app smoke can now chain real app execution, verified catalog run acceptance, Compatibility Center consumption, and KDE Center page consumption in one operator command.
+- Remote acceptance and desktop consumption preview commands now execute from the q4 source root so version-aware read models can resolve repository metadata consistently.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc200`.
+
 ## [0.2.640-rc199] - 2026-07-27
 
 ### Added
