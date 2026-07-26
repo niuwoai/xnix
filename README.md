@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc206`.
+The project is currently at `v0.2.640-rc207`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc206`.
 
 ## Current Checkpoint
 
-v0.2.640-rc206 brings real GUI evidence into the verified catalog. `xnix-runtime-go known-app-verified-catalog-preview --matrix-evidence MATRIX.json --gui-evidence-packet GUI.json` still requires the original q4 matrix evidence for 7zr and BusyBox, then adds a review-only GUI application entry from a Go-owned real Windows app GUI evidence packet. GUI catalog cards expose only safe facts such as evidence source, window observation, owner file-open verification, and GUI-specific counts. Run planning points MessageBox GUI entries to `scripts/q4_messagebox_smoke.rb --execute --owner-file-open`. q4 validation built and ran the real MessageBox Windows GUI fixture, observed the expected QEMU/Wine window, verified owner-controlled file-open plus document-content marker evidence, and kept host compilation avoided. This makes the catalog a single Runtime-owned place for both console app proof and real GUI app proof.
+v0.2.640-rc207 projects verified-catalog GUI entries into the desktop read models. Compatibility Center now reports verified-catalog GUI application counts, ids, and cards; KDE Center page previews expose the same GUI catalog subset plus a `known-app-verified-catalog-gui` source marker. This means KDE and AI surfaces can tell which catalog entries are real GUI compatibility proof, not just console matrix entries, while still keeping direct launch, backend details, raw q4 paths, and raw window summaries closed.
+
+The previous v0.2.640-rc206 checkpoint brings real GUI evidence into the verified catalog. `xnix-runtime-go known-app-verified-catalog-preview --matrix-evidence MATRIX.json --gui-evidence-packet GUI.json` still requires the original q4 matrix evidence for 7zr and BusyBox, then adds a review-only GUI application entry from a Go-owned real Windows app GUI evidence packet. GUI catalog cards expose only safe facts such as evidence source, window observation, owner file-open verification, and GUI-specific counts. Run planning points MessageBox GUI entries to `scripts/q4_messagebox_smoke.rb --execute --owner-file-open`. q4 validation built and ran the real MessageBox Windows GUI fixture, observed the expected QEMU/Wine window, verified owner-controlled file-open plus document-content marker evidence, and kept host compilation avoided. This makes the catalog a single Runtime-owned place for both console app proof and real GUI app proof.
 
 The previous v0.2.640-rc205 checkpoint makes Runtime-owner verified-catalog dispatch execution carry desktop-safe Windows GUI evidence. `xnix-runtime-go known-app-verified-catalog-dispatch-runner-execution` now projects delegated managed guest readiness, file-argument copy counts, Wine path translation status, window-match observation, controlled-session window observation, and `delegated_gui_evidence_ready` without exposing state roots, cache roots, launcher paths, runner argument values, raw launcher output, backend details, raw host paths, executable paths, file-argument paths, or raw window evidence summaries. q4 validation also built and ran the real MessageBox Windows GUI fixture through QEMU/Wine, observed the expected window, verified the owner-controlled file-open entrypoint, observed the document-content marker, and kept host compilation avoided. This gives the desktop and AI Runtime a safer signal that a real Windows GUI app produced observable X/Wine evidence after the recorded dispatch request is consumed.
 

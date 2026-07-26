@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc207] - 2026-07-27
+
+### Added
+
+- Added Compatibility Center projection fields for verified-catalog GUI entries: GUI application count, GUI application ids, and GUI application cards.
+- Added KDE Center page projection fields for verified-catalog GUI entries, plus a `known-app-verified-catalog-gui` source marker when such cards are present.
+- Added CLI coverage proving verified-catalog GUI entries remain review-only while exposing safe window and owner file-open evidence to desktop read models.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc207`.
+
 ## [0.2.640-rc206] - 2026-07-27
 
 ### Added

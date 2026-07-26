@@ -783,40 +783,43 @@ type KRunnerQueryOptions struct {
 }
 
 type CompatibilityCenterPreview struct {
-	SchemaVersion                            string                               `json:"schema_version"`
-	SummaryType                              string                               `json:"summary_type"`
-	Desktop                                  string                               `json:"desktop"`
-	Title                                    string                               `json:"title"`
-	Source                                   KRunnerSource                        `json:"source"`
-	RuntimeOwned                             bool                                 `json:"runtime_owned"`
-	KDEPolicyOwner                           bool                                 `json:"kde_policy_owner"`
-	ApplicationCount                         int                                  `json:"application_count"`
-	KnownIssueCount                          int                                  `json:"known_issue_count"`
-	RepairRecordCount                        int                                  `json:"repair_record_count"`
-	PendingReviewCount                       int                                  `json:"pending_review_count"`
-	KnownAppSmokeEvidenceCount               int                                  `json:"known_app_smoke_evidence_count"`
-	KnownAppSmokePassedCount                 int                                  `json:"known_app_smoke_passed_count"`
-	KnownAppStagedLauncherPassedCount        int                                  `json:"known_app_staged_launcher_passed_count"`
-	KnownAppLaunchAuthorizationRequiredCount int                                  `json:"known_app_launch_authorization_required_count"`
-	KnownAppLaunchAuthorizationRecordedCount int                                  `json:"known_app_launch_authorization_recorded_count"`
-	KnownAppLaunchGateConsumedCount          int                                  `json:"known_app_launch_gate_consumed_count"`
-	KnownAppControlledDispatchReadyCount     int                                  `json:"known_app_controlled_dispatch_ready_count"`
-	KnownAppLauncherSessionGateConsumedCount int                                  `json:"known_app_launcher_session_gate_consumed_count"`
-	KnownAppPostReviewDispatchConsumedCount  int                                  `json:"known_app_post_review_dispatch_consumed_count"`
-	KnownAppVerifiedCatalogConsumed          bool                                 `json:"known_app_verified_catalog_consumed"`
-	KnownAppVerifiedCatalogApplicationCount  int                                  `json:"known_app_verified_catalog_application_count"`
-	KnownAppVerifiedCatalogReviewOnly        bool                                 `json:"known_app_verified_catalog_review_only"`
-	KnownAppVerifiedCatalogApplicationIDs    []string                             `json:"known_app_verified_catalog_application_ids"`
-	Applications                             []CompatibilityCenterApp             `json:"applications"`
-	KnownAppSmokeEvidence                    []KnownAppSmokeEvidenceSummary       `json:"known_app_smoke_evidence"`
-	KnownAppVerifiedCatalogApplications      []KnownAppVerifiedCatalogApplication `json:"known_app_verified_catalog_applications"`
-	ActionExecutionEnabled                   bool                                 `json:"action_execution_enabled"`
-	RepairExecutionEnabled                   bool                                 `json:"repair_execution_enabled"`
-	BackendLaunchEnabled                     bool                                 `json:"backend_launch_enabled"`
-	SettingsPersistenceEnabled               bool                                 `json:"settings_persistence_enabled"`
-	HostRootModified                         bool                                 `json:"host_root_modified"`
-	BackendDetailsExposed                    bool                                 `json:"backend_details_exposed"`
-	Summary                                  CompatibilityCenterSummaryText       `json:"summary"`
+	SchemaVersion                              string                               `json:"schema_version"`
+	SummaryType                                string                               `json:"summary_type"`
+	Desktop                                    string                               `json:"desktop"`
+	Title                                      string                               `json:"title"`
+	Source                                     KRunnerSource                        `json:"source"`
+	RuntimeOwned                               bool                                 `json:"runtime_owned"`
+	KDEPolicyOwner                             bool                                 `json:"kde_policy_owner"`
+	ApplicationCount                           int                                  `json:"application_count"`
+	KnownIssueCount                            int                                  `json:"known_issue_count"`
+	RepairRecordCount                          int                                  `json:"repair_record_count"`
+	PendingReviewCount                         int                                  `json:"pending_review_count"`
+	KnownAppSmokeEvidenceCount                 int                                  `json:"known_app_smoke_evidence_count"`
+	KnownAppSmokePassedCount                   int                                  `json:"known_app_smoke_passed_count"`
+	KnownAppStagedLauncherPassedCount          int                                  `json:"known_app_staged_launcher_passed_count"`
+	KnownAppLaunchAuthorizationRequiredCount   int                                  `json:"known_app_launch_authorization_required_count"`
+	KnownAppLaunchAuthorizationRecordedCount   int                                  `json:"known_app_launch_authorization_recorded_count"`
+	KnownAppLaunchGateConsumedCount            int                                  `json:"known_app_launch_gate_consumed_count"`
+	KnownAppControlledDispatchReadyCount       int                                  `json:"known_app_controlled_dispatch_ready_count"`
+	KnownAppLauncherSessionGateConsumedCount   int                                  `json:"known_app_launcher_session_gate_consumed_count"`
+	KnownAppPostReviewDispatchConsumedCount    int                                  `json:"known_app_post_review_dispatch_consumed_count"`
+	KnownAppVerifiedCatalogConsumed            bool                                 `json:"known_app_verified_catalog_consumed"`
+	KnownAppVerifiedCatalogApplicationCount    int                                  `json:"known_app_verified_catalog_application_count"`
+	KnownAppVerifiedCatalogReviewOnly          bool                                 `json:"known_app_verified_catalog_review_only"`
+	KnownAppVerifiedCatalogApplicationIDs      []string                             `json:"known_app_verified_catalog_application_ids"`
+	KnownAppVerifiedCatalogGUIApplicationCount int                                  `json:"known_app_verified_catalog_gui_application_count"`
+	KnownAppVerifiedCatalogGUIApplicationIDs   []string                             `json:"known_app_verified_catalog_gui_application_ids"`
+	Applications                               []CompatibilityCenterApp             `json:"applications"`
+	KnownAppSmokeEvidence                      []KnownAppSmokeEvidenceSummary       `json:"known_app_smoke_evidence"`
+	KnownAppVerifiedCatalogApplications        []KnownAppVerifiedCatalogApplication `json:"known_app_verified_catalog_applications"`
+	KnownAppVerifiedCatalogGUIApplications     []KnownAppVerifiedCatalogApplication `json:"known_app_verified_catalog_gui_applications"`
+	ActionExecutionEnabled                     bool                                 `json:"action_execution_enabled"`
+	RepairExecutionEnabled                     bool                                 `json:"repair_execution_enabled"`
+	BackendLaunchEnabled                       bool                                 `json:"backend_launch_enabled"`
+	SettingsPersistenceEnabled                 bool                                 `json:"settings_persistence_enabled"`
+	HostRootModified                           bool                                 `json:"host_root_modified"`
+	BackendDetailsExposed                      bool                                 `json:"backend_details_exposed"`
+	Summary                                    CompatibilityCenterSummaryText       `json:"summary"`
 }
 
 type CompatibilityCenterApp struct {
@@ -2636,29 +2639,32 @@ func NewCompatibilityCenterPreviewWithOptions(recipes []Recipe, provenance Prove
 	}
 
 	preview := CompatibilityCenterPreview{
-		SchemaVersion:                            "xnix.runtime.compatibility_center.v1",
-		SummaryType:                              "compatibility-center-preview",
-		Desktop:                                  "KDE Plasma",
-		Title:                                    "Xnix Compatibility Center",
-		RuntimeOwned:                             true,
-		KDEPolicyOwner:                           false,
-		ApplicationCount:                         len(applications),
-		Applications:                             applications,
-		KnownAppSmokeEvidenceCount:               len(knownAppEvidence),
-		KnownAppSmokePassedCount:                 countPassedKnownAppSmokeEvidence(knownAppEvidence),
-		KnownAppStagedLauncherPassedCount:        countStagedLauncherKnownAppSmokeEvidence(knownAppEvidence),
-		KnownAppLaunchAuthorizationRequiredCount: countLaunchAuthorizationRequiredKnownAppSmokeEvidence(knownAppEvidence),
-		KnownAppLaunchAuthorizationRecordedCount: countLaunchAuthorizationRecordedKnownAppSmokeEvidence(knownAppEvidence),
-		KnownAppLaunchGateConsumedCount:          countLaunchGateConsumedKnownAppSmokeEvidence(knownAppEvidence),
-		KnownAppControlledDispatchReadyCount:     countControlledDispatchReadyKnownAppSmokeEvidence(knownAppEvidence),
-		KnownAppLauncherSessionGateConsumedCount: countLauncherSessionGateConsumedKnownAppSmokeEvidence(knownAppEvidence),
-		KnownAppPostReviewDispatchConsumedCount:  countPostReviewDispatchConsumedKnownAppSmokeEvidence(knownAppEvidence),
-		KnownAppVerifiedCatalogConsumed:          knownAppVerifiedCatalog != nil,
-		KnownAppVerifiedCatalogApplicationCount:  len(knownAppVerifiedCatalogApplications(knownAppVerifiedCatalog)),
-		KnownAppVerifiedCatalogReviewOnly:        knownAppVerifiedCatalog == nil || knownAppVerifiedCatalog.ReviewOnly,
-		KnownAppVerifiedCatalogApplicationIDs:    knownAppVerifiedCatalogApplicationIDsFromPreview(knownAppVerifiedCatalog),
-		KnownAppSmokeEvidence:                    knownAppEvidence,
-		KnownAppVerifiedCatalogApplications:      knownAppVerifiedCatalogApplications(knownAppVerifiedCatalog),
+		SchemaVersion:                              "xnix.runtime.compatibility_center.v1",
+		SummaryType:                                "compatibility-center-preview",
+		Desktop:                                    "KDE Plasma",
+		Title:                                      "Xnix Compatibility Center",
+		RuntimeOwned:                               true,
+		KDEPolicyOwner:                             false,
+		ApplicationCount:                           len(applications),
+		Applications:                               applications,
+		KnownAppSmokeEvidenceCount:                 len(knownAppEvidence),
+		KnownAppSmokePassedCount:                   countPassedKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppStagedLauncherPassedCount:          countStagedLauncherKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppLaunchAuthorizationRequiredCount:   countLaunchAuthorizationRequiredKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppLaunchAuthorizationRecordedCount:   countLaunchAuthorizationRecordedKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppLaunchGateConsumedCount:            countLaunchGateConsumedKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppControlledDispatchReadyCount:       countControlledDispatchReadyKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppLauncherSessionGateConsumedCount:   countLauncherSessionGateConsumedKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppPostReviewDispatchConsumedCount:    countPostReviewDispatchConsumedKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppVerifiedCatalogConsumed:            knownAppVerifiedCatalog != nil,
+		KnownAppVerifiedCatalogApplicationCount:    len(knownAppVerifiedCatalogApplications(knownAppVerifiedCatalog)),
+		KnownAppVerifiedCatalogReviewOnly:          knownAppVerifiedCatalog == nil || knownAppVerifiedCatalog.ReviewOnly,
+		KnownAppVerifiedCatalogApplicationIDs:      knownAppVerifiedCatalogApplicationIDsFromPreview(knownAppVerifiedCatalog),
+		KnownAppVerifiedCatalogGUIApplicationCount: len(knownAppVerifiedCatalogGUIApplications(knownAppVerifiedCatalog)),
+		KnownAppVerifiedCatalogGUIApplicationIDs:   knownAppVerifiedCatalogGUIApplicationIDsFromPreview(knownAppVerifiedCatalog),
+		KnownAppSmokeEvidence:                      knownAppEvidence,
+		KnownAppVerifiedCatalogApplications:        knownAppVerifiedCatalogApplications(knownAppVerifiedCatalog),
+		KnownAppVerifiedCatalogGUIApplications:     knownAppVerifiedCatalogGUIApplications(knownAppVerifiedCatalog),
 		Source: KRunnerSource{
 			Kind:                  "runtime-go-registry",
 			RegistryName:          provenance.RegistryName,
@@ -2801,11 +2807,33 @@ func knownAppVerifiedCatalogApplications(catalog *KnownAppVerifiedCatalogPreview
 	return applications
 }
 
+func knownAppVerifiedCatalogGUIApplications(catalog *KnownAppVerifiedCatalogPreview) []KnownAppVerifiedCatalogApplication {
+	if catalog == nil {
+		return nil
+	}
+	applications := make([]KnownAppVerifiedCatalogApplication, 0, len(catalog.Applications))
+	for _, app := range catalog.Applications {
+		if app.GUIEvidence {
+			applications = append(applications, app)
+		}
+	}
+	return applications
+}
+
 func knownAppVerifiedCatalogApplicationIDsFromPreview(catalog *KnownAppVerifiedCatalogPreview) []string {
 	if catalog == nil {
 		return nil
 	}
 	ids := append([]string(nil), catalog.ApplicationIDs...)
+	sort.Strings(ids)
+	return ids
+}
+
+func knownAppVerifiedCatalogGUIApplicationIDsFromPreview(catalog *KnownAppVerifiedCatalogPreview) []string {
+	if catalog == nil {
+		return nil
+	}
+	ids := append([]string(nil), catalog.GUIEvidenceApplicationIDs...)
 	sort.Strings(ids)
 	return ids
 }

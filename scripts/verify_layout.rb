@@ -1056,6 +1056,14 @@ verified_catalog_model = read_project_file("internal/runtime/appidentity/known_a
 %w[GUIEvidencePacketConsumed GUIEvidenceApplicationIDs GUIVerifiedApplicationCount GUIWindowObservedCount GUIEvidence WindowObserved FileOpenVerified validateKnownAppVerifiedCatalogGUIEvidencePacket knownAppVerifiedCatalogGUIApplication q4_messagebox_smoke.rb q4_winapp_smoke.rb].each do |token|
   assert(verified_catalog_model.include?(token), "verified catalog model must include #{token}")
 end
+compatibility_center_model = read_project_file("internal/runtime/appidentity/identity.go")
+%w[KnownAppVerifiedCatalogGUIApplicationCount KnownAppVerifiedCatalogGUIApplicationIDs KnownAppVerifiedCatalogGUIApplications known_app_verified_catalog_gui_application_count known_app_verified_catalog_gui_application_ids known_app_verified_catalog_gui_applications knownAppVerifiedCatalogGUIApplications knownAppVerifiedCatalogGUIApplicationIDsFromPreview].each do |token|
+  assert(compatibility_center_model.include?(token), "Compatibility Center model must include #{token}")
+end
+kde_center_page = read_project_file("internal/runtime/appidentity/kde_center_page.go")
+%w[KnownAppVerifiedCatalogGUIApplicationCount KnownAppVerifiedCatalogGUICards known_app_verified_catalog_gui_application_count known_app_verified_catalog_gui_cards known-app-verified-catalog-gui].each do |token|
+  assert(kde_center_page.include?(token), "KDE center page must include #{token}")
+end
 real_run_receipt_summary = read_project_file("internal/runtime/appidentity/real_winapp_run_receipt_summary.go")
 %w[xnix.runtime.real_winapp_run_receipt_summary.v1 real-winapp-run-receipt-summary-preview remote-wine-guest-gui-smoke real-windows-app-run-receipt-summary report_path_exposed remote_host_exposed execution_host_class backend_class managed-guest-gui file_open_verified document_content_marker_observation_required document_content_marker_observed owner_controlled_launch_verified runtime_evidence_owner_file_open_verified kde_action_owner_file_open_verified receipt_ready host_root_modified privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required backend_details_exposed raw_launcher_output_exposed validateNoBackendTerms].each do |token|
   assert(real_run_receipt_summary.include?(token), "real Windows app run receipt summary must include #{token}")

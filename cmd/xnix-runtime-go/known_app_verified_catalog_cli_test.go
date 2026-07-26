@@ -255,6 +255,61 @@ func TestCompatibilityCenterPreviewCommandConsumesKnownAppVerifiedCatalog(t *tes
 	}
 }
 
+func TestCompatibilityCenterPreviewCommandConsumesKnownAppVerifiedCatalogGUIEvidence(t *testing.T) {
+	registryPath, _ := writeTestRepairGroupRegistry(t)
+	catalogPath := writeKnownAppVerifiedCatalogCLIFile(t, true)
+
+	var output bytes.Buffer
+	err := run([]string{"compatibility-center-preview", "--registry", registryPath, "--known-app-verified-catalog", catalogPath}, &output)
+	if err != nil {
+		t.Fatalf("compatibility-center-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["known_app_verified_catalog_consumed"] != true ||
+		payload["known_app_verified_catalog_application_count"] != float64(3) ||
+		payload["known_app_verified_catalog_gui_application_count"] != float64(1) ||
+		payload["known_app_verified_catalog_review_only"] != true ||
+		payload["action_execution_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected center GUI catalog summary: %#v", payload)
+	}
+	guiIDs := payload["known_app_verified_catalog_gui_application_ids"].([]any)
+	if len(guiIDs) != 1 || guiIDs[0] != "org.xnix.apps.messagebox" {
+		t.Fatalf("unexpected GUI verified catalog application ids: %#v", guiIDs)
+	}
+	guiApps := payload["known_app_verified_catalog_gui_applications"].([]any)
+	if len(guiApps) != 1 {
+		t.Fatalf("expected one GUI verified catalog application, got %#v", guiApps)
+	}
+	messagebox := guiApps[0].(map[string]any)
+	if messagebox["app_id"] != "org.xnix.apps.messagebox" ||
+		messagebox["verification_state"] != "verified-real-gui-q4-run" ||
+		messagebox["evidence_source"] != "wine-guest-gui-smoke" ||
+		messagebox["gui_evidence"] != true ||
+		messagebox["window_observed"] != true ||
+		messagebox["file_open_verified"] != true ||
+		messagebox["direct_launch_enabled"] != false ||
+		messagebox["backend_launch_enabled"] != false ||
+		messagebox["backend_details_exposed"] != false ||
+		messagebox["raw_output_exposed"] != false ||
+		messagebox["remote_path_exposed"] != false ||
+		messagebox["host_root_modified"] != false {
+		t.Fatalf("unexpected center GUI catalog application: %#v", messagebox)
+	}
+	if strings.Contains(output.String(), catalogPath) ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") ||
+		strings.Contains(strings.ToLower(output.String()), "wine/") ||
+		strings.Contains(strings.ToLower(output.String()), ".wine") {
+		t.Fatalf("center GUI catalog output exposed unsafe details: %s", output.String())
+	}
+}
+
 func TestCompatibilityCenterPreviewCommandRejectsUnsafeKnownAppVerifiedCatalog(t *testing.T) {
 	registryPath, _ := writeTestRepairGroupRegistry(t)
 	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
@@ -351,6 +406,63 @@ func TestKDECenterPagePreviewCommandConsumesKnownAppVerifiedCatalog(t *testing.T
 		strings.Contains(output.String(), matrixEvidencePath) ||
 		strings.Contains(output.String(), "/home/xnix-run-materials") {
 		t.Fatalf("KDE Center page exposed verified catalog paths: %s", output.String())
+	}
+}
+
+func TestKDECenterPagePreviewCommandConsumesKnownAppVerifiedCatalogGUIEvidence(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	catalogPath := writeKnownAppVerifiedCatalogCLIFile(t, true)
+
+	var output bytes.Buffer
+	err := run([]string{"kde-center-page-preview", "--registry", registryPath, "--app", app, "--decision", "approved", "--known-app-verified-catalog", catalogPath}, &output)
+	if err != nil {
+		t.Fatalf("kde-center-page-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if !strings.Contains(payload["source"].(string), "known-app-verified-catalog-gui") ||
+		payload["known_app_verified_catalog_consumed"] != true ||
+		payload["known_app_verified_catalog_application_count"] != float64(3) ||
+		payload["known_app_verified_catalog_gui_application_count"] != float64(1) ||
+		payload["known_app_verified_catalog_review_only"] != true ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE GUI catalog summary: %#v", payload)
+	}
+	guiCards := payload["known_app_verified_catalog_gui_cards"].([]any)
+	if len(guiCards) != 1 {
+		t.Fatalf("expected one KDE GUI verified catalog card, got %#v", guiCards)
+	}
+	messagebox := guiCards[0].(map[string]any)
+	launchCommand := messagebox["launch_request_command"].([]any)
+	if messagebox["app_id"] != "org.xnix.apps.messagebox" ||
+		messagebox["verification_state"] != "verified-real-gui-q4-run" ||
+		messagebox["evidence_source"] != "wine-guest-gui-smoke" ||
+		messagebox["gui_evidence"] != true ||
+		messagebox["window_observed"] != true ||
+		messagebox["file_open_verified"] != true ||
+		launchCommand[0] != "xnix-compat-launch" ||
+		launchCommand[1] != "--app" ||
+		launchCommand[2] != "org.xnix.apps.messagebox" ||
+		messagebox["operator_review_required"] != true ||
+		messagebox["direct_launch_enabled"] != false ||
+		messagebox["backend_launch_enabled"] != false ||
+		messagebox["backend_details_exposed"] != false ||
+		messagebox["remote_path_exposed"] != false ||
+		messagebox["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE GUI catalog card: %#v", messagebox)
+	}
+	if strings.Contains(output.String(), catalogPath) ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") ||
+		strings.Contains(strings.ToLower(output.String()), "wine/") ||
+		strings.Contains(strings.ToLower(output.String()), ".wine") {
+		t.Fatalf("KDE GUI catalog output exposed unsafe details: %s", output.String())
 	}
 }
 
@@ -734,6 +846,32 @@ func writeKnownAppVerifiedCatalogRunAcceptanceCLIFile(t *testing.T, appID string
 		t.Fatalf("WriteFile run acceptance returned error: %v", err)
 	}
 	return acceptancePath
+}
+
+func writeKnownAppVerifiedCatalogCLIFile(t *testing.T, includeGUIEvidence bool) string {
+	t.Helper()
+	tempDir := t.TempDir()
+	matrixEvidencePath := filepath.Join(tempDir, "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+	args := []string{"known-app-verified-catalog-preview", "--matrix-evidence", matrixEvidencePath}
+	if includeGUIEvidence {
+		guiPacketPath := filepath.Join(tempDir, "gui-evidence-packet.json")
+		if err := os.WriteFile(guiPacketPath, []byte(knownAppVerifiedCatalogCLIGUIEvidencePacketFixture()), 0o600); err != nil {
+			t.Fatalf("WriteFile GUI packet returned error: %v", err)
+		}
+		args = append(args, "--gui-evidence-packet", guiPacketPath)
+	}
+	var catalogOutput bytes.Buffer
+	if err := run(args, &catalogOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	catalogPath := filepath.Join(tempDir, "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, catalogOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile verified catalog returned error: %v", err)
+	}
+	return catalogPath
 }
 
 func knownAppVerifiedCatalogCLIFixture(t *testing.T) []byte {

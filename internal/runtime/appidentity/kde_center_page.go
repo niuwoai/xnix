@@ -11,81 +11,83 @@ import (
 )
 
 type KDECenterPagePreview struct {
-	SchemaVersion                            string                                 `json:"schema_version"`
-	RequestType                              string                                 `json:"request_type"`
-	PageType                                 string                                 `json:"page_type"`
-	Source                                   string                                 `json:"source"`
-	Desktop                                  string                                 `json:"desktop"`
-	RuntimeMethod                            string                                 `json:"runtime_method"`
-	ReadMethod                               string                                 `json:"read_method"`
-	ApplicationID                            string                                 `json:"application_id"`
-	ApplicationName                          string                                 `json:"application_name"`
-	Icon                                     string                                 `json:"icon"`
-	DesktopFile                              string                                 `json:"desktop_file"`
-	LauncherCommand                          []string                               `json:"launcher_command"`
-	Header                                   KDECenterPageHeader                    `json:"header"`
-	ApplicationSummary                       KDECenterPageApplication               `json:"application_summary"`
-	KnownAppSessionGateEvidenceCount         int                                    `json:"known_app_session_gate_evidence_count"`
-	KnownAppLauncherSessionGateConsumedCount int                                    `json:"known_app_launcher_session_gate_consumed_count"`
-	KnownAppPostReviewDispatchConsumedCount  int                                    `json:"known_app_post_review_dispatch_consumed_count"`
-	KnownAppSessionGateCards                 []KDECenterPageKnownAppSessionGateCard `json:"known_app_session_gate_cards"`
-	KnownAppVerifiedCatalogConsumed          bool                                   `json:"known_app_verified_catalog_consumed"`
-	KnownAppVerifiedCatalogApplicationCount  int                                    `json:"known_app_verified_catalog_application_count"`
-	KnownAppVerifiedCatalogReviewOnly        bool                                   `json:"known_app_verified_catalog_review_only"`
-	KnownAppVerifiedCatalogCards             []KnownAppVerifiedCatalogApplication   `json:"known_app_verified_catalog_cards"`
-	KnownAppMatrixEvidenceCount              int                                    `json:"known_app_matrix_evidence_count"`
-	KnownAppMatrixEvidenceCards              []KDECenterPageKnownAppMatrixCard      `json:"known_app_matrix_evidence_cards"`
-	KnownAppGUIEvidenceCount                 int                                    `json:"known_app_gui_evidence_count"`
-	KnownAppOwnerControlledGUIEvidenceCount  int                                    `json:"known_app_owner_controlled_gui_evidence_count"`
-	KnownAppOwnerManagedCopyVerifiedCount    int                                    `json:"known_app_owner_managed_copy_verified_count"`
-	KnownAppOwnerFileOpenVerifiedCount       int                                    `json:"known_app_owner_file_open_verified_count"`
-	KnownAppOwnerFileOpenEntrypointCount     int                                    `json:"known_app_owner_file_open_entrypoint_count"`
-	KnownAppGUIEvidenceCards                 []KDECenterPageKnownAppMatrixCard      `json:"known_app_gui_evidence_cards"`
-	BackendSelectionSnapshot                 KDECenterPageBackend                   `json:"backend_selection_snapshot"`
-	ActivationStatusSnapshot                 KDECenterPageActivation                `json:"activation_status_snapshot"`
-	ExecutionReadinessSnapshot               KDECenterPageExecution                 `json:"execution_readiness_snapshot"`
-	ApplicationReadinessEvidence             ApplicationReadinessPreview            `json:"application_readiness_evidence"`
-	LaunchIntentSnapshot                     KDECenterPageLaunchIntent              `json:"launch_intent_snapshot"`
-	WindowIdentitySnapshot                   KDECenterPageWindow                    `json:"window_identity_snapshot"`
-	FileAssociationSnapshot                  KDECenterPageFiles                     `json:"file_association_snapshot"`
-	TrayStatusSnapshot                       KDECenterPageTray                      `json:"tray_status_snapshot"`
-	NotificationSnapshot                     KDECenterPageNotification              `json:"notification_snapshot"`
-	ActionDeck                               KDECenterPageActionDeck                `json:"action_deck"`
-	ActionDependencyGraph                    KDECenterPageActionGraph               `json:"action_dependency_graph"`
-	SettingsSnapshot                         KDECenterPageSettings                  `json:"settings_snapshot"`
-	Navigation                               []KDECenterPageNavigation              `json:"navigation"`
-	NavigationCount                          int                                    `json:"navigation_count"`
-	PrimaryNavigationTarget                  string                                 `json:"primary_navigation_target"`
-	RuntimeOwned                             bool                                   `json:"runtime_owned"`
-	GoRuntimeBacked                          bool                                   `json:"go_runtime_backed"`
-	KDEPolicyOwner                           bool                                   `json:"kde_policy_owner"`
-	OfficialDesktopOnly                      bool                                   `json:"official_desktop_only"`
-	UserVisible                              bool                                   `json:"user_visible"`
-	SafeForAIDiagnostics                     bool                                   `json:"safe_for_ai_diagnostics"`
-	UserDecisionCaptured                     bool                                   `json:"user_decision_captured"`
-	UserDecisionAllowsLaunch                 bool                                   `json:"user_decision_allows_launch"`
-	PagePreviewCreated                       bool                                   `json:"page_preview_created"`
-	PagePersisted                            bool                                   `json:"page_persisted"`
-	DeckPersisted                            bool                                   `json:"deck_persisted"`
-	CardsPersisted                           bool                                   `json:"cards_persisted"`
-	CardActionsEnabled                       bool                                   `json:"card_actions_enabled"`
-	SettingsPersisted                        bool                                   `json:"settings_persisted"`
-	SettingsPersistenceEnabled               bool                                   `json:"settings_persistence_enabled"`
-	NotificationsSent                        bool                                   `json:"notifications_sent"`
-	ResourceGrantCreated                     bool                                   `json:"resource_grant_created"`
-	RuntimeLaunchApproval                    bool                                   `json:"runtime_launch_approval"`
-	LaunchAllowed                            bool                                   `json:"launch_allowed"`
-	LaunchEnabled                            bool                                   `json:"launch_enabled"`
-	ExecutionStarted                         bool                                   `json:"execution_started"`
-	BackendProcessStarted                    bool                                   `json:"backend_process_started"`
-	RequestObjectsCreated                    bool                                   `json:"request_objects_created"`
-	PermissionGrantCreated                   bool                                   `json:"permission_grant_created"`
-	HostRootModified                         bool                                   `json:"host_root_modified"`
-	NetworkRequired                          bool                                   `json:"network_required"`
-	BackendDetailsExposed                    bool                                   `json:"backend_details_exposed"`
-	BlockedActions                           []string                               `json:"blocked_actions"`
-	UserFacingSettings                       map[string]string                      `json:"user_facing_settings"`
-	DesktopSafeSummary                       string                                 `json:"desktop_safe_summary"`
+	SchemaVersion                              string                                 `json:"schema_version"`
+	RequestType                                string                                 `json:"request_type"`
+	PageType                                   string                                 `json:"page_type"`
+	Source                                     string                                 `json:"source"`
+	Desktop                                    string                                 `json:"desktop"`
+	RuntimeMethod                              string                                 `json:"runtime_method"`
+	ReadMethod                                 string                                 `json:"read_method"`
+	ApplicationID                              string                                 `json:"application_id"`
+	ApplicationName                            string                                 `json:"application_name"`
+	Icon                                       string                                 `json:"icon"`
+	DesktopFile                                string                                 `json:"desktop_file"`
+	LauncherCommand                            []string                               `json:"launcher_command"`
+	Header                                     KDECenterPageHeader                    `json:"header"`
+	ApplicationSummary                         KDECenterPageApplication               `json:"application_summary"`
+	KnownAppSessionGateEvidenceCount           int                                    `json:"known_app_session_gate_evidence_count"`
+	KnownAppLauncherSessionGateConsumedCount   int                                    `json:"known_app_launcher_session_gate_consumed_count"`
+	KnownAppPostReviewDispatchConsumedCount    int                                    `json:"known_app_post_review_dispatch_consumed_count"`
+	KnownAppSessionGateCards                   []KDECenterPageKnownAppSessionGateCard `json:"known_app_session_gate_cards"`
+	KnownAppVerifiedCatalogConsumed            bool                                   `json:"known_app_verified_catalog_consumed"`
+	KnownAppVerifiedCatalogApplicationCount    int                                    `json:"known_app_verified_catalog_application_count"`
+	KnownAppVerifiedCatalogReviewOnly          bool                                   `json:"known_app_verified_catalog_review_only"`
+	KnownAppVerifiedCatalogCards               []KnownAppVerifiedCatalogApplication   `json:"known_app_verified_catalog_cards"`
+	KnownAppVerifiedCatalogGUIApplicationCount int                                    `json:"known_app_verified_catalog_gui_application_count"`
+	KnownAppVerifiedCatalogGUICards            []KnownAppVerifiedCatalogApplication   `json:"known_app_verified_catalog_gui_cards"`
+	KnownAppMatrixEvidenceCount                int                                    `json:"known_app_matrix_evidence_count"`
+	KnownAppMatrixEvidenceCards                []KDECenterPageKnownAppMatrixCard      `json:"known_app_matrix_evidence_cards"`
+	KnownAppGUIEvidenceCount                   int                                    `json:"known_app_gui_evidence_count"`
+	KnownAppOwnerControlledGUIEvidenceCount    int                                    `json:"known_app_owner_controlled_gui_evidence_count"`
+	KnownAppOwnerManagedCopyVerifiedCount      int                                    `json:"known_app_owner_managed_copy_verified_count"`
+	KnownAppOwnerFileOpenVerifiedCount         int                                    `json:"known_app_owner_file_open_verified_count"`
+	KnownAppOwnerFileOpenEntrypointCount       int                                    `json:"known_app_owner_file_open_entrypoint_count"`
+	KnownAppGUIEvidenceCards                   []KDECenterPageKnownAppMatrixCard      `json:"known_app_gui_evidence_cards"`
+	BackendSelectionSnapshot                   KDECenterPageBackend                   `json:"backend_selection_snapshot"`
+	ActivationStatusSnapshot                   KDECenterPageActivation                `json:"activation_status_snapshot"`
+	ExecutionReadinessSnapshot                 KDECenterPageExecution                 `json:"execution_readiness_snapshot"`
+	ApplicationReadinessEvidence               ApplicationReadinessPreview            `json:"application_readiness_evidence"`
+	LaunchIntentSnapshot                       KDECenterPageLaunchIntent              `json:"launch_intent_snapshot"`
+	WindowIdentitySnapshot                     KDECenterPageWindow                    `json:"window_identity_snapshot"`
+	FileAssociationSnapshot                    KDECenterPageFiles                     `json:"file_association_snapshot"`
+	TrayStatusSnapshot                         KDECenterPageTray                      `json:"tray_status_snapshot"`
+	NotificationSnapshot                       KDECenterPageNotification              `json:"notification_snapshot"`
+	ActionDeck                                 KDECenterPageActionDeck                `json:"action_deck"`
+	ActionDependencyGraph                      KDECenterPageActionGraph               `json:"action_dependency_graph"`
+	SettingsSnapshot                           KDECenterPageSettings                  `json:"settings_snapshot"`
+	Navigation                                 []KDECenterPageNavigation              `json:"navigation"`
+	NavigationCount                            int                                    `json:"navigation_count"`
+	PrimaryNavigationTarget                    string                                 `json:"primary_navigation_target"`
+	RuntimeOwned                               bool                                   `json:"runtime_owned"`
+	GoRuntimeBacked                            bool                                   `json:"go_runtime_backed"`
+	KDEPolicyOwner                             bool                                   `json:"kde_policy_owner"`
+	OfficialDesktopOnly                        bool                                   `json:"official_desktop_only"`
+	UserVisible                                bool                                   `json:"user_visible"`
+	SafeForAIDiagnostics                       bool                                   `json:"safe_for_ai_diagnostics"`
+	UserDecisionCaptured                       bool                                   `json:"user_decision_captured"`
+	UserDecisionAllowsLaunch                   bool                                   `json:"user_decision_allows_launch"`
+	PagePreviewCreated                         bool                                   `json:"page_preview_created"`
+	PagePersisted                              bool                                   `json:"page_persisted"`
+	DeckPersisted                              bool                                   `json:"deck_persisted"`
+	CardsPersisted                             bool                                   `json:"cards_persisted"`
+	CardActionsEnabled                         bool                                   `json:"card_actions_enabled"`
+	SettingsPersisted                          bool                                   `json:"settings_persisted"`
+	SettingsPersistenceEnabled                 bool                                   `json:"settings_persistence_enabled"`
+	NotificationsSent                          bool                                   `json:"notifications_sent"`
+	ResourceGrantCreated                       bool                                   `json:"resource_grant_created"`
+	RuntimeLaunchApproval                      bool                                   `json:"runtime_launch_approval"`
+	LaunchAllowed                              bool                                   `json:"launch_allowed"`
+	LaunchEnabled                              bool                                   `json:"launch_enabled"`
+	ExecutionStarted                           bool                                   `json:"execution_started"`
+	BackendProcessStarted                      bool                                   `json:"backend_process_started"`
+	RequestObjectsCreated                      bool                                   `json:"request_objects_created"`
+	PermissionGrantCreated                     bool                                   `json:"permission_grant_created"`
+	HostRootModified                           bool                                   `json:"host_root_modified"`
+	NetworkRequired                            bool                                   `json:"network_required"`
+	BackendDetailsExposed                      bool                                   `json:"backend_details_exposed"`
+	BlockedActions                             []string                               `json:"blocked_actions"`
+	UserFacingSettings                         map[string]string                      `json:"user_facing_settings"`
+	DesktopSafeSummary                         string                                 `json:"desktop_safe_summary"`
 }
 
 type KDECenterPageHeader struct {
@@ -839,6 +841,7 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	navigation := kdeCenterPageNavigation()
 	knownAppSessionGateCards := kdeCenterPageKnownAppSessionGateCards(center.KnownAppSmokeEvidence)
 	knownAppVerifiedCatalogCards := kdeCenterPageKnownAppVerifiedCatalogCards(center.KnownAppVerifiedCatalogApplications)
+	knownAppVerifiedCatalogGUICards := kdeCenterPageKnownAppVerifiedCatalogCards(center.KnownAppVerifiedCatalogGUIApplications)
 	knownAppMatrixCards := kdeCenterPageKnownAppMatrixCards(center.KnownAppSmokeEvidence)
 	knownAppGUICards := kdeCenterPageKnownAppGUICards(center.KnownAppSmokeEvidence)
 	knownAppOwnerControlledGUICount := countOwnerControlledKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
@@ -854,6 +857,9 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	}
 	if len(knownAppVerifiedCatalogCards) > 0 {
 		source += "+known-app-verified-catalog"
+	}
+	if len(knownAppVerifiedCatalogGUICards) > 0 {
+		source += "+known-app-verified-catalog-gui"
 	}
 	if len(knownAppMatrixCards) > 0 {
 		source += "+known-app-matrix-evidence"
@@ -909,22 +915,24 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 			BackendDetailsExposed:      application.BackendDetailsExposed,
 			Summary:                    application.Summary,
 		},
-		KnownAppSessionGateEvidenceCount:         len(knownAppSessionGateCards),
-		KnownAppLauncherSessionGateConsumedCount: center.KnownAppLauncherSessionGateConsumedCount,
-		KnownAppPostReviewDispatchConsumedCount:  center.KnownAppPostReviewDispatchConsumedCount,
-		KnownAppSessionGateCards:                 knownAppSessionGateCards,
-		KnownAppVerifiedCatalogConsumed:          center.KnownAppVerifiedCatalogConsumed,
-		KnownAppVerifiedCatalogApplicationCount:  len(knownAppVerifiedCatalogCards),
-		KnownAppVerifiedCatalogReviewOnly:        center.KnownAppVerifiedCatalogReviewOnly,
-		KnownAppVerifiedCatalogCards:             knownAppVerifiedCatalogCards,
-		KnownAppMatrixEvidenceCount:              len(knownAppMatrixCards),
-		KnownAppMatrixEvidenceCards:              knownAppMatrixCards,
-		KnownAppGUIEvidenceCount:                 len(knownAppGUICards),
-		KnownAppOwnerControlledGUIEvidenceCount:  knownAppOwnerControlledGUICount,
-		KnownAppOwnerManagedCopyVerifiedCount:    knownAppOwnerManagedCopyVerifiedCount,
-		KnownAppOwnerFileOpenVerifiedCount:       knownAppOwnerFileOpenVerifiedCount,
-		KnownAppOwnerFileOpenEntrypointCount:     knownAppOwnerFileOpenEntrypointCount,
-		KnownAppGUIEvidenceCards:                 knownAppGUICards,
+		KnownAppSessionGateEvidenceCount:           len(knownAppSessionGateCards),
+		KnownAppLauncherSessionGateConsumedCount:   center.KnownAppLauncherSessionGateConsumedCount,
+		KnownAppPostReviewDispatchConsumedCount:    center.KnownAppPostReviewDispatchConsumedCount,
+		KnownAppSessionGateCards:                   knownAppSessionGateCards,
+		KnownAppVerifiedCatalogConsumed:            center.KnownAppVerifiedCatalogConsumed,
+		KnownAppVerifiedCatalogApplicationCount:    len(knownAppVerifiedCatalogCards),
+		KnownAppVerifiedCatalogReviewOnly:          center.KnownAppVerifiedCatalogReviewOnly,
+		KnownAppVerifiedCatalogCards:               knownAppVerifiedCatalogCards,
+		KnownAppVerifiedCatalogGUIApplicationCount: len(knownAppVerifiedCatalogGUICards),
+		KnownAppVerifiedCatalogGUICards:            knownAppVerifiedCatalogGUICards,
+		KnownAppMatrixEvidenceCount:                len(knownAppMatrixCards),
+		KnownAppMatrixEvidenceCards:                knownAppMatrixCards,
+		KnownAppGUIEvidenceCount:                   len(knownAppGUICards),
+		KnownAppOwnerControlledGUIEvidenceCount:    knownAppOwnerControlledGUICount,
+		KnownAppOwnerManagedCopyVerifiedCount:      knownAppOwnerManagedCopyVerifiedCount,
+		KnownAppOwnerFileOpenVerifiedCount:         knownAppOwnerFileOpenVerifiedCount,
+		KnownAppOwnerFileOpenEntrypointCount:       knownAppOwnerFileOpenEntrypointCount,
+		KnownAppGUIEvidenceCards:                   knownAppGUICards,
 		BackendSelectionSnapshot: KDECenterPageBackend{
 			RequestType:                 backendSelection.RequestType,
 			PlanType:                    backendSelection.PlanType,

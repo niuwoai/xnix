@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc206
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc207
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc207 checkpoint projects verified-catalog GUI entries into desktop read models. Compatibility Center now reports `known_app_verified_catalog_gui_application_count`, GUI application ids, and GUI application cards when the verified catalog includes a real GUI evidence packet. KDE Center page previews also expose `known_app_verified_catalog_gui_application_count`, `known_app_verified_catalog_gui_cards`, and a `known-app-verified-catalog-gui` source marker. These fields let KDE and AI surfaces distinguish review-only GUI compatibility proof from console matrix entries without exposing raw q4 paths, raw window summaries, backend details, or enabling direct launch.
 
 The v0.2.640-rc206 checkpoint brings real GUI evidence into the verified catalog instead of leaving it in a side lane. `known-app-verified-catalog-preview --matrix-evidence MATRIX.json --gui-evidence-packet GUI.json` keeps the original required q4 matrix evidence for 7zr and BusyBox, then adds a review-only GUI application entry from a Go-owned `real-winapp-gui-evidence-packet-preview`. GUI entries carry desktop-safe evidence source, window observation, owner file-open verification, and GUI-specific catalog counts; run planning points MessageBox entries to `scripts/q4_messagebox_smoke.rb --execute --owner-file-open` and other GUI entries to the generic q4 Windows app smoke. The rc206 q4 validation ran the real MessageBox Windows GUI fixture, built the Windows `.exe` on q4, observed the expected QEMU/Wine window, verified owner-controlled file-open plus document-content marker evidence, produced Go-owned q4 acceptance readiness, and kept host compilation avoided. This makes the catalog a single Runtime-owned place for both external console compatibility proof and real Windows GUI app proof.
 
