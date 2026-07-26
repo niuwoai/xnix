@@ -17,6 +17,8 @@ const (
 	KnownAppVerifiedCatalogLaunchMaterializationRequestType   = "known-app-verified-catalog-launch-materialization-record"
 	KnownAppVerifiedCatalogDispatchRequestSchemaVersion       = "xnix.runtime.known_app_verified_catalog_dispatch_request.v1"
 	KnownAppVerifiedCatalogDispatchRequestType                = "known-app-verified-catalog-dispatch-request-record"
+	KnownAppVerifiedCatalogDispatchExecutionSchemaVersion     = "xnix.runtime.known_app_verified_catalog_dispatch_execution.v1"
+	KnownAppVerifiedCatalogDispatchExecutionRequestType       = "known-app-verified-catalog-dispatch-runner-execution"
 )
 
 type KnownAppVerifiedCatalogLaunchMaterializationRequest struct {
@@ -34,6 +36,12 @@ type KnownAppVerifiedCatalogDispatchRequestRecordRequest struct {
 	GuestBoundary       string
 	LauncherName        string
 	RecordedAtUTC       time.Time
+}
+
+type KnownAppVerifiedCatalogDispatchRequestReadRequest struct {
+	StateRoot                   string
+	DispatchRequestRelativePath string
+	ExpectedSHA256              string
 }
 
 type KnownAppVerifiedCatalogLaunchMaterializationRecord struct {
@@ -191,6 +199,25 @@ type KnownAppVerifiedCatalogDispatchRequestRecord struct {
 	BlockedReason                       string   `json:"blocked_reason,omitempty"`
 	NextOwnerAction                     string   `json:"next_owner_action"`
 	DesktopSafeSummary                  string   `json:"desktop_safe_summary"`
+}
+
+type KnownAppVerifiedCatalogDispatchRequestPlan struct {
+	SchemaVersion                 string   `json:"schema_version"`
+	RequestType                   string   `json:"request_type"`
+	AppID                         string   `json:"app_id"`
+	DisplayName                   string   `json:"display_name"`
+	AppVersion                    string   `json:"app_version"`
+	LauncherName                  string   `json:"launcher_name"`
+	RunnerRequestType             string   `json:"runner_request_type"`
+	RunnerArgv                    []string `json:"runner_argv"`
+	LaunchAuthorizationReceiptID  string   `json:"launch_authorization_receipt_id"`
+	SessionGatedReviewReceiptID   string   `json:"session_gated_review_receipt_id"`
+	ControlledExecutionSessionID  string   `json:"controlled_execution_session_id"`
+	ControlledSessionRelativePath string   `json:"controlled_session_relative_path"`
+	GuestBoundary                 string   `json:"guest_boundary"`
+	DispatchRequestRelativePath   string   `json:"dispatch_request_relative_path"`
+	DispatchRequestSHA256         string   `json:"dispatch_request_sha256"`
+	DigestMatched                 bool     `json:"digest_matched"`
 }
 
 func RecordKnownAppVerifiedCatalogLaunchMaterialization(request KnownAppVerifiedCatalogLaunchMaterializationRequest) (KnownAppVerifiedCatalogLaunchMaterializationRecord, error) {
@@ -400,6 +427,55 @@ func RecordKnownAppVerifiedCatalogDispatchRequestFromMaterialization(stateRoot s
 	base.NextOwnerAction = "dispatch-runner-execute-request"
 	base.DesktopSafeSummary = materialization.DisplayName + " verified catalog dispatch request is recorded for Runtime-owner runner execution."
 	return validateKnownAppVerifiedCatalogDispatchRequestRecord(base)
+}
+
+func ReadKnownAppVerifiedCatalogDispatchRequest(request KnownAppVerifiedCatalogDispatchRequestReadRequest) (KnownAppVerifiedCatalogDispatchRequestPlan, error) {
+	stateRoot := strings.TrimSpace(request.StateRoot)
+	if err := validateKnownAppRuntimeOwnerStateRoot(stateRoot); err != nil {
+		return KnownAppVerifiedCatalogDispatchRequestPlan{}, err
+	}
+	relativePath := filepath.ToSlash(strings.TrimSpace(request.DispatchRequestRelativePath))
+	if relativePath == "" {
+		return KnownAppVerifiedCatalogDispatchRequestPlan{}, errors.New("known app verified catalog dispatch request read requires --dispatch-request-relative-path")
+	}
+	fullPath, err := knownAppVerifiedCatalogDispatchRequestPath(stateRoot, relativePath)
+	if err != nil {
+		return KnownAppVerifiedCatalogDispatchRequestPlan{}, err
+	}
+	content, err := os.ReadFile(fullPath)
+	if err != nil {
+		return KnownAppVerifiedCatalogDispatchRequestPlan{}, fmt.Errorf("read known app verified catalog dispatch request: %w", err)
+	}
+	actualSHA256 := sha256Hex(string(content))
+	expectedSHA256 := strings.TrimSpace(strings.ToLower(request.ExpectedSHA256))
+	if expectedSHA256 != "" && expectedSHA256 != actualSHA256 {
+		return KnownAppVerifiedCatalogDispatchRequestPlan{}, errors.New("known app verified catalog dispatch request digest mismatch")
+	}
+	var payload knownAppVerifiedCatalogDispatchRequestPayload
+	if err := json.Unmarshal(content, &payload); err != nil {
+		return KnownAppVerifiedCatalogDispatchRequestPlan{}, fmt.Errorf("parse known app verified catalog dispatch request: %w", err)
+	}
+	if err := validateKnownAppVerifiedCatalogDispatchRequestPayload(payload); err != nil {
+		return KnownAppVerifiedCatalogDispatchRequestPlan{}, err
+	}
+	return KnownAppVerifiedCatalogDispatchRequestPlan{
+		SchemaVersion:                 payload.SchemaVersion,
+		RequestType:                   payload.RequestType,
+		AppID:                         payload.AppID,
+		DisplayName:                   payload.DisplayName,
+		AppVersion:                    payload.AppVersion,
+		LauncherName:                  payload.LauncherName,
+		RunnerRequestType:             payload.RunnerRequestType,
+		RunnerArgv:                    append([]string{}, payload.RunnerArgv...),
+		LaunchAuthorizationReceiptID:  payload.LaunchAuthorizationReceiptID,
+		SessionGatedReviewReceiptID:   payload.SessionGatedReviewReceiptID,
+		ControlledExecutionSessionID:  payload.ControlledExecutionSessionID,
+		ControlledSessionRelativePath: payload.ControlledSessionRelativePath,
+		GuestBoundary:                 payload.GuestBoundary,
+		DispatchRequestRelativePath:   relativePath,
+		DispatchRequestSHA256:         actualSHA256,
+		DigestMatched:                 expectedSHA256 == "" || expectedSHA256 == actualSHA256,
+	}, nil
 }
 
 func baseKnownAppVerifiedCatalogLaunchMaterializationRecord(handoff knownAppVerifiedCatalogLaunchHandoffPayload, relativePath string, digest string, launchReceipt KnownAppLaunchAuthorizationReceiptPreview, sessionRecord KnownAppControlledExecutionSessionRecord, recordedAtText string) KnownAppVerifiedCatalogLaunchMaterializationRecord {
@@ -697,4 +773,53 @@ func validateKnownAppVerifiedCatalogDispatchRequestRecord(record KnownAppVerifie
 		return KnownAppVerifiedCatalogDispatchRequestRecord{}, err
 	}
 	return record, nil
+}
+
+func validateKnownAppVerifiedCatalogDispatchRequestPayload(payload knownAppVerifiedCatalogDispatchRequestPayload) error {
+	switch {
+	case payload.SchemaVersion != KnownAppVerifiedCatalogDispatchRequestSchemaVersion || payload.RequestType != KnownAppVerifiedCatalogDispatchRequestType:
+		return errors.New("known app verified catalog dispatch request payload has invalid schema")
+	case payload.AppID == "" || payload.DisplayName == "" || payload.AppVersion == "":
+		return errors.New("known app verified catalog dispatch request payload requires known app identity")
+	case payload.LauncherName == "" || payload.RunnerRequestType != winapp.KnownDispatchSmokeRequestType || len(payload.RunnerArgv) < 15:
+		return errors.New("known app verified catalog dispatch request payload requires a managed runner argv")
+	case payload.RunnerArgv[0] != payload.LauncherName:
+		return errors.New("known app verified catalog dispatch request payload launcher does not match argv")
+	case payload.LaunchAuthorizationReceiptID == "" || payload.SessionGatedReviewReceiptID == "" || payload.ControlledExecutionSessionID == "" || payload.ControlledSessionRelativePath == "":
+		return errors.New("known app verified catalog dispatch request payload requires receipts and controlled session")
+	case payload.GuestBoundary != winapp.KnownDispatchGuestBoundary:
+		return errors.New("known app verified catalog dispatch request payload requires the controlled guest boundary")
+	case !dispatchRequestArgPair(payload.RunnerArgv, "--app", payload.AppID):
+		return errors.New("known app verified catalog dispatch request payload app argument mismatch")
+	case !dispatchRequestArgPair(payload.RunnerArgv, "--guest-boundary", payload.GuestBoundary):
+		return errors.New("known app verified catalog dispatch request payload guest boundary argument mismatch")
+	case !dispatchRequestArgPair(payload.RunnerArgv, "--receipt-id", payload.LaunchAuthorizationReceiptID):
+		return errors.New("known app verified catalog dispatch request payload launch receipt argument mismatch")
+	case !dispatchRequestArgPair(payload.RunnerArgv, "--review-receipt-id", payload.SessionGatedReviewReceiptID):
+		return errors.New("known app verified catalog dispatch request payload review receipt argument mismatch")
+	case !dispatchRequestArgPair(payload.RunnerArgv, "--session-id", payload.ControlledExecutionSessionID):
+		return errors.New("known app verified catalog dispatch request payload session argument mismatch")
+	case filepath.IsAbs(payload.ControlledSessionRelativePath) || strings.Contains(filepath.Clean(payload.ControlledSessionRelativePath), ".."):
+		return errors.New("known app verified catalog dispatch request payload requires safe relative session evidence")
+	}
+	for _, value := range []string{payload.SchemaVersion, payload.RequestType, payload.AppID, payload.DisplayName, payload.AppVersion, payload.LauncherName, payload.RunnerRequestType, payload.LaunchAuthorizationReceiptID, payload.SessionGatedReviewReceiptID, payload.ControlledExecutionSessionID, payload.ControlledSessionRelativePath, payload.GuestBoundary, payload.RecordedAtUTC} {
+		if value != "" && !singleLine(value) {
+			return errors.New("known app verified catalog dispatch request payload requires single-line fields")
+		}
+	}
+	for _, value := range payload.RunnerArgv {
+		if !singleLine(value) {
+			return errors.New("known app verified catalog dispatch request payload requires single-line argv")
+		}
+	}
+	return nil
+}
+
+func dispatchRequestArgPair(argv []string, name string, value string) bool {
+	for index := 0; index < len(argv)-1; index++ {
+		if argv[index] == name && argv[index+1] == value {
+			return true
+		}
+	}
+	return false
 }

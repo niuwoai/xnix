@@ -4,6 +4,20 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc204] - 2026-07-27
+
+### Added
+
+- Added the Go Runtime `known-app-verified-catalog-dispatch-runner-execution` command, which consumes a persisted verified-catalog dispatch request and invokes the managed launcher with Runtime-owner state, cache, receipt, review, and session arguments.
+- Added dispatch request read/digest validation and CLI coverage proving the managed launcher receives private runner inputs while public output hides state roots, cache roots, launcher paths, raw launcher output, backend details, and runner argument values.
+
+### Changed
+
+- Extended the dispatch execution bridge with optional Go-started QEMU guest startup so q4 can run the recorded request through the managed launcher without local host compilation.
+- Expanded the q4 targeted Go test default regex and layout guard to cover verified-catalog dispatch runner execution.
+- Verified rc204 on q4 with fresh 7zr dispatch request consumption, Go-started QEMU, delegated managed launcher execution, digest verification, artifact verification, managed artifact copy, controlled session digest verification, and closed host/container/path/raw-output/backend exposure gates.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc204`.
+
 ## [0.2.640-rc203] - 2026-07-27
 
 ### Added

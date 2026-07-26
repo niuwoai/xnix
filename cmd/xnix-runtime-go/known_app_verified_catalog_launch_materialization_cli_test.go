@@ -162,3 +162,133 @@ func TestKnownAppVerifiedCatalogDispatchRequestRecordCommandRejectsMissingInputs
 		t.Fatalf("missing handoff path must be rejected, got: %v", err)
 	}
 }
+
+func TestKnownAppVerifiedCatalogDispatchRunnerExecutionCommandInvokesManagedLauncher(t *testing.T) {
+	stateRoot := t.TempDir()
+	cacheRoot := filepath.Join(t.TempDir(), "known-cache")
+	sessionID := "known-app-controlled-execution-session-7zr-26.02"
+	requestRelativePath := "runtime/known-app-verified-catalog-dispatch-requests/known-app-verified-catalog-dispatch-request-7zr-26.02.json"
+	requestPath := filepath.Join(stateRoot, filepath.FromSlash(requestRelativePath))
+	if err := os.MkdirAll(filepath.Dir(requestPath), 0o700); err != nil {
+		t.Fatalf("MkdirAll request dir returned error: %v", err)
+	}
+	requestJSON := `{
+  "schema_version": "xnix.runtime.known_app_verified_catalog_dispatch_request.v1",
+  "request_type": "known-app-verified-catalog-dispatch-request-record",
+  "app_id": "7zr",
+  "display_name": "7-Zip standalone console executable",
+  "app_version": "26.02",
+  "launcher_name": "xnix-compat-launch",
+  "runner_request_type": "windows-known-app-dispatch-smoke",
+  "runner_argv": [
+    "xnix-compat-launch",
+    "--app", "7zr",
+    "--cache-root", "` + cacheRoot + `",
+    "--guest-boundary", "managed-known-app-guest-smoke",
+    "--state-root", "` + stateRoot + `",
+    "--receipt-id", "known-app-launch-authorization-7zr-26.02",
+    "--review-receipt-id", "known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02",
+    "--session-id", "` + sessionID + `"
+  ],
+  "launch_authorization_receipt_id": "known-app-launch-authorization-7zr-26.02",
+  "session_gated_review_receipt_id": "known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02",
+  "controlled_execution_session_id": "` + sessionID + `",
+  "controlled_session_relative_path": "execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json",
+  "guest_boundary": "managed-known-app-guest-smoke",
+  "recorded_at_utc": "2026-07-27T07:08:09Z"
+}
+`
+	if err := os.WriteFile(requestPath, []byte(requestJSON), 0o600); err != nil {
+		t.Fatalf("WriteFile request returned error: %v", err)
+	}
+	argsLog := filepath.Join(t.TempDir(), "launcher-args.log")
+	fakeLauncher := writeVerifiedCatalogFakeDispatchLauncher(t, argsLog)
+	t.Setenv("XNIX_FAKE_DISPATCH_ARGS_LOG", argsLog)
+
+	var output bytes.Buffer
+	err := run([]string{
+		"known-app-verified-catalog-dispatch-runner-execution",
+		"--state-root", stateRoot,
+		"--dispatch-request-relative-path", requestRelativePath,
+		"--launcher", fakeLauncher,
+		"--host", "127.0.0.1",
+		"--port", "2222",
+		"--user", "root",
+		"--key", filepath.Join(t.TempDir(), "id_ed25519"),
+		"--remote-dir", "/tmp/xnix-known-winapp-smoke",
+		"--owner-timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("known-app-verified-catalog-dispatch-runner-execution returned error: %v\n%s", err, output.String())
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("execution output must be JSON: %v\n%s", err, output.String())
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.known_app_verified_catalog_dispatch_execution.v1" ||
+		payload["request_type"] != "known-app-verified-catalog-dispatch-runner-execution" ||
+		payload["source"] != "known-app-verified-catalog-dispatch-request-record+runner-consumption" ||
+		payload["app_id"] != "7zr" ||
+		payload["dispatch_request_consumed"] != true ||
+		payload["dispatch_request_relative_path"] != requestRelativePath ||
+		payload["dispatch_request_digest_verified"] != true ||
+		payload["dispatch_runner_request_type"] != "windows-known-app-dispatch-smoke" ||
+		payload["dispatch_runner_name"] != filepath.Base(fakeLauncher) ||
+		payload["dispatch_runner_invoked"] != true ||
+		payload["dispatch_runner_exit_code"] != float64(0) ||
+		payload["dispatch_runner_output_json_observed"] != true ||
+		payload["dispatch_runner_argument_values_exposed"] != false ||
+		payload["runtime_owner_transport_supplied"] != true ||
+		payload["guest_start_requested"] != false ||
+		payload["guest_start_mode"] != "external" ||
+		payload["delegated_request_type"] != "windows-known-app-dispatch-smoke" ||
+		payload["delegated_status"] != "passed" ||
+		payload["delegated_runtime_owned_dispatch"] != true ||
+		payload["delegated_smoke_passed"] != true ||
+		payload["delegated_execution_started"] != true ||
+		payload["delegated_backend_process_started"] != false ||
+		payload["delegated_controlled_execution_session_consumed"] != true ||
+		payload["delegated_controlled_session_digest_verified"] != true ||
+		payload["raw_launcher_output_exposed"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected dispatch runner execution payload: %#v", payload)
+	}
+	for _, forbidden := range []string{stateRoot, cacheRoot, fakeLauncher, "id_ed25519", "/tmp/xnix-known-winapp-smoke"} {
+		if strings.Contains(output.String(), forbidden) {
+			t.Fatalf("execution output exposed owner-only value %q: %s", forbidden, output.String())
+		}
+	}
+	argsBytes, err := os.ReadFile(argsLog)
+	if err != nil {
+		t.Fatalf("ReadFile args log returned error: %v", err)
+	}
+	argsText := string(argsBytes)
+	for _, expected := range []string{"--state-root", stateRoot, "--cache-root", cacheRoot, "--receipt-id", "known-app-launch-authorization-7zr-26.02", "--review-receipt-id", "--session-id", sessionID, "--host", "127.0.0.1", "--port", "2222"} {
+		if !strings.Contains(argsText, expected) {
+			t.Fatalf("managed launcher did not receive expected private argument %q: %s", expected, argsText)
+		}
+	}
+}
+
+func TestKnownAppVerifiedCatalogDispatchRunnerExecutionCommandRejectsMissingInputs(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"known-app-verified-catalog-dispatch-runner-execution"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "requires --state-root") {
+		t.Fatalf("missing state root must be rejected, got: %v", err)
+	}
+	err = run([]string{"known-app-verified-catalog-dispatch-runner-execution", "--state-root", t.TempDir()}, &output)
+	if err == nil || !strings.Contains(err.Error(), "requires --dispatch-request-relative-path") {
+		t.Fatalf("missing dispatch request path must be rejected, got: %v", err)
+	}
+}
+
+func writeVerifiedCatalogFakeDispatchLauncher(t *testing.T, argsLog string) string {
+	t.Helper()
+	launcher := filepath.Join(t.TempDir(), "xnix-compat-launch")
+	script := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$XNIX_FAKE_DISPATCH_ARGS_LOG\"\nprintf '%s\\n' '{\"request_type\":\"windows-known-app-dispatch-smoke\",\"status\":\"passed\",\"guest_boundary\":\"managed-known-app-guest-smoke\",\"runtime_owned_dispatch\":true,\"artifact_verified\":true,\"managed_artifact_copied\":true,\"marker_observed\":true,\"smoke_passed\":true,\"execution_started\":true,\"backend_process_started\":false,\"controlled_execution_session_consumed\":true,\"controlled_session_digest_verified\":true,\"host_root_modified\":false,\"privileged_container_required\":false,\"host_networking_required\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false,\"backend_details_exposed\":false}'\n"
+	if err := os.WriteFile(launcher, []byte(script), 0o700); err != nil {
+		t.Fatalf("WriteFile fake launcher returned error: %v", err)
+	}
+	return launcher
+}
