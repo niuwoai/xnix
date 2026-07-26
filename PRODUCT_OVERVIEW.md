@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc169
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc170
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc170 checkpoint candidate exposes file-open owner-environment readiness in the KDE controlled-launch action read model without exposing environment values. `kde-controlled-launch-action-preview` now reports the static `xnix-compat-open %U` file-open entrypoint, marks it ready only when owner file-open entrypoint invocation evidence exists, lists the safe `XNIX_COMPAT_OPEN_*` environment key names required by controlled sessions, and keeps actual state roots, receipt ids, guest connection values, owner service arguments, backend details, and raw launcher output hidden from KDE. The local KDE action smoke no longer falls back to `go run` by default; local Go compilation requires the explicit `XNIX_ALLOW_LOCAL_GO_COMPILE=1` override, while compile-heavy build/test work remains q4-first.
 
 The v0.2.640-rc169 checkpoint candidate makes the Go `xnix-compat-open` entrypoint configurable by Runtime-owner environment defaults. `XNIX_COMPAT_OPEN_LAUNCHER_REGISTRY`, cache root, guest boundary, state root, launch authorization receipt id, session-gated review receipt id, controlled session id, guest SSH, guest display, host display, window match, timeout, and GUI wait values can now be injected by the owner/session environment while explicit command-line flags still take precedence. This keeps the packaged Dolphin service menu as a static `xnix-compat-open %U` desktop route without embedding backend paths, state roots, receipt ids, or guest connection details in KDE files, while allowing controlled sessions to supply the execution context required for the real q4 Sample Notepad file-open path.
 

@@ -100,6 +100,12 @@ func TestPreviewKDEControlledLaunchActionConsumesKDEGUICardRoute(t *testing.T) {
 		preview.DesktopCallableExecutionType != card.DesktopCallableExecutionType ||
 		!preview.OwnerFileOpenVerified ||
 		!preview.OwnerFileOpenEntrypointInvoked ||
+		preview.StaticFileOpenEntrypoint != "xnix-compat-open %U" ||
+		!preview.StaticFileOpenEntrypointReady ||
+		!preview.OwnerFileOpenEnvironmentReady ||
+		preview.OwnerFileOpenEnvironmentKeyCount != len(KDEControlledLaunchActionOwnerFileOpenEnvironmentKeys()) ||
+		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.OwnerFileOpenEnvironmentKeys, KDEControlledLaunchActionOwnerFileOpenEnvironmentKeys()) ||
+		preview.OwnerFileOpenEnvironmentValuesExposed ||
 		preview.OwnerDelegatedFileArgumentCount != 1 ||
 		preview.OwnerDelegatedFileArgumentCopiedCount != 1 ||
 		!preview.OwnerDelegatedFileArgumentsPassed ||
@@ -116,6 +122,48 @@ func TestPreviewKDEControlledLaunchActionConsumesKDEGUICardRoute(t *testing.T) {
 		preview.BackendLaunchEnabled ||
 		preview.ExecutionStarted {
 		t.Fatalf("unexpected GUI card controlled launch action preview: %#v", preview)
+	}
+}
+
+func TestPreviewKDEControlledLaunchActionSurfacesFileOpenOwnerEnvironmentKeysOnly(t *testing.T) {
+	stateRoot := t.TempDir()
+	record := recordKDEControlledLaunchActionGUIEvidence(t, stateRoot)
+	card := kdeControlledLaunchActionGUICard(record)
+
+	preview, err := PreviewKDEControlledLaunchAction(KDEControlledLaunchActionRequest{
+		StateRoot:        stateRoot,
+		KDECenterGUICard: &card,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKDEControlledLaunchAction returned error: %v", err)
+	}
+
+	required := []string{
+		"XNIX_COMPAT_LAUNCH",
+		"XNIX_COMPAT_OPEN_REGISTRY",
+		"XNIX_COMPAT_OPEN_EXECUTE",
+		"XNIX_COMPAT_OPEN_STATE_ROOT",
+		"XNIX_COMPAT_OPEN_RECEIPT_ID",
+		"XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID",
+		"XNIX_COMPAT_OPEN_SESSION_ID",
+		"XNIX_COMPAT_OPEN_GUEST_HOST",
+		"XNIX_COMPAT_OPEN_GUEST_PORT",
+		"XNIX_COMPAT_OPEN_GUEST_KEY",
+		"XNIX_COMPAT_OPEN_WINDOW_MATCH",
+	}
+	for _, key := range required {
+		if !containsString(preview.OwnerFileOpenEnvironmentKeys, key) {
+			t.Fatalf("file-open owner environment keys must include %s: %#v", key, preview.OwnerFileOpenEnvironmentKeys)
+		}
+	}
+	if preview.StaticFileOpenEntrypoint != "xnix-compat-open %U" ||
+		!preview.StaticFileOpenEntrypointReady ||
+		!preview.OwnerFileOpenEnvironmentReady ||
+		preview.OwnerFileOpenEnvironmentKeyCount != len(preview.OwnerFileOpenEnvironmentKeys) ||
+		preview.OwnerFileOpenEnvironmentValuesExposed ||
+		containsString(preview.OwnerFileOpenEnvironmentKeys, stateRoot) ||
+		containsString(preview.OwnerFileOpenEnvironmentKeys, record.EvidenceRelativePath) {
+		t.Fatalf("file-open owner environment readiness must expose only safe key names: %#v", preview)
 	}
 }
 

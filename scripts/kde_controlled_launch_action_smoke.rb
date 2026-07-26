@@ -24,6 +24,7 @@ GO_CACHE_ROOT = PROJECT_ROOT.join(".cache", "go")
 GO_TMP_ROOT = GO_CACHE_ROOT.join("tmp")
 EXECUTE_ENV = "XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE"
 EXECUTE_DBUS_FIXTURE_ENV = "XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE_DBUS_FIXTURE"
+ALLOW_LOCAL_GO_COMPILE_ENV = "XNIX_ALLOW_LOCAL_GO_COMPILE"
 
 def assert(condition, message)
   return if condition
@@ -41,7 +42,7 @@ end
 
 def runtime_go_command
   return ["xnix-runtime-go"] if command_available?("xnix-runtime-go")
-  return ["go", "run", "./cmd/xnix-runtime-go"] if command_available?("go")
+  return ["go", "run", "./cmd/xnix-runtime-go"] if ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1" && command_available?("go")
 
   nil
 end
@@ -189,7 +190,7 @@ FileUtils.mkdir_p(GO_TMP_ROOT)
 
 runtime_command = runtime_go_command
 unless runtime_command
-  puts "#{SKIP_MARKER} (xnix-runtime-go and go are unavailable)"
+  puts "#{SKIP_MARKER} (xnix-runtime-go is unavailable; local Go compilation is disabled by default, set #{ALLOW_LOCAL_GO_COMPILE_ENV}=1 only for an explicit local override or build on q4 with scripts/remote_go_build.rb --execute)"
   exit 0
 end
 
@@ -363,6 +364,14 @@ assert(gui_action["desktop_callable_route"] == "kde-dbus-runtime-status-action",
 assert(gui_action["kde_forwards_only_evidence_handle"] == true, "GUI page action must keep KDE evidence-only")
 assert(gui_action["owner_file_open_verified"] == true, "GUI page action must expose owner file-open evidence")
 assert(gui_action["owner_file_open_entrypoint_invoked"] == true, "GUI page action must expose owner file-open entrypoint evidence")
+assert(gui_action["static_file_open_entrypoint"] == "xnix-compat-open %U", "GUI page action must expose the static file-open desktop entrypoint")
+assert(gui_action["static_file_open_entrypoint_ready"] == true, "GUI page action must mark the static file-open entrypoint ready")
+assert(gui_action["owner_file_open_environment_ready"] == true, "GUI page action must expose owner file-open environment readiness")
+assert(gui_action["owner_file_open_environment_key_count"] == gui_action.fetch("owner_file_open_environment_keys").length, "GUI page action must count owner file-open environment keys")
+%w[XNIX_COMPAT_LAUNCH XNIX_COMPAT_OPEN_STATE_ROOT XNIX_COMPAT_OPEN_RECEIPT_ID XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID XNIX_COMPAT_OPEN_GUEST_HOST XNIX_COMPAT_OPEN_WINDOW_MATCH].each do |key|
+  assert(gui_action.fetch("owner_file_open_environment_keys").include?(key), "GUI page action must expose #{key} as a safe key name")
+end
+assert(gui_action["owner_file_open_environment_values_exposed"] == false, "GUI page action must not expose owner file-open environment values")
 assert(gui_action["owner_delegated_window_match"] == "messagebox-document.txt", "GUI page action must expose safe owner window-match evidence")
 assert_false_payload(
   gui_action,

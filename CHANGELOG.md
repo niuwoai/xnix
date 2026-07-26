@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc170] - 2026-07-26
+
+### Added
+
+- Added KDE controlled-launch action read-model fields for the static `xnix-compat-open %U` file-open entrypoint and safe owner environment key names.
+- Added Go, CLI, smoke, and layout checks proving file-open owner environment readiness is visible without exposing environment values, state roots, receipt ids, guest connection values, owner service arguments, backend details, or raw launcher output.
+
+### Changed
+
+- Disabled local `go run` fallback in the KDE controlled-launch action smoke by default; explicit `XNIX_ALLOW_LOCAL_GO_COMPILE=1` is now required for local Go compilation while q4 remains the compile-heavy default.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc170`.
+
 ## [0.2.640-rc169] - 2026-07-26
 
 ### Added

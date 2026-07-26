@@ -52,6 +52,12 @@ type KDEControlledLaunchActionPreview struct {
 	DesktopCallableExecutionType                      string   `json:"desktop_callable_execution_type"`
 	OwnerFileOpenVerified                             bool     `json:"owner_file_open_verified"`
 	OwnerFileOpenEntrypointInvoked                    bool     `json:"owner_file_open_entrypoint_invoked"`
+	StaticFileOpenEntrypoint                          string   `json:"static_file_open_entrypoint,omitempty"`
+	StaticFileOpenEntrypointReady                     bool     `json:"static_file_open_entrypoint_ready"`
+	OwnerFileOpenEnvironmentReady                     bool     `json:"owner_file_open_environment_ready"`
+	OwnerFileOpenEnvironmentKeyCount                  int      `json:"owner_file_open_environment_key_count"`
+	OwnerFileOpenEnvironmentKeys                      []string `json:"owner_file_open_environment_keys,omitempty"`
+	OwnerFileOpenEnvironmentValuesExposed             bool     `json:"owner_file_open_environment_values_exposed"`
 	OwnerDelegatedFileArgumentCount                   int      `json:"owner_delegated_file_argument_count"`
 	OwnerDelegatedFileArgumentCopiedCount             int      `json:"owner_delegated_file_argument_copied_count"`
 	OwnerDelegatedFileArgumentsPassed                 bool     `json:"owner_delegated_file_arguments_passed"`
@@ -178,6 +184,14 @@ func PreviewKDEControlledLaunchAction(request KDEControlledLaunchActionRequest) 
 		preview.OwnerDelegatedRawFileArgumentPathExposed = kdeCenterGUICard.OwnerDelegatedRawFileArgumentPathExposed
 		preview.OwnerDelegatedWindowMatch = strings.TrimSpace(kdeCenterGUICard.OwnerDelegatedWindowMatch)
 		preview.OwnerDelegatedWindowMatchObserved = kdeCenterGUICard.OwnerDelegatedWindowMatchObserved
+		if preview.OwnerFileOpenEntrypointInvoked {
+			preview.StaticFileOpenEntrypoint = "xnix-compat-open %U"
+			preview.StaticFileOpenEntrypointReady = true
+			preview.OwnerFileOpenEnvironmentKeys = KDEControlledLaunchActionOwnerFileOpenEnvironmentKeys()
+			preview.OwnerFileOpenEnvironmentKeyCount = len(preview.OwnerFileOpenEnvironmentKeys)
+			preview.OwnerFileOpenEnvironmentReady = true
+			preview.OwnerFileOpenEnvironmentValuesExposed = false
+		}
 		if preview.OwnerFileOpenVerified {
 			preview.DesktopSafeSummary = trigger.DisplayName + " can be presented as a KDE controlled-launch file-open action that forwards only the Runtime-status evidence handle to D-Bus."
 		}
@@ -192,6 +206,34 @@ func PreviewKDEControlledLaunchAction(request KDEControlledLaunchActionRequest) 
 		}
 	}
 	return preview, nil
+}
+
+func KDEControlledLaunchActionOwnerFileOpenEnvironmentKeys() []string {
+	return []string{
+		"XNIX_COMPAT_LAUNCH",
+		"XNIX_COMPAT_OPEN_REGISTRY",
+		"XNIX_COMPAT_OPEN_EXECUTE",
+		"XNIX_COMPAT_OPEN_LAUNCHER_REGISTRY",
+		"XNIX_COMPAT_OPEN_CACHE_ROOT",
+		"XNIX_COMPAT_OPEN_GUEST_BOUNDARY",
+		"XNIX_COMPAT_OPEN_STATE_ROOT",
+		"XNIX_COMPAT_OPEN_RECEIPT_ID",
+		"XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID",
+		"XNIX_COMPAT_OPEN_SESSION_ID",
+		"XNIX_COMPAT_OPEN_GUEST_HOST",
+		"XNIX_COMPAT_OPEN_GUEST_PORT",
+		"XNIX_COMPAT_OPEN_GUEST_USER",
+		"XNIX_COMPAT_OPEN_GUEST_KEY",
+		"XNIX_COMPAT_OPEN_GUEST_REMOTE_DIR",
+		"XNIX_COMPAT_OPEN_GUEST_SSH",
+		"XNIX_COMPAT_OPEN_GUEST_SCP",
+		"XNIX_COMPAT_OPEN_GUEST_XWININFO",
+		"XNIX_COMPAT_OPEN_GUEST_DISPLAY",
+		"XNIX_COMPAT_OPEN_HOST_DISPLAY",
+		"XNIX_COMPAT_OPEN_WINDOW_MATCH",
+		"XNIX_COMPAT_OPEN_TIMEOUT",
+		"XNIX_COMPAT_OPEN_GUI_WAIT",
+	}
 }
 
 func kdeControlledLaunchActionGUICardFromPage(page KDECenterPagePreview, appID string) (KDECenterPageKnownAppMatrixCard, error) {
@@ -359,6 +401,22 @@ func validateKDEControlledLaunchActionPreview(preview KDEControlledLaunchActionP
 	if preview.OwnerFileOpenEntrypointInvoked && !preview.OwnerFileOpenVerified {
 		return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open entrypoint evidence requires verified file-open evidence")
 	}
+	if preview.StaticFileOpenEntrypointReady || preview.OwnerFileOpenEnvironmentReady || len(preview.OwnerFileOpenEnvironmentKeys) > 0 || preview.OwnerFileOpenEnvironmentKeyCount > 0 {
+		switch {
+		case !preview.OwnerFileOpenEntrypointInvoked:
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open environment requires entrypoint invocation evidence")
+		case preview.StaticFileOpenEntrypoint != "xnix-compat-open %U":
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open environment requires the static desktop entrypoint")
+		case !preview.StaticFileOpenEntrypointReady || !preview.OwnerFileOpenEnvironmentReady:
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open environment must be ready together with the static entrypoint")
+		case preview.OwnerFileOpenEnvironmentValuesExposed:
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action must not expose file-open environment values")
+		case preview.OwnerFileOpenEnvironmentKeyCount != len(KDEControlledLaunchActionOwnerFileOpenEnvironmentKeys()):
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open environment key count is inconsistent")
+		case !sameRuntimeStatusLaunchOwnerFixtureArgs(preview.OwnerFileOpenEnvironmentKeys, KDEControlledLaunchActionOwnerFileOpenEnvironmentKeys()):
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open environment keys are incomplete")
+		}
+	}
 	for _, value := range []string{
 		preview.SchemaVersion,
 		preview.RequestType,
@@ -384,6 +442,7 @@ func validateKDEControlledLaunchActionPreview(preview KDEControlledLaunchActionP
 		preview.DesktopCallableRoute,
 		preview.DesktopCallableRuntimeMethod,
 		preview.DesktopCallableExecutionType,
+		preview.StaticFileOpenEntrypoint,
 		preview.OwnerDelegatedWindowMatch,
 		preview.DesktopSafeSummary,
 	} {
@@ -394,6 +453,11 @@ func validateKDEControlledLaunchActionPreview(preview KDEControlledLaunchActionP
 	for _, value := range append(append([]string{}, preview.KDEForwardedArguments...), append(preview.RuntimePreviewCommand, preview.BlockedActions...)...) {
 		if value != "" && !singleLine(value) {
 			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action requires single-line list values")
+		}
+	}
+	for _, value := range preview.OwnerFileOpenEnvironmentKeys {
+		if value != "" && !singleLine(value) {
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action requires single-line file-open environment keys")
 		}
 	}
 	if err := validateNoBackendTerms(preview, "KDE controlled launch action"); err != nil {

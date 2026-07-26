@@ -102,6 +102,11 @@ func TestKDEControlledLaunchActionPreviewCommandConsumesKDEGUICardFile(t *testin
 		payload["desktop_callable_execution_type"] != appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType ||
 		payload["owner_file_open_verified"] != true ||
 		payload["owner_file_open_entrypoint_invoked"] != true ||
+		payload["static_file_open_entrypoint"] != "xnix-compat-open %U" ||
+		payload["static_file_open_entrypoint_ready"] != true ||
+		payload["owner_file_open_environment_ready"] != true ||
+		payload["owner_file_open_environment_key_count"] != float64(len(appidentity.KDEControlledLaunchActionOwnerFileOpenEnvironmentKeys())) ||
+		payload["owner_file_open_environment_values_exposed"] != false ||
 		payload["owner_delegated_file_argument_count"] != float64(1) ||
 		payload["owner_delegated_file_argument_copied_count"] != float64(1) ||
 		payload["owner_delegated_file_arguments_passed"] != true ||
@@ -117,6 +122,15 @@ func TestKDEControlledLaunchActionPreviewCommandConsumesKDEGUICardFile(t *testin
 		payload["desktop_launch_enabled"] != false ||
 		payload["execution_started"] != false {
 		t.Fatalf("unexpected KDE GUI card action payload: %#v", payload)
+	}
+	envKeys, ok := payload["owner_file_open_environment_keys"].([]any)
+	if !ok || len(envKeys) != len(appidentity.KDEControlledLaunchActionOwnerFileOpenEnvironmentKeys()) {
+		t.Fatalf("KDE GUI card action must expose the owner file-open environment key names: %#v", payload)
+	}
+	for _, key := range []string{"XNIX_COMPAT_LAUNCH", "XNIX_COMPAT_OPEN_STATE_ROOT", "XNIX_COMPAT_OPEN_RECEIPT_ID", "XNIX_COMPAT_OPEN_GUEST_KEY"} {
+		if !jsonArrayContains(envKeys, key) {
+			t.Fatalf("KDE GUI card action must expose %s as a safe key name: %#v", key, payload)
+		}
 	}
 	forwardedArgs, ok := payload["kde_forwarded_arguments"].([]any)
 	if !ok || len(forwardedArgs) != 1 || forwardedArgs[0] != record.EvidenceRelativePath {
@@ -163,6 +177,10 @@ func TestKDEControlledLaunchActionPreviewCommandConsumesKDECenterPageFile(t *tes
 		payload["desktop_callable_route"] != "kde-dbus-runtime-status-action" ||
 		payload["owner_file_open_verified"] != true ||
 		payload["owner_file_open_entrypoint_invoked"] != true ||
+		payload["static_file_open_entrypoint"] != "xnix-compat-open %U" ||
+		payload["owner_file_open_environment_ready"] != true ||
+		payload["owner_file_open_environment_key_count"] != float64(len(appidentity.KDEControlledLaunchActionOwnerFileOpenEnvironmentKeys())) ||
+		payload["owner_file_open_environment_values_exposed"] != false ||
 		payload["owner_delegated_window_match"] != "messagebox-document.txt" ||
 		payload["kde_forwards_only_evidence_handle"] != true ||
 		payload["owner_service_args_exposed_to_kde"] != false ||
@@ -171,6 +189,10 @@ func TestKDEControlledLaunchActionPreviewCommandConsumesKDECenterPageFile(t *tes
 		payload["backend_launch_enabled"] != false ||
 		payload["execution_started"] != false {
 		t.Fatalf("unexpected KDE center page action payload: %#v", payload)
+	}
+	envKeys, ok := payload["owner_file_open_environment_keys"].([]any)
+	if !ok || !jsonArrayContains(envKeys, "XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID") || !jsonArrayContains(envKeys, "XNIX_COMPAT_OPEN_WINDOW_MATCH") {
+		t.Fatalf("KDE center page action must expose safe owner file-open environment key names: %#v", payload)
 	}
 	forwardedArgs, ok := payload["kde_forwarded_arguments"].([]any)
 	if !ok || len(forwardedArgs) != 1 || forwardedArgs[0] != record.EvidenceRelativePath {
@@ -235,6 +257,15 @@ func recordKDEControlledLaunchActionCLIEvidence(t *testing.T, stateRoot string) 
 		t.Fatalf("RecordKnownAppKDERuntimeStatusLaunchEvidence returned error: %v", err)
 	}
 	return record
+}
+
+func jsonArrayContains(values []any, candidate string) bool {
+	for _, value := range values {
+		if text, ok := value.(string); ok && text == candidate {
+			return true
+		}
+	}
+	return false
 }
 
 func recordKDEControlledLaunchActionCLIGUIEvidence(t *testing.T, stateRoot string) appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecord {
