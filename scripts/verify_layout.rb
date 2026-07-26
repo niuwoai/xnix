@@ -1054,6 +1054,18 @@ end
 plasmoid_metadata = read_project_file("kde/plasmoids/org.xnix.compatibilitycenter/metadata.json")
 assert(plasmoid_metadata.include?("\"Version\": \"#{EXPECTED_VERSION}\""), "Plasma metadata must reference #{EXPECTED_VERSION}")
 assert(plasmoid_metadata.include?("xnix-kde-center-model"), "Plasma metadata must declare the Runtime read-model command")
+plasmoid_qml = read_project_file("kde/plasmoids/org.xnix.compatibilitycenter/contents/ui/main.qml")
+%w[
+  external_app_run_record_consumed
+  external_app_handle_consumed
+  external_app_import_record_consumed
+  imported_artifact_digest_verified
+  window_observed
+  x_window_observed
+].each do |field|
+  assert(plasmoid_qml.include?(field), "Plasma QML must declare the real Windows GUI evidence card field #{field}")
+end
+assert(plasmoid_qml.include?("external app handle"), "Plasma QML must describe imported desktop-handle GUI evidence")
 
 dolphin_service_menu = read_project_file("kde/dolphin/servicemenus/xnix-open-with-compatibility.desktop")
 assert(dolphin_service_menu.include?("X-KDE-ServiceTypes=KonqPopupMenu/Plugin"), "Dolphin service menu must target Dolphin popup integration")

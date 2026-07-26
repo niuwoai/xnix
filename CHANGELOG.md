@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc146] - 2026-07-26
+
+### Changed
+
+- Updated the KDE Compatibility Center plasmoid GUI evidence card contract to declare external app run, handle, import-record, digest, and observed-window fields.
+- Added layout verification for the plasmoid real Windows GUI evidence field contract so KDE shell packaging stays aligned with the Go Runtime read model.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc146`.
+
 ## [0.2.640-rc145] - 2026-07-26
 
 ### Changed

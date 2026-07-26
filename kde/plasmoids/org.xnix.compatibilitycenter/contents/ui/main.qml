@@ -17,6 +17,12 @@ PlasmoidItem {
         "display_name",
         "recipe_backed",
         "recipe_app_id",
+        "external_app_run_record_consumed",
+        "external_app_handle_consumed",
+        "external_app_import_record_consumed",
+        "imported_artifact_digest_verified",
+        "window_observed",
+        "x_window_observed",
         "smoke_status",
         "compatibility_state",
         "center_card_state",
@@ -64,12 +70,12 @@ PlasmoidItem {
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: "This page expects kde-center-page-preview to provide known_app_gui_evidence_count, known_app_owner_controlled_gui_evidence_count, known_app_owner_managed_copy_verified_count, and known_app_gui_evidence_cards from wine-guest-gui-smoke or recipe-backed winapp-smoke-container-x-gui."
+            text: "This page expects kde-center-page-preview to provide known_app_gui_evidence_count, known_app_owner_controlled_gui_evidence_count, known_app_owner_managed_copy_verified_count, and known_app_gui_evidence_cards from wine-guest-gui-smoke, recipe-backed winapp-smoke-container-x-gui, or imported external Windows app desktop handle runs."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: "The KDE read model renders display_name, recipe_backed, recipe_app_id, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, owner_controlled_runtime_launch_verified, owner_managed_copy_verified, owner_evidence_handoff_ready, runtime_dispatch_verified, primary_action_id, primary_action_kind, primary_action_label, desktop_callable_route, desktop_dbus_method, and desktop_evidence_handle_forwarded from each safe card."
+            text: "The KDE read model renders display_name, recipe_backed, recipe_app_id, external_app_run_record_consumed, external_app_handle_consumed, external_app_import_record_consumed, imported_artifact_digest_verified, window_observed, x_window_observed, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, owner_controlled_runtime_launch_verified, owner_managed_copy_verified, owner_evidence_handoff_ready, runtime_dispatch_verified, primary_action_id, primary_action_kind, primary_action_label, desktop_callable_route, desktop_dbus_method, and desktop_evidence_handle_forwarded from each safe card."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }
@@ -79,7 +85,7 @@ PlasmoidItem {
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: "A passing owner-controlled GUI card means the Runtime owner service invoked the managed launcher, copied the Windows .exe into the QEMU guest when needed, launched it by Wine, and observed it as an X11 window."
+            text: "A passing owner-controlled GUI card means the Runtime owner service invoked the managed launcher, copied the Windows .exe into the QEMU guest when needed, launched it by Wine, and observed it as an X11 window. A passing imported desktop-handle GUI card means the staged desktop entry invoked xnix-compat-launch with only the external app handle, the Runtime consumed the import record, and KDE saw the observed-window evidence without raw paths."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc145
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc146
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc146 checkpoint candidate aligns the KDE Compatibility Center plasmoid with the real imported Windows app desktop evidence path. The QML card contract now declares the Runtime/KDE fields that prove a staged desktop entry launched through an opaque external app handle, consumed the Runtime run record and import record, verified the imported artifact digest, and observed a real Wine/Xvfb window. `scripts/verify_layout.rb` now checks those field names directly so KDE shell packaging cannot drift away from the Go Runtime read model while still keeping launch authority, backend details, raw paths, Docker socket mounts, host mounts, host networking, and host-root mutation outside the desktop shell.
 
 The v0.2.640-rc145 checkpoint candidate carries imported external Windows app handle evidence into KDE-facing Runtime read models. Real GUI evidence packet consumption now preserves and validates `external_app_handle_consumed`, known app smoke summaries and KDE Compatibility Center GUI cards expose the same field, and the staged external desktop smoke requires both Runtime packet and KDE card handle evidence after launching through `xnix-compat-launch --external-app-handle APPID`. This proves the observed Wine/Xvfb window came from the handle-only desktop route without exposing raw import-record, state-root, executable, Docker, backend, host mount, or host-root mutation details.
 
