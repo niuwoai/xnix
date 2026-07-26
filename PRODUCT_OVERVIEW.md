@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc207
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc208
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc208 checkpoint turns verified-catalog run plans into desktop-callable Runtime-owned handoff descriptions. `known-app-verified-catalog-run-plan-preview --verified-catalog CATALOG.json --app APP_ID` now exposes a safe action id, owner route, Runtime method, execution type, and app-id-only forwarded arguments for both console and GUI catalog entries. GUI run plans also state that GUI evidence, window observation, and owner file-open verification are required and consumed. The preview remains review-only: KDE cannot directly launch, write desktop files, reconstruct receipts, inspect Runtime state roots, expose owner inputs, leak q4 paths, or compile on the host.
 
 The v0.2.640-rc207 checkpoint projects verified-catalog GUI entries into desktop read models. Compatibility Center now reports `known_app_verified_catalog_gui_application_count`, GUI application ids, and GUI application cards when the verified catalog includes a real GUI evidence packet. KDE Center page previews also expose `known_app_verified_catalog_gui_application_count`, `known_app_verified_catalog_gui_cards`, and a `known-app-verified-catalog-gui` source marker. These fields let KDE and AI surfaces distinguish review-only GUI compatibility proof from console matrix entries without exposing raw q4 paths, raw window summaries, backend details, or enabling direct launch.
 

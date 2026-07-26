@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc208] - 2026-07-27
+
+### Added
+
+- Added Runtime-owned action handoff fields to verified-catalog run plans, including a desktop-callable action id, owner route, Runtime method, execution type, and app-id-only forwarded arguments.
+- Added GUI-specific run-plan evidence requirements so GUI catalog entries declare consumed GUI evidence, required window observation, and owner file-open verification without exposing raw q4 paths or desktop state roots.
+- Added Go and CLI coverage for MessageBox GUI run-plan handoffs and console catalog run-plan handoffs.
+
+### Changed
+
+- Kept verified-catalog run-plan previews review-only: KDE still cannot launch directly, write desktop files, reconstruct receipts, inspect Runtime state roots, expose owner inputs, or compile on the host.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc208`.
+
 ## [0.2.640-rc207] - 2026-07-27
 
 ### Added

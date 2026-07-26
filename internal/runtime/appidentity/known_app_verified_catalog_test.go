@@ -173,6 +173,21 @@ func TestPreviewKnownAppVerifiedCatalogRunPlanSelectsGUIRunnableApp(t *testing.T
 		strings.Join(preview.LaunchRequestCommand, " ") != "xnix-compat-launch --app org.xnix.apps.messagebox" ||
 		strings.Join(preview.RemoteSmokeCommand, " ") != "ruby scripts/q4_messagebox_smoke.rb --execute --owner-file-open" ||
 		preview.RemoteSmokeRequestType != "q4-messagebox-smoke" ||
+		!preview.RuntimeOwnedActionReady ||
+		preview.DesktopCallableActionID != "review-known-app-gui-evidence" ||
+		preview.DesktopCallableRoute != "runtime-owner://known-app-verified-catalog/run-plan" ||
+		preview.DesktopCallableRuntimeMethod != "PlanKnownVerifiedApplicationRun" ||
+		preview.DesktopCallableExecutionType != "review-only-q4-gui-smoke" ||
+		strings.Join(preview.DesktopForwardedArguments, " ") != "org.xnix.apps.messagebox" ||
+		!preview.DesktopForwardsOnlyAppID ||
+		preview.DesktopReceiptFieldsReconstructed ||
+		preview.DesktopKDEStateRootAccess ||
+		preview.DesktopOwnerInputsExposed ||
+		!preview.GUIEvidenceRequired ||
+		!preview.GUIEvidenceConsumed ||
+		!preview.WindowObservationRequired ||
+		!preview.OwnerFileOpenRequired ||
+		!preview.OwnerFileOpenVerified ||
 		!preview.Q4ExecutionRequired ||
 		!preview.Q4ExecutionPlanned ||
 		preview.Q4ExecutionStarted ||
@@ -214,6 +229,23 @@ func TestPreviewKnownAppVerifiedCatalogRunPlanSelectsQ4RunnableApp(t *testing.T)
 		strings.Join(preview.RemoteSmokeCommand, " ") != "ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app busybox-w32" ||
 		preview.RemoteSmokeRequestType != "remote-known-winapp-guest-wine-smoke" {
 		t.Fatalf("unexpected run commands: %#v", preview)
+	}
+	if !preview.RuntimeOwnedActionReady ||
+		preview.DesktopCallableActionID != "review-known-app-matrix-evidence" ||
+		preview.DesktopCallableRoute != "runtime-owner://known-app-verified-catalog/run-plan" ||
+		preview.DesktopCallableRuntimeMethod != "PlanKnownVerifiedApplicationRun" ||
+		preview.DesktopCallableExecutionType != "review-only-q4-known-app-smoke" ||
+		strings.Join(preview.DesktopForwardedArguments, " ") != "busybox-w32" ||
+		!preview.DesktopForwardsOnlyAppID ||
+		preview.DesktopReceiptFieldsReconstructed ||
+		preview.DesktopKDEStateRootAccess ||
+		preview.DesktopOwnerInputsExposed ||
+		preview.GUIEvidenceRequired ||
+		preview.GUIEvidenceConsumed ||
+		preview.WindowObservationRequired ||
+		preview.OwnerFileOpenRequired ||
+		preview.OwnerFileOpenVerified {
+		t.Fatalf("unexpected desktop action handoff fields: %#v", preview)
 	}
 	if !preview.Q4ExecutionRequired ||
 		!preview.Q4ExecutionPlanned ||

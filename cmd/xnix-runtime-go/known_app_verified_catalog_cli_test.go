@@ -578,6 +578,87 @@ func TestKnownAppVerifiedCatalogRunPlanPreviewCommandSelectsQ4RunnableApp(t *tes
 	}
 }
 
+func TestKnownAppVerifiedCatalogRunPlanPreviewCommandSelectsGUIRunnableApp(t *testing.T) {
+	catalogPath := writeKnownAppVerifiedCatalogCLIFile(t, true)
+
+	var output bytes.Buffer
+	err := run([]string{"known-app-verified-catalog-run-plan-preview", "--verified-catalog", catalogPath, "--app", "org.xnix.apps.messagebox"}, &output)
+	if err != nil {
+		t.Fatalf("known-app-verified-catalog-run-plan-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_app_verified_catalog_run_plan.v1" ||
+		payload["request_type"] != "known-app-verified-catalog-run-plan-preview" ||
+		payload["source"] != "known-app-verified-catalog+q4-run-plan" ||
+		payload["runtime_method"] != "PlanKnownVerifiedApplicationRun" ||
+		payload["read_method"] != "GetKnownVerifiedApplicationRunPlan" ||
+		payload["verified_catalog_consumed"] != true ||
+		payload["requested_app_id"] != "org.xnix.apps.messagebox" ||
+		payload["app_id"] != "org.xnix.apps.messagebox" ||
+		payload["verification_state"] != "verified-real-gui-q4-run" ||
+		payload["compatibility_state"] != "owner-controlled-gui-qemu-wine-verified" ||
+		payload["desktop_catalog_state"] != "visible-review-only" {
+		t.Fatalf("unexpected GUI run plan payload: %#v", payload)
+	}
+	launchCommand := payload["launch_request_command"].([]any)
+	remoteSmokeCommand := payload["remote_smoke_command"].([]any)
+	forwardedArguments := payload["desktop_forwarded_arguments"].([]any)
+	if launchCommand[0] != "xnix-compat-launch" ||
+		launchCommand[1] != "--app" ||
+		launchCommand[2] != "org.xnix.apps.messagebox" ||
+		remoteSmokeCommand[0] != "ruby" ||
+		remoteSmokeCommand[1] != "scripts/q4_messagebox_smoke.rb" ||
+		remoteSmokeCommand[2] != "--execute" ||
+		remoteSmokeCommand[3] != "--owner-file-open" ||
+		payload["remote_smoke_request_type"] != "q4-messagebox-smoke" ||
+		forwardedArguments[0] != "org.xnix.apps.messagebox" {
+		t.Fatalf("unexpected GUI run plan commands: %#v", payload)
+	}
+	if payload["runtime_owned_action_ready"] != true ||
+		payload["desktop_callable_action_id"] != "review-known-app-gui-evidence" ||
+		payload["desktop_callable_route"] != "runtime-owner://known-app-verified-catalog/run-plan" ||
+		payload["desktop_callable_runtime_method"] != "PlanKnownVerifiedApplicationRun" ||
+		payload["desktop_callable_execution_type"] != "review-only-q4-gui-smoke" ||
+		payload["desktop_forwards_only_app_id"] != true ||
+		payload["desktop_receipt_fields_reconstructed"] != false ||
+		payload["desktop_kde_state_root_access"] != false ||
+		payload["desktop_owner_inputs_exposed"] != false ||
+		payload["gui_evidence_required"] != true ||
+		payload["gui_evidence_consumed"] != true ||
+		payload["window_observation_required"] != true ||
+		payload["owner_file_open_required"] != true ||
+		payload["owner_file_open_verified"] != true {
+		t.Fatalf("unexpected GUI run plan action handoff fields: %#v", payload)
+	}
+	if payload["q4_execution_required"] != true ||
+		payload["q4_execution_planned"] != true ||
+		payload["q4_execution_started"] != false ||
+		payload["review_only"] != true ||
+		payload["operator_review_required"] != true ||
+		payload["direct_launch_enabled"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["desktop_files_written"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_output_exposed"] != false ||
+		payload["remote_path_exposed"] != false ||
+		payload["host_compilation_required"] != false ||
+		payload["host_compilation_avoided"] != true ||
+		payload["targeted_remote_verification_ready"] != true {
+		t.Fatalf("unexpected GUI run plan safety flags: %#v", payload)
+	}
+	if strings.Contains(output.String(), catalogPath) ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") {
+		t.Fatalf("GUI run plan exposed local or q4 evidence paths: %s", output.String())
+	}
+}
+
 func TestKnownAppVerifiedCatalogRunPlanPreviewCommandRejectsUnknownApp(t *testing.T) {
 	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
 	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {

@@ -114,50 +114,65 @@ type KnownAppVerifiedCatalogApplication struct {
 }
 
 type KnownAppVerifiedCatalogRunPlanPreview struct {
-	SchemaVersion                   string   `json:"schema_version"`
-	RequestType                     string   `json:"request_type"`
-	Source                          string   `json:"source"`
-	Desktop                         string   `json:"desktop"`
-	RuntimeMethod                   string   `json:"runtime_method"`
-	ReadMethod                      string   `json:"read_method"`
-	VerifiedCatalogConsumed         bool     `json:"verified_catalog_consumed"`
-	RequestedAppID                  string   `json:"requested_app_id"`
-	AppID                           string   `json:"app_id"`
-	DisplayName                     string   `json:"display_name"`
-	AppVersion                      string   `json:"app_version"`
-	VerificationState               string   `json:"verification_state"`
-	CompatibilityState              string   `json:"compatibility_state"`
-	DesktopCatalogState             string   `json:"desktop_catalog_state"`
-	LauncherSurface                 string   `json:"launcher_surface"`
-	LaunchRequestCommand            []string `json:"launch_request_command"`
-	RemoteSmokeCommand              []string `json:"remote_smoke_command"`
-	RemoteSmokeRequestType          string   `json:"remote_smoke_request_type"`
-	Q4ExecutionRequired             bool     `json:"q4_execution_required"`
-	Q4ExecutionPlanned              bool     `json:"q4_execution_planned"`
-	Q4ExecutionStarted              bool     `json:"q4_execution_started"`
-	ReviewOnly                      bool     `json:"review_only"`
-	OperatorReviewRequired          bool     `json:"operator_review_required"`
-	RuntimeOwned                    bool     `json:"runtime_owned"`
-	GoRuntimeBacked                 bool     `json:"go_runtime_backed"`
-	KDEPolicyOwner                  bool     `json:"kde_policy_owner"`
-	DirectLaunchEnabled             bool     `json:"direct_launch_enabled"`
-	LaunchEnabled                   bool     `json:"launch_enabled"`
-	ExecutionStarted                bool     `json:"execution_started"`
-	BackendLaunchEnabled            bool     `json:"backend_launch_enabled"`
-	DesktopFilesWritten             bool     `json:"desktop_files_written"`
-	HostRootModified                bool     `json:"host_root_modified"`
-	BackendDetailsExposed           bool     `json:"backend_details_exposed"`
-	RawOutputExposed                bool     `json:"raw_output_exposed"`
-	RemotePathExposed               bool     `json:"remote_path_exposed"`
-	PrivilegedContainerRequired     bool     `json:"privileged_container_required"`
-	HostNetworkingRequired          bool     `json:"host_networking_required"`
-	DockerSocketMounted             bool     `json:"docker_socket_mounted"`
-	BroadHostMountRequired          bool     `json:"broad_host_mount_required"`
-	HostCompilationRequired         bool     `json:"host_compilation_required"`
-	HostCompilationAvoided          bool     `json:"host_compilation_avoided"`
-	TargetedRemoteVerificationReady bool     `json:"targeted_remote_verification_ready"`
-	BlockedActions                  []string `json:"blocked_actions"`
-	DesktopSafeSummary              string   `json:"desktop_safe_summary"`
+	SchemaVersion                     string   `json:"schema_version"`
+	RequestType                       string   `json:"request_type"`
+	Source                            string   `json:"source"`
+	Desktop                           string   `json:"desktop"`
+	RuntimeMethod                     string   `json:"runtime_method"`
+	ReadMethod                        string   `json:"read_method"`
+	VerifiedCatalogConsumed           bool     `json:"verified_catalog_consumed"`
+	RequestedAppID                    string   `json:"requested_app_id"`
+	AppID                             string   `json:"app_id"`
+	DisplayName                       string   `json:"display_name"`
+	AppVersion                        string   `json:"app_version"`
+	VerificationState                 string   `json:"verification_state"`
+	CompatibilityState                string   `json:"compatibility_state"`
+	DesktopCatalogState               string   `json:"desktop_catalog_state"`
+	LauncherSurface                   string   `json:"launcher_surface"`
+	LaunchRequestCommand              []string `json:"launch_request_command"`
+	RemoteSmokeCommand                []string `json:"remote_smoke_command"`
+	RemoteSmokeRequestType            string   `json:"remote_smoke_request_type"`
+	RuntimeOwnedActionReady           bool     `json:"runtime_owned_action_ready"`
+	DesktopCallableActionID           string   `json:"desktop_callable_action_id"`
+	DesktopCallableRoute              string   `json:"desktop_callable_route"`
+	DesktopCallableRuntimeMethod      string   `json:"desktop_callable_runtime_method"`
+	DesktopCallableExecutionType      string   `json:"desktop_callable_execution_type"`
+	DesktopForwardedArguments         []string `json:"desktop_forwarded_arguments"`
+	DesktopForwardsOnlyAppID          bool     `json:"desktop_forwards_only_app_id"`
+	DesktopReceiptFieldsReconstructed bool     `json:"desktop_receipt_fields_reconstructed"`
+	DesktopKDEStateRootAccess         bool     `json:"desktop_kde_state_root_access"`
+	DesktopOwnerInputsExposed         bool     `json:"desktop_owner_inputs_exposed"`
+	GUIEvidenceRequired               bool     `json:"gui_evidence_required"`
+	GUIEvidenceConsumed               bool     `json:"gui_evidence_consumed"`
+	WindowObservationRequired         bool     `json:"window_observation_required"`
+	OwnerFileOpenRequired             bool     `json:"owner_file_open_required"`
+	OwnerFileOpenVerified             bool     `json:"owner_file_open_verified"`
+	Q4ExecutionRequired               bool     `json:"q4_execution_required"`
+	Q4ExecutionPlanned                bool     `json:"q4_execution_planned"`
+	Q4ExecutionStarted                bool     `json:"q4_execution_started"`
+	ReviewOnly                        bool     `json:"review_only"`
+	OperatorReviewRequired            bool     `json:"operator_review_required"`
+	RuntimeOwned                      bool     `json:"runtime_owned"`
+	GoRuntimeBacked                   bool     `json:"go_runtime_backed"`
+	KDEPolicyOwner                    bool     `json:"kde_policy_owner"`
+	DirectLaunchEnabled               bool     `json:"direct_launch_enabled"`
+	LaunchEnabled                     bool     `json:"launch_enabled"`
+	ExecutionStarted                  bool     `json:"execution_started"`
+	BackendLaunchEnabled              bool     `json:"backend_launch_enabled"`
+	DesktopFilesWritten               bool     `json:"desktop_files_written"`
+	HostRootModified                  bool     `json:"host_root_modified"`
+	BackendDetailsExposed             bool     `json:"backend_details_exposed"`
+	RawOutputExposed                  bool     `json:"raw_output_exposed"`
+	RemotePathExposed                 bool     `json:"remote_path_exposed"`
+	PrivilegedContainerRequired       bool     `json:"privileged_container_required"`
+	HostNetworkingRequired            bool     `json:"host_networking_required"`
+	DockerSocketMounted               bool     `json:"docker_socket_mounted"`
+	BroadHostMountRequired            bool     `json:"broad_host_mount_required"`
+	HostCompilationRequired           bool     `json:"host_compilation_required"`
+	HostCompilationAvoided            bool     `json:"host_compilation_avoided"`
+	TargetedRemoteVerificationReady   bool     `json:"targeted_remote_verification_ready"`
+	BlockedActions                    []string `json:"blocked_actions"`
+	DesktopSafeSummary                string   `json:"desktop_safe_summary"`
 }
 
 type KnownAppVerifiedCatalogRunAcceptancePreview struct {
@@ -361,49 +376,72 @@ func PreviewKnownAppVerifiedCatalogRunPlanJSON(content []byte, appID string) (Kn
 	}
 
 	remoteSmokeCommand, remoteSmokeRequestType := knownAppVerifiedCatalogRemoteSmokeCommand(selected)
+	desktopCallableActionID := selected.PrimaryActionID
+	if desktopCallableActionID == "" {
+		desktopCallableActionID = "review-known-app-verified-catalog-run-plan"
+	}
+	desktopCallableExecutionType := "review-only-q4-known-app-smoke"
+	if selected.GUIEvidence {
+		desktopCallableExecutionType = "review-only-q4-gui-smoke"
+	}
 	preview := KnownAppVerifiedCatalogRunPlanPreview{
-		SchemaVersion:                   KnownAppVerifiedCatalogRunPlanSchemaVersion,
-		RequestType:                     KnownAppVerifiedCatalogRunPlanRequestType,
-		Source:                          "known-app-verified-catalog+q4-run-plan",
-		Desktop:                         "KDE Plasma",
-		RuntimeMethod:                   "PlanKnownVerifiedApplicationRun",
-		ReadMethod:                      "GetKnownVerifiedApplicationRunPlan",
-		VerifiedCatalogConsumed:         true,
-		RequestedAppID:                  appID,
-		AppID:                           selected.AppID,
-		DisplayName:                     selected.DisplayName,
-		AppVersion:                      selected.AppVersion,
-		VerificationState:               selected.VerificationState,
-		CompatibilityState:              selected.CompatibilityState,
-		DesktopCatalogState:             selected.DesktopCatalogState,
-		LauncherSurface:                 selected.LauncherSurface,
-		LaunchRequestCommand:            append([]string(nil), selected.LaunchRequestCommand...),
-		RemoteSmokeCommand:              remoteSmokeCommand,
-		RemoteSmokeRequestType:          remoteSmokeRequestType,
-		Q4ExecutionRequired:             true,
-		Q4ExecutionPlanned:              true,
-		Q4ExecutionStarted:              false,
-		ReviewOnly:                      true,
-		OperatorReviewRequired:          true,
-		RuntimeOwned:                    true,
-		GoRuntimeBacked:                 true,
-		KDEPolicyOwner:                  false,
-		DirectLaunchEnabled:             false,
-		LaunchEnabled:                   false,
-		ExecutionStarted:                false,
-		BackendLaunchEnabled:            false,
-		DesktopFilesWritten:             false,
-		HostRootModified:                false,
-		BackendDetailsExposed:           false,
-		RawOutputExposed:                false,
-		RemotePathExposed:               false,
-		PrivilegedContainerRequired:     false,
-		HostNetworkingRequired:          false,
-		DockerSocketMounted:             false,
-		BroadHostMountRequired:          false,
-		HostCompilationRequired:         false,
-		HostCompilationAvoided:          true,
-		TargetedRemoteVerificationReady: true,
+		SchemaVersion:                     KnownAppVerifiedCatalogRunPlanSchemaVersion,
+		RequestType:                       KnownAppVerifiedCatalogRunPlanRequestType,
+		Source:                            "known-app-verified-catalog+q4-run-plan",
+		Desktop:                           "KDE Plasma",
+		RuntimeMethod:                     "PlanKnownVerifiedApplicationRun",
+		ReadMethod:                        "GetKnownVerifiedApplicationRunPlan",
+		VerifiedCatalogConsumed:           true,
+		RequestedAppID:                    appID,
+		AppID:                             selected.AppID,
+		DisplayName:                       selected.DisplayName,
+		AppVersion:                        selected.AppVersion,
+		VerificationState:                 selected.VerificationState,
+		CompatibilityState:                selected.CompatibilityState,
+		DesktopCatalogState:               selected.DesktopCatalogState,
+		LauncherSurface:                   selected.LauncherSurface,
+		LaunchRequestCommand:              append([]string(nil), selected.LaunchRequestCommand...),
+		RemoteSmokeCommand:                remoteSmokeCommand,
+		RemoteSmokeRequestType:            remoteSmokeRequestType,
+		RuntimeOwnedActionReady:           true,
+		DesktopCallableActionID:           desktopCallableActionID,
+		DesktopCallableRoute:              "runtime-owner://known-app-verified-catalog/run-plan",
+		DesktopCallableRuntimeMethod:      "PlanKnownVerifiedApplicationRun",
+		DesktopCallableExecutionType:      desktopCallableExecutionType,
+		DesktopForwardedArguments:         []string{selected.AppID},
+		DesktopForwardsOnlyAppID:          true,
+		DesktopReceiptFieldsReconstructed: false,
+		DesktopKDEStateRootAccess:         false,
+		DesktopOwnerInputsExposed:         false,
+		GUIEvidenceRequired:               selected.GUIEvidence,
+		GUIEvidenceConsumed:               selected.GUIEvidence,
+		WindowObservationRequired:         selected.GUIEvidence,
+		OwnerFileOpenRequired:             selected.GUIEvidence,
+		OwnerFileOpenVerified:             selected.FileOpenVerified,
+		Q4ExecutionRequired:               true,
+		Q4ExecutionPlanned:                true,
+		Q4ExecutionStarted:                false,
+		ReviewOnly:                        true,
+		OperatorReviewRequired:            true,
+		RuntimeOwned:                      true,
+		GoRuntimeBacked:                   true,
+		KDEPolicyOwner:                    false,
+		DirectLaunchEnabled:               false,
+		LaunchEnabled:                     false,
+		ExecutionStarted:                  false,
+		BackendLaunchEnabled:              false,
+		DesktopFilesWritten:               false,
+		HostRootModified:                  false,
+		BackendDetailsExposed:             false,
+		RawOutputExposed:                  false,
+		RemotePathExposed:                 false,
+		PrivilegedContainerRequired:       false,
+		HostNetworkingRequired:            false,
+		DockerSocketMounted:               false,
+		BroadHostMountRequired:            false,
+		HostCompilationRequired:           false,
+		HostCompilationAvoided:            true,
+		TargetedRemoteVerificationReady:   true,
 		BlockedActions: []string{
 			"start q4 execution from run-plan preview",
 			"launch verified app directly from KDE catalog card",
