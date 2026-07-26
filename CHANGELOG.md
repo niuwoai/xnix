@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc186] - 2026-07-26
+
+### Changed
+
+- Changed the q4-built MessageBox Windows fixture to read the owner file-open document argument and expose the document content marker in its window title.
+- Changed `scripts/q4_messagebox_smoke.rb` owner mode to match the generated desktop-safe document content marker, proving the Windows app consumed the opened file instead of only displaying a fixed window.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc186`.
+
 ## [0.2.640-rc185] - 2026-07-26
 
 ### Added

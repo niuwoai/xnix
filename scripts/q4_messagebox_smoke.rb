@@ -21,7 +21,8 @@ DEFAULT_REMOTE_MATERIALS_ROOT = ENV.fetch("XNIX_REMOTE_MATERIALS_ROOT", "/home/x
 DEFAULT_REMOTE_GO = ENV.fetch("XNIX_REMOTE_GO", "/home/xnix-toolchains/go1.24.4-linux-amd64/bin/go")
 DEFAULT_APP_ID = "org.xnix.apps.messagebox"
 DEFAULT_DISPLAY_NAME = "Xnix MessageBox"
-DEFAULT_WINDOW_MATCH = "Xnix Windows GUI Smoke"
+DEFAULT_WINDOW_MATCH = "Xnix document opened by Windows app"
+DIRECT_WINDOW_MATCH = "Xnix Windows GUI Smoke"
 DEFAULT_SAMPLE_FILE_ARGUMENT = ENV.fetch("XNIX_Q4_MESSAGEBOX_SAMPLE_FILE", "messagebox-document.txt")
 
 options = {
@@ -151,6 +152,8 @@ output_path = ensure_local_output_path!(options.fetch(:output))
 delegated_output = "/tmp/xnix-q4-messagebox-winapp-#{VERSION}.json"
 sample_file_argument = options.fetch(:sample_file_argument).strip
 abort "sample file argument must be a simple file name" if !sample_file_argument.empty? && File.basename(sample_file_argument) != sample_file_argument
+window_match = options.fetch(:window_match)
+window_match = DIRECT_WINDOW_MATCH if !options.fetch(:owner_file_open) && window_match == DEFAULT_WINDOW_MATCH
 
 delegated_command = [
   "ruby",
@@ -159,7 +162,7 @@ delegated_command = [
   "--remote-executable", remote_executable,
   "--app-id", options.fetch(:app_id),
   "--display-name", options.fetch(:display_name),
-  "--window-match", options.fetch(:window_match),
+  "--window-match", window_match,
   "--remote", remote_host,
   "--remote-timeout-seconds", options.fetch(:remote_timeout_seconds).to_s,
   "--output", delegated_output
@@ -191,7 +194,7 @@ plan = {
   "remote_executable_path_exposed" => false,
   "app_id" => options.fetch(:app_id),
   "display_name" => options.fetch(:display_name),
-  "window_match" => options.fetch(:window_match),
+  "window_match" => window_match,
   "sample_file_argument" => options.fetch(:owner_file_open) ? sample_file_argument : "",
   "launch_mode" => options.fetch(:owner_file_open) ? "owner-controlled-launch" : "direct",
   "file_open_entrypoint_requested" => options.fetch(:owner_file_open),

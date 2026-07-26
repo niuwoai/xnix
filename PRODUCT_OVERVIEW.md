@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc185
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc186
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc186 checkpoint makes the q4 MessageBox Windows fixture prove that the Windows app consumed the opened document. The fixture reads the first file-open argument and places the document's first-line marker in the MessageBox window title, while `scripts/q4_messagebox_smoke.rb` owner mode now matches the desktop-safe `Xnix document opened by Windows app` marker during q4 GUI observation. This turns the external executable lane from "a Windows window appeared" into stronger evidence that a Linux desktop file-open action reached a Windows process through the independent Runtime and that the process read the delegated document.
 
 The v0.2.640-rc185 checkpoint turns the q4 MessageBox external executable smoke into an owner-controlled file-open run by default. The q4-built `.exe` now runs through `xnix-compat-open %U` with a generated sample document, and `xnix-compat-open` forwards the Runtime-owner supplied executable to `xnix-compat-launch` so managed artifact copy evidence remains intact. Real-run receipts and acceptance summaries now accept safe Runtime/KDE app identity for q4-hosted external executables instead of requiring a built-in known-app id. The real-run acceptance chain must prove owner-managed launch, file-argument delivery, guest path translation, Runtime evidence consumption, KDE page file-open evidence, and Go-owned generic q4 acceptance. This moves the real app lane closer to the desktop goal: a Linux shell action opens a document with a Windows GUI app through the independent Runtime rather than merely direct-launching a Windows process.
 

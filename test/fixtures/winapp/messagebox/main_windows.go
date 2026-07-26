@@ -3,13 +3,17 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"unsafe"
 )
 
 const (
-	messageBoxTitle = "Xnix Windows GUI Smoke"
-	messageBoxBody  = "XNIX_WINAPP_GUI_OK"
+	messageBoxBaseTitle = "Xnix Windows GUI Smoke"
+	messageBoxBody      = "XNIX_WINAPP_GUI_OK"
+	maxTitleMarkerBytes = 96
 )
 
 func main() {
@@ -18,9 +22,40 @@ func main() {
 	messageBox.Call(
 		0,
 		uintptr(unsafe.Pointer(mustUTF16Ptr(messageBoxBody))),
-		uintptr(unsafe.Pointer(mustUTF16Ptr(messageBoxTitle))),
+		uintptr(unsafe.Pointer(mustUTF16Ptr(messageBoxTitle()))),
 		0,
 	)
+}
+
+func messageBoxTitle() string {
+	filePath := openedFileArgument()
+	if filePath == "" {
+		return messageBoxBaseTitle
+	}
+	marker := fileContentMarker(filePath)
+	if marker == "" {
+		marker = filepath.Base(filePath)
+	}
+	return messageBoxBaseTitle + " - " + marker
+}
+
+func openedFileArgument() string {
+	if len(os.Args) < 2 {
+		return ""
+	}
+	return strings.TrimSpace(os.Args[1])
+}
+
+func fileContentMarker(path string) string {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	marker := strings.TrimSpace(strings.SplitN(string(content), "\n", 2)[0])
+	if len(marker) > maxTitleMarkerBytes {
+		marker = marker[:maxTitleMarkerBytes]
+	}
+	return marker
 }
 
 func mustUTF16Ptr(value string) *uint16 {

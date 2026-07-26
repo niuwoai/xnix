@@ -396,7 +396,7 @@ if sample_file_argument_requested
   sample_prepare = [
     "set -eu",
     shell_join(["mkdir", "-p", Pathname.new(remote_file_argument).dirname.to_s]),
-    shell_join(["ruby", "-e", "File.write(ARGV.fetch(0), \"Xnix remote Wine GUI file-open smoke\\n\")", remote_file_argument])
+    shell_join(["ruby", "-e", "File.write(ARGV.fetch(0), \"Xnix document opened by Windows app\\n\")", remote_file_argument])
   ].join("\n")
   sample_stdout, sample_stderr, sample_status = run_shell(options.fetch(:local_shell), shell_join(ssh_command(remote_host, sample_prepare)), timeout_seconds: options.fetch(:remote_timeout_seconds))
   warn sample_stdout unless sample_stdout.empty?
