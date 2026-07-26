@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc125
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc126
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc126 checkpoint candidate prepares the real external Windows GUI app lane by letting the Go Runtime container X GUI smoke carry ad-hoc application identity. `windows-app-container-x-gui-smoke` now accepts `--app-id`, `--display-name`, and `--app-version` for non-recipe runs, so a container-provided or owner-built GUI executable can produce correctly identified Runtime evidence before it graduates into a signed recipe. Recipe-backed runs still take identity from the digest-verified registry entry, and the smoke remains network-isolated with no host mounts, Docker socket mounts, privileged container, host networking, backend launch enablement, or host-root mutation.
 
 The v0.2.640-rc125 checkpoint candidate makes the staged desktop Notepad path visible as a controlled launcher/session-gate run in the Go-owned evidence flow. `real-winapp-gui-evidence-packet-preview` now carries launch authorization, session-gated dispatch, controlled execution session, digest verification, Runtime-owner/KDE read-model consumability, and post-review dispatch fields from the delegated `xnix-compat-launch` payload into the known-app smoke evidence consumed by KDE GUI cards. `scripts/staged_desktop_notepad_smoke.rb` now asserts those fields after the actual `.desktop` entry and managed launcher run recipe-backed Notepad, while backend launch, raw command output, host mounts, Docker socket mounts, host networking, and host-root mutation stay closed.
 

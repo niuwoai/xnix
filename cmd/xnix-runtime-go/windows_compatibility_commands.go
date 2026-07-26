@@ -375,6 +375,9 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 
 	var appName string
 	var windowMatch string
+	var appID string
+	var displayName string
+	var appVersion string
 	var recipeApp string
 	var registryPath string
 	var image string
@@ -383,6 +386,9 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	var timeoutText string
 	flags.StringVar(&appName, "app", winapp.DefaultContainerGUIApp, "Windows GUI application name available in the Wine image")
 	flags.StringVar(&windowMatch, "window-match", winapp.DefaultContainerWindowMatch, "case-insensitive X window match text")
+	flags.StringVar(&appID, "app-id", "", "optional application id for ad-hoc container GUI evidence")
+	flags.StringVar(&displayName, "display-name", "", "optional display name for ad-hoc container GUI evidence")
+	flags.StringVar(&appVersion, "app-version", "", "optional application version for ad-hoc container GUI evidence")
 	flags.StringVar(&recipeApp, "recipe-app", "", "registered application id with container GUI smoke hints")
 	flags.StringVar(&registryPath, "registry", "", "recipe registry path used with --recipe-app")
 	flags.StringVar(&image, "image", winapp.DefaultContainerImage, "local Wine X GUI container image")
@@ -404,10 +410,18 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	request := winapp.ContainerXGUIRequest{
 		ApplicationName: appName,
 		WindowMatch:     windowMatch,
+		ApplicationID:   strings.TrimSpace(appID),
+		DisplayName:     strings.TrimSpace(displayName),
+		AppVersion:      strings.TrimSpace(appVersion),
 		Image:           image,
 		Platform:        platform,
 		DockerPath:      dockerPath,
 		Timeout:         timeout,
+	}
+	for _, value := range []string{request.ApplicationID, request.DisplayName, request.AppVersion} {
+		if strings.ContainsAny(value, "\r\n") {
+			return errors.New("windows-app-container-x-gui-smoke identity fields must be single-line values")
+		}
 	}
 	if strings.TrimSpace(recipeApp) != "" {
 		if strings.TrimSpace(registryPath) == "" {

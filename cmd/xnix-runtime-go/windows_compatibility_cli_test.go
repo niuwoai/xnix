@@ -1176,6 +1176,9 @@ func TestWindowsAppContainerXGUISmokeCommandObservesNotepadWindow(t *testing.T) 
 		"windows-app-container-x-gui-smoke",
 		"--app", "notepad.exe",
 		"--window-match", "notepad.exe",
+		"--app-id", "org.xnix.adhoc.notepad",
+		"--display-name", "Ad-hoc Notepad",
+		"--app-version", "adhoc-local",
 		"--image", "local/wine-x-gui:test",
 		"--docker", dockerPath,
 		"--timeout", "5s",
@@ -1191,6 +1194,10 @@ func TestWindowsAppContainerXGUISmokeCommandObservesNotepadWindow(t *testing.T) 
 	if payload["schema_version"] != "xnix.runtime.windows_app_container_x_gui_smoke.v1" ||
 		payload["request_type"] != "windows-app-container-x-gui-smoke" ||
 		payload["status"] != "passed" ||
+		payload["application_id"] != "org.xnix.adhoc.notepad" ||
+		payload["display_name"] != "Ad-hoc Notepad" ||
+		payload["app_version"] != "adhoc-local" ||
+		payload["recipe_backed"] != false ||
 		payload["application_name"] != "notepad.exe" ||
 		payload["window_match"] != "notepad.exe" ||
 		payload["container_image"] != "local/wine-x-gui:test" ||

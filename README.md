@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc125`.
+The project is currently at `v0.2.640-rc126`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc125`.
 
 ## Current Checkpoint
 
-v0.2.640-rc125 surfaces the staged desktop launcher/session-gate facts from the real Notepad `.desktop` run inside the Go Runtime real GUI packet and KDE GUI evidence card. The packet now preserves launch authorization, session-gated dispatch, controlled execution session, digest verification, Runtime-owner/KDE read-model consumability, and post-review dispatch fields while keeping backend launch, raw command output, host mounts, Docker socket mounts, host networking, and host-root mutation closed.
+v0.2.640-rc126 lets the Go Runtime container X GUI smoke carry ad-hoc application identity through `--app-id`, `--display-name`, and `--app-version` when no recipe is being used. This gives the next real external Windows GUI app lane a Go-owned evidence identity without weakening recipe-backed digest validation or opening backend launch, host mounts, Docker socket mounts, host networking, or host-root mutation.
+
+The previous v0.2.640-rc125 checkpoint surfaced the staged desktop launcher/session-gate facts from the real Notepad `.desktop` run inside the Go Runtime real GUI packet and KDE GUI evidence card. The packet now preserves launch authorization, session-gated dispatch, controlled execution session, digest verification, Runtime-owner/KDE read-model consumability, and post-review dispatch fields while keeping backend launch, raw command output, host mounts, Docker socket mounts, host networking, and host-root mutation closed.
 
 The previous v0.2.640-rc124 checkpoint let the staged desktop Notepad smoke carry its real `.desktop`/managed-launcher run into Go Runtime real GUI packet evidence and a KDE page. The Go packet now accepts the delegated `windows-app-container-x-gui-smoke` payload returned by `xnix-compat-launch`, so Ruby does not need to wrap the launcher result into a synthetic report.
 

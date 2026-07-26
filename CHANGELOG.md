@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc126] - 2026-07-26
+
+### Changed
+
+- Changed `windows-app-container-x-gui-smoke` to accept ad-hoc `--app-id`, `--display-name`, and `--app-version` identity fields for non-recipe real GUI smoke evidence.
+- Kept recipe-backed container GUI smoke identity sourced from the digest-verified recipe registry while extending CLI coverage for the ad-hoc identity path.
+
 ## [0.2.640-rc125] - 2026-07-26
 
 ### Changed
