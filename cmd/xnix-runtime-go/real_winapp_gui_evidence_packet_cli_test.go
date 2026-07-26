@@ -297,6 +297,45 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesRawExternalExecutableR
 		card["host_root_modified"] != false {
 		t.Fatalf("unexpected KDE card from external executable packet: %#v", card)
 	}
+
+	var externalPageOutput bytes.Buffer
+	if err := run([]string{"kde-center-page-preview", "--external-app-evidence-file", outputPath, "--decision", "approved"}, &externalPageOutput); err != nil {
+		t.Fatalf("external app KDE page returned error: %v", err)
+	}
+	var externalPage map[string]any
+	if err := json.Unmarshal(externalPageOutput.Bytes(), &externalPage); err != nil {
+		t.Fatalf("Unmarshal external app KDE output returned error: %v", err)
+	}
+	if externalPage["application_id"] != "org.xnix.external.notepad-file" ||
+		externalPage["application_name"] != "External Notepad File" ||
+		externalPage["icon"] != "application-x-executable" ||
+		externalPage["known_app_gui_evidence_count"] != float64(1) ||
+		externalPage["launch_enabled"] != false ||
+		externalPage["backend_process_started"] != false ||
+		externalPage["backend_details_exposed"] != false ||
+		externalPage["host_root_modified"] != false {
+		t.Fatalf("unexpected external app KDE page: %#v", externalPage)
+	}
+	externalCards := externalPage["known_app_gui_evidence_cards"].([]any)
+	if len(externalCards) != 1 {
+		t.Fatalf("unexpected external app KDE cards: %#v", externalCards)
+	}
+	externalCard := externalCards[0].(map[string]any)
+	if externalCard["app_id"] != externalPage["application_id"] ||
+		externalCard["recipe_backed"] != false ||
+		externalCard["execution_evidence_recorded"] != true ||
+		externalCard["runtime_dispatch_verified"] != true ||
+		externalCard["desktop_launch_enabled"] != false ||
+		externalCard["backend_launch_enabled"] != false ||
+		externalCard["host_root_modified"] != false {
+		t.Fatalf("unexpected external app KDE card: %#v", externalCard)
+	}
+	if strings.Contains(externalPageOutput.String(), reportPath) ||
+		strings.Contains(externalPageOutput.String(), outputPath) ||
+		strings.Contains(externalPageOutput.String(), "docker run") ||
+		strings.Contains(externalPageOutput.String(), "/var/run/docker.sock") {
+		t.Fatalf("external app KDE page exposed unsafe details: %s", externalPageOutput.String())
+	}
 }
 
 func rawContainerXGUIRuntimePayloadCLIFixture() string {

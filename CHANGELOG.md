@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc129] - 2026-07-26
+
+### Added
+
+- Added `kde-center-page-preview --external-app-evidence-file PACKET.json` for rendering a KDE Compatibility Center page whose primary app identity comes from a passed non-recipe external Windows GUI evidence packet.
+- Added Runtime and CLI coverage proving the evidence-backed external app page preserves the external app id, display name, version, GUI evidence card, and closed launch/write/backend safety gates without exposing local report paths.
+
 ## [0.2.640-rc128] - 2026-07-26
 
 ### Added

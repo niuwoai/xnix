@@ -412,3 +412,45 @@ func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (Known
 	}
 	return normalized, nil
 }
+
+func ExternalAppRecipeFromRealWinAppGUIEvidencePacket(payload []byte) (Recipe, Provenance, KnownAppSmokeEvidenceSummary, error) {
+	var packet RealWinAppGUIEvidencePacket
+	if err := json.Unmarshal(payload, &packet); err != nil {
+		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, fmt.Errorf("parse external Windows app GUI evidence packet: %w", err)
+	}
+	evidence, err := KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload)
+	if err != nil {
+		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, err
+	}
+	switch {
+	case packet.RecipeBacked || evidence.RecipeBacked:
+		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, errors.New("external Windows app page requires non-recipe real GUI evidence")
+	case !packet.ContainerRuntimeUsed:
+		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, errors.New("external Windows app page requires container GUI Runtime evidence")
+	case !packet.LocalExecutableCopied:
+		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, errors.New("external Windows app page requires copied external executable evidence")
+	case strings.TrimSpace(packet.ExecutableName) == "" || strings.ContainsAny(packet.ExecutableName, `/\`):
+		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, errors.New("external Windows app page requires a safe executable name")
+	case !strings.HasSuffix(strings.ToLower(packet.ExecutableName), ".exe"):
+		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, errors.New("external Windows app page requires a Windows executable name")
+	}
+
+	recipe := Recipe{
+		ID:                  evidence.AppID,
+		Name:                evidence.DisplayName,
+		Version:             evidence.AppVersion,
+		Icon:                "application-x-executable",
+		Mode:                "automatic",
+		SupportedExtensions: []string{},
+	}
+	if err := recipe.Validate(); err != nil {
+		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, err
+	}
+	provenance := Provenance{
+		Source:          "real-gui-evidence-packet",
+		RegistryName:    "runtime-observed-external-app",
+		DigestVerified:  false,
+		SignatureStatus: "observed-runtime-evidence",
+	}
+	return recipe, provenance, evidence, nil
+}

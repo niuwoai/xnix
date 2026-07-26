@@ -216,6 +216,64 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesRawExternalExecutableRuntimeP
 	}
 }
 
+func TestExternalAppRecipeFromRealWinAppGUIEvidencePacket(t *testing.T) {
+	packet, err := PreviewRealWinAppGUIEvidencePacketJSON([]byte(rawExternalExecutableContainerXGUIRuntimePayloadFixture()), RealWinAppGUIEvidencePacketRequest{})
+	if err != nil {
+		t.Fatalf("PreviewRealWinAppGUIEvidencePacketJSON returned error: %v", err)
+	}
+	payload, err := json.Marshal(packet)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+
+	recipe, provenance, evidence, err := ExternalAppRecipeFromRealWinAppGUIEvidencePacket(payload)
+	if err != nil {
+		t.Fatalf("ExternalAppRecipeFromRealWinAppGUIEvidencePacket returned error: %v", err)
+	}
+	if recipe.ID != "org.xnix.external.notepad-file" ||
+		recipe.Name != "External Notepad File" ||
+		recipe.Version != "0.2.640-test" ||
+		recipe.Icon != "application-x-executable" ||
+		recipe.Mode != "automatic" ||
+		len(recipe.SupportedExtensions) != 0 ||
+		provenance.Source != "real-gui-evidence-packet" ||
+		provenance.RegistryName != "runtime-observed-external-app" ||
+		provenance.DigestVerified ||
+		provenance.SignatureStatus != "observed-runtime-evidence" ||
+		evidence.AppID != recipe.ID ||
+		evidence.DisplayName != recipe.Name ||
+		evidence.AppVersion != recipe.Version ||
+		evidence.RecipeBacked ||
+		evidence.RecipeAppID != "" ||
+		!evidence.ExecutionEvidenceRecorded ||
+		!evidence.RuntimeDispatchVerified ||
+		evidence.DesktopLaunchEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.HostRootModified {
+		t.Fatalf("unexpected external app recipe projection: recipe=%#v provenance=%#v evidence=%#v", recipe, provenance, evidence)
+	}
+
+	page, err := NewKDECenterPagePreviewWithOptions(recipe, provenance, "approved", nil, KDECenterPageOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{evidence},
+	})
+	if err != nil {
+		t.Fatalf("NewKDECenterPagePreviewWithOptions returned error: %v", err)
+	}
+	if page.ApplicationID != "org.xnix.external.notepad-file" ||
+		page.ApplicationName != "External Notepad File" ||
+		page.Icon != "application-x-executable" ||
+		page.KnownAppGUIEvidenceCount != 1 ||
+		len(page.KnownAppGUIEvidenceCards) != 1 ||
+		page.KnownAppGUIEvidenceCards[0].AppID != page.ApplicationID ||
+		page.KnownAppGUIEvidenceCards[0].RecipeBacked ||
+		page.LaunchEnabled ||
+		page.BackendProcessStarted ||
+		page.BackendDetailsExposed ||
+		page.HostRootModified {
+		t.Fatalf("unexpected external app KDE page: %#v", page)
+	}
+}
+
 func rawContainerXGUIRuntimePayloadFixture() string {
 	return `{
   "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",
