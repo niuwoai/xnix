@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc154`.
+The project is currently at `v0.2.640-rc155`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc154`.
 
 ## Current Checkpoint
 
-v0.2.640-rc154 tightens copy-only external file bridge evidence for imported external Windows GUI apps. The Wine/Xvfb container launcher now translates copied files through `winepath -w`, prints redacted launch-boundary markers for passed and translated file-argument counts, and Runtime/KDE run records expose `external_file_bridge_arguments_passed`, `external_file_bridge_argument_observed_count`, `external_file_bridge_winepath_translated`, and `external_file_bridge_winepath_translated_count`. `external_file_bridge_ready` now requires copied files, observed container launch-boundary arguments, and Wine path translation, while raw file URI/path output, host mounts, Docker socket mounts, host networking, privileged containers, broad host mounts, and host-root mutation remain closed.
+v0.2.640-rc155 adds process-level file-open evidence to the staged external desktop smoke using a real Wine Notepad GUI app. `scripts/staged_desktop_external_winapp_smoke.rb --fixture notepad-file-argument` imports Wine Notepad as an external app, launches it through the exact KDE handle route with one `file://` argument, and requires the observed X window title to include `sample-document.txt`. This proves the file-open argument reached the Windows GUI process itself while keeping raw file URI/path output, host mounts, Docker socket mounts, host networking, privileged containers, broad host mounts, and host-root mutation closed.
+
+The previous v0.2.640-rc154 checkpoint tightened copy-only external file bridge evidence for imported external Windows GUI apps. The Wine/Xvfb container launcher now translates copied files through `winepath -w`, prints redacted launch-boundary markers for passed and translated file-argument counts, and Runtime/KDE run records expose `external_file_bridge_arguments_passed`, `external_file_bridge_argument_observed_count`, `external_file_bridge_winepath_translated`, and `external_file_bridge_winepath_translated_count`. `external_file_bridge_ready` now requires copied files, observed container launch-boundary arguments, and Wine path translation, while raw file URI/path output, host mounts, Docker socket mounts, host networking, privileged containers, broad host mounts, and host-root mutation remain closed.
 
 The previous v0.2.640-rc153 checkpoint turned KDE `%U` file-open intent into an actual copy-only container file bridge for imported external Windows GUI apps. `xnix-compat-launch --external-app-handle APPID file:///...` and `windows-external-app-run ... file:///...` now validate local file URIs, copy each accepted file into the isolated Wine/Xvfb container with `docker cp`, pass only the container-local file path to the Windows app, and report `external_file_bridge_copy_enabled`, `external_file_bridge_copied_count`, and `external_file_bridge_ready` while keeping host mounts, raw file URI/path output, Docker socket mounts, host networking, and host-root mutation closed.
 

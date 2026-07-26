@@ -4,18 +4,20 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.2.640-rc154`
+- Version: `0.2.640-rc155`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - Flagship stack: Fedora Kinoite-compatible atomic base, KDE Plasma 6, XDG Desktop Portal, and the Xnix Compatibility Runtime
 - Learning baseline: Linux LTS kernel, Buildroot, BusyBox, initramfs, and OpenSSH `sshd`
 - Container host: Colima Docker, currently started with 2 CPUs; project containers still keep their own narrower runtime limits
+- Heavy build preference: use `ssh root@q4` for compile-heavy work whenever the task allows it; keep the macOS host for lightweight targeted checks and explicitly approved restricted smoke runs.
 
 ## Safety Constraints
 
 - Do not use `--privileged`, `--network host`, a Docker socket mount, or host-directory mounts at runtime.
 - Bind test ports only to `127.0.0.1`.
 - Do not install QEMU or build dependencies on the macOS host; keep them in the build container.
+- Prefer q4 for repeated or heavy compilation so local development remains responsive; do not move secrets, host-only private material, or broad host directories to q4.
 
 ## Commands
 

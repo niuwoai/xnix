@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc155] - 2026-07-26
+
+### Changed
+
+- Added a Wine Notepad file-open fixture mode that changes the required X window evidence from the generic app window to the opened document title.
+- Extended the staged external Windows app desktop smoke with `--fixture notepad-file-argument` to run Wine Notepad through the same KDE handle launcher route with one copied file argument.
+- Added smoke evidence for observing a Windows process-level file-argument window title without exposing raw file URI or host file paths.
+- Documented q4 as the preferred host for compile-heavy work while keeping local checks lightweight.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc155`.
+
 ## [0.2.640-rc154] - 2026-07-26
 
 ### Changed

@@ -12,8 +12,11 @@ require "shellwords"
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
 SCHEMA_VERSION = "xnix.scripts.staged_desktop_external_winapp_smoke.v1"
-APP_ID = "org.xnix.external.desktop-notepad"
-APP_NAME = "External Desktop Notepad"
+DEFAULT_APP_ID = "org.xnix.external.desktop-notepad"
+DEFAULT_APP_NAME = "External Desktop Notepad"
+NOTEPAD_FILE_ARGUMENT_APP_ID = "org.xnix.external.desktop-notepad-file-argument"
+NOTEPAD_FILE_ARGUMENT_APP_NAME = "External Desktop Notepad File Argument"
+NOTEPAD_FILE_ARGUMENT_WINDOW_MATCH = "sample-document.txt"
 DEFAULT_IMAGE = "xnix-wine-smoke:local"
 DEFAULT_RUN_ROOT = Pathname.new("/tmp/xnix-staged-desktop-external-winapp-smoke-#{VERSION}")
 RUN_ID = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{Process.pid}-#{SecureRandom.hex(4)}"
@@ -38,6 +41,7 @@ options = {
   runtime_packet_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-real-gui-packet.json").to_s,
   kde_page_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-kde-page.json").to_s,
   executable: "",
+  fixture: "notepad",
   image: ENV.fetch("XNIX_WINE_IMAGE", DEFAULT_IMAGE),
   docker: ENV.fetch("XNIX_DOCKER_BIN", "docker"),
   timeout: "120s"
@@ -54,6 +58,7 @@ OptionParser.new do |parser|
   parser.on("--runtime-packet-output PATH", "Go Runtime real Windows GUI packet output path") { |value| options[:runtime_packet_output] = value }
   parser.on("--kde-page-output PATH", "KDE center page JSON output path") { |value| options[:kde_page_output] = value }
   parser.on("--executable PATH", "Optional existing Windows GUI executable; defaults to Wine Notepad from the local image") { |value| options[:executable] = value }
+  parser.on("--fixture NAME", "Built-in executable fixture: notepad or notepad-file-argument") { |value| options[:fixture] = value }
   parser.on("--image IMAGE", "Local Wine GUI smoke image") { |value| options[:image] = value }
   parser.on("--docker PATH", "Docker runner path") { |value| options[:docker] = value }
   parser.on("--timeout DURATION", "GUI smoke timeout") { |value| options[:timeout] = value }
@@ -151,12 +156,12 @@ def desktop_exec_from(path)
   line.delete_prefix("Exec=").strip
 end
 
-def write_skip_report(report_output, markdown_output, reason)
+def write_skip_report(report_output, markdown_output, reason, app_id, app_name)
   packet = {
     "schema_version" => SCHEMA_VERSION,
     "status" => "skipped",
-    "app_id" => APP_ID,
-    "display_name" => APP_NAME,
+    "app_id" => app_id,
+    "display_name" => app_name,
     "version" => VERSION,
     "skip_reason" => reason,
     "report_path" => report_output.to_s,
@@ -169,7 +174,7 @@ def write_skip_report(report_output, markdown_output, reason)
       "# Staged Desktop External Windows App Smoke",
       "",
       "- Status: skipped",
-      "- App: #{APP_NAME} (`#{APP_ID}`)",
+      "- App: #{app_name} (`#{app_id}`)",
       "- Version: #{VERSION}",
       "- Skip reason: #{reason}",
       ""
@@ -185,6 +190,7 @@ def write_markdown_report(markdown_output, packet)
       "# Staged Desktop External Windows App Smoke",
       "",
       "- Status: #{packet.fetch("status")}",
+      "- Fixture: #{packet.fetch("fixture")}",
       "- App: #{packet.fetch("display_name")} (`#{packet.fetch("app_id")}`)",
       "- Version: #{packet.fetch("version")}",
       "- Desktop Exec uses external app handle: #{packet.fetch("desktop_exec_uses_external_app_handle")}",
@@ -203,6 +209,7 @@ def write_markdown_report(markdown_output, packet)
       "- External file bridge Wine path translated: #{packet.fetch("external_file_bridge_winepath_translated")}",
       "- External file bridge Wine path translated count: #{packet.fetch("external_file_bridge_winepath_translated_count")}",
       "- External file bridge ready: #{packet.fetch("external_file_bridge_ready")}",
+      "- Windows process file-argument window observed: #{packet.fetch("windows_process_file_argument_window_observed")}",
       "- External file bridge mount enabled: #{packet.fetch("external_file_bridge_mount_enabled")}",
       "- Raw file URI arguments exposed: #{packet.fetch("raw_file_uri_arguments_exposed")}",
       "- Desktop launch packet ready: #{packet.fetch("desktop_launch_packet_ready")}",
@@ -247,7 +254,21 @@ sample_document_path = run_root.join("sample-document.txt")
 sample_document_uri = "file://#{sample_document_path}"
 launcher_bin = build_root.join("xnix-compat-launch")
 staged_launcher = stage_root.join("usr/local/bin/xnix-compat-launch")
-executable_path = options.fetch(:executable).to_s.strip.empty? ? run_root.join("notepad.exe") : absolute_path(options.fetch(:executable))
+fixture = options.fetch(:fixture).to_s.strip
+app_id = DEFAULT_APP_ID
+app_name = DEFAULT_APP_NAME
+window_match = ""
+case fixture
+when "notepad"
+  executable_path = options.fetch(:executable).to_s.strip.empty? ? run_root.join("notepad.exe") : absolute_path(options.fetch(:executable))
+when "notepad-file-argument"
+  app_id = NOTEPAD_FILE_ARGUMENT_APP_ID
+  app_name = NOTEPAD_FILE_ARGUMENT_APP_NAME
+  window_match = NOTEPAD_FILE_ARGUMENT_WINDOW_MATCH
+  executable_path = options.fetch(:executable).to_s.strip.empty? ? run_root.join("notepad.exe") : absolute_path(options.fetch(:executable))
+else
+  abort "unsupported fixture #{fixture.inspect}; expected notepad or notepad-file-argument"
+end
 docker_bin = resolve_executable(options.fetch(:docker))
 
 go_env = {
@@ -272,19 +293,19 @@ FileUtils.mkdir_p(runtime_packet_output.dirname)
 FileUtils.mkdir_p(kde_page_output.dirname)
 
 if docker_bin.nil?
-  write_skip_report(report_output, markdown_output, "Docker runner #{options.fetch(:docker)} is unavailable")
+  write_skip_report(report_output, markdown_output, "Docker runner #{options.fetch(:docker)} is unavailable", app_id, app_name)
   exit 0
 end
 
 unless docker_image_available?(docker_bin, options.fetch(:image))
-  write_skip_report(report_output, markdown_output, "Docker image #{options.fetch(:image)} is unavailable")
+  write_skip_report(report_output, markdown_output, "Docker image #{options.fetch(:image)} is unavailable", app_id, app_name)
   exit 0
 end
 
-if options.fetch(:executable).to_s.strip.empty?
+if options.fetch(:executable).to_s.strip.empty? && %w[notepad notepad-file-argument].include?(fixture)
   notepad_path = container_notepad_path(docker_bin, options.fetch(:image))
   if notepad_path.nil?
-    write_skip_report(report_output, markdown_output, "Wine Notepad was not found in #{options.fetch(:image)}")
+    write_skip_report(report_output, markdown_output, "Wine Notepad was not found in #{options.fetch(:image)}", app_id, app_name)
     exit 0
   end
   copy_container_notepad(docker_bin, options.fetch(:image), notepad_path, executable_path)
@@ -304,8 +325,8 @@ import_record, import_stdout = run_json(
   "external-winapp-import-record",
   "--state-root", state_root.to_s,
   "--executable", executable_path.to_s,
-  "--app-id", APP_ID,
-  "--display-name", APP_NAME
+  "--app-id", app_id,
+  "--display-name", app_name
 )
 assert(import_record.fetch("import_recorded") == true, "external app import record must be persisted")
 assert(import_record.fetch("artifact_copied") == true, "external app import must copy the artifact")
@@ -327,8 +348,8 @@ written_ids = stage.fetch("written_file_ids")
 %w[desktop-entry managed-launcher-artifact managed-launcher-executable].each do |id|
   assert(written_ids.include?(id), "desktop activation stage must write #{id}")
 end
-assert(stage.fetch("application_id") == APP_ID, "desktop activation stage must target the imported app")
-assert(stage.fetch("external_app_handle") == APP_ID, "desktop activation stage must expose the opaque external app handle")
+assert(stage.fetch("application_id") == app_id, "desktop activation stage must target the imported app")
+assert(stage.fetch("external_app_handle") == app_id, "desktop activation stage must expose the opaque external app handle")
 assert(stage.fetch("desktop_exec_uses_external_app_handle") == true, "desktop activation stage must prove the desktop Exec uses the external app handle")
 assert(stage.fetch("external_app_desktop_handle_ready") == true, "desktop activation stage must mark external app desktop handle readiness")
 assert(stage.fetch("desktop_exec_uses_raw_import_record") == false, "desktop activation stage must not expose raw import-record Exec routing")
@@ -348,7 +369,7 @@ activation_status, status_stdout = run_json(
 )
 File.write(activation_status_output, JSON.pretty_generate(activation_status) + "\n")
 receipt_evidence = activation_status.fetch("receipt_evidence")
-assert(receipt_evidence.fetch("external_app_handle") == APP_ID, "activation receipt evidence must preserve the opaque external app handle")
+assert(receipt_evidence.fetch("external_app_handle") == app_id, "activation receipt evidence must preserve the opaque external app handle")
 assert(receipt_evidence.fetch("desktop_exec_uses_external_app_handle") == true, "activation receipt evidence must prove external app handle Exec routing")
 assert(receipt_evidence.fetch("external_app_desktop_handle_ready") == true, "activation receipt evidence must mark external desktop handle readiness")
 assert(receipt_evidence.fetch("desktop_exec_uses_raw_import_record") == false, "activation receipt evidence must not persist raw import-record Exec routing")
@@ -364,7 +385,7 @@ assert(staged_launcher.file?, "staged managed launcher must exist")
 
 desktop_exec = desktop_exec_from(desktop_path)
 desktop_tokens = Shellwords.split(desktop_exec).reject { |token| token == "%U" }
-assert(desktop_tokens == ["xnix-compat-launch", "--external-app-handle", APP_ID], "desktop Exec must expose only the external app handle")
+assert(desktop_tokens == ["xnix-compat-launch", "--external-app-handle", app_id], "desktop Exec must expose only the external app handle")
 assert_no_forbidden(desktop_exec, [state_root.to_s, import_record_path.to_s, executable_path.to_s, "notepad.exe", "wine ", "docker", "qemu-system", "--state-root", "--external-app-import-record"], "desktop Exec")
 
 launcher_env = {
@@ -376,12 +397,13 @@ launcher_env = {
   "XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_OUTPUT" => launch_packet_output.to_s,
   "XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_MODE" => "development"
 }
+launcher_env["XNIX_EXTERNAL_APP_WINDOW_MATCH"] = window_match unless window_match.empty?
 launcher_argv = [
   staged_launcher.to_s,
   *desktop_tokens.drop(1),
   sample_document_uri
 ]
-assert(launcher_argv == [staged_launcher.to_s, "--external-app-handle", APP_ID, sample_document_uri], "staged launcher invocation must match the desktop Exec handle route plus one KDE file URI without extra launcher options")
+assert(launcher_argv == [staged_launcher.to_s, "--external-app-handle", app_id, sample_document_uri], "staged launcher invocation must match the desktop Exec handle route plus one KDE file URI without extra launcher options")
 
 launcher_stdout, launcher_stderr, launcher_status = run_command(launcher_env, *launcher_argv)
 abort "staged external app launcher failed:\n#{launcher_stderr}\n#{launcher_stdout}" unless launcher_status.success?
@@ -390,7 +412,7 @@ payload = JSON.parse(launcher_stdout)
 File.write(delegated_output, JSON.pretty_generate(payload) + "\n")
 assert(payload.fetch("request_type") == "windows-external-app-run", "launcher must enter the external app Runtime run")
 assert(payload.fetch("status") == "passed", "launcher smoke must pass")
-assert(payload.fetch("application_id") == APP_ID, "launcher smoke must preserve imported app id")
+assert(payload.fetch("application_id") == app_id, "launcher smoke must preserve imported app id")
 assert(payload.fetch("external_app_import_record_consumed") == true, "launcher smoke must consume the import record")
 assert(payload.fetch("external_app_handle_consumed") == true, "launcher smoke must consume the desktop handle")
 assert(payload.fetch("external_desktop_argument_count") == 1, "launcher smoke must accept one KDE file URI desktop argument")
@@ -408,6 +430,11 @@ assert(payload.fetch("raw_file_uri_arguments_exposed") == false, "launcher smoke
 assert(payload.fetch("imported_artifact_digest_verified") == true, "launcher smoke must verify the imported artifact digest")
 assert(payload.fetch("x_window_observed") == true, "launcher smoke must observe a Windows GUI X window")
 assert(payload.fetch("window_observed") == true, "launcher smoke must expose generic observed-window evidence")
+if !window_match.empty?
+  runtime_payload = payload.fetch("runtime_payload")
+  assert(runtime_payload.fetch("window_match") == window_match, "launcher smoke must use the fixture file-argument window match")
+  assert(payload.fetch("window_evidence_summary").include?(window_match), "launcher smoke must observe the Windows process file-argument window title")
+end
 assert(payload.fetch("container_network_mode") == "none", "launcher smoke must disable container networking")
 assert(payload.fetch("container_host_mount_count") == 0, "launcher smoke must not mount host directories")
 assert(payload.fetch("docker_socket_mounted") == false, "launcher smoke must not mount the Docker socket")
@@ -421,8 +448,8 @@ launch_packet_text = launch_packet_output.read
 launch_packet = JSON.parse(launch_packet_text)
 assert(launch_packet.fetch("request_type") == "desktop-external-winapp-launch-packet-preview", "desktop launch packet must use the external launch packet request type")
 assert(launch_packet.fetch("status") == "passed", "desktop launch packet must pass")
-assert(launch_packet.fetch("application_id") == APP_ID, "desktop launch packet must target the imported app")
-assert(launch_packet.fetch("external_app_handle") == APP_ID, "desktop launch packet must preserve the opaque external app handle")
+assert(launch_packet.fetch("application_id") == app_id, "desktop launch packet must target the imported app")
+assert(launch_packet.fetch("external_app_handle") == app_id, "desktop launch packet must preserve the opaque external app handle")
 assert(launch_packet.fetch("activation_receipt_backed") == true, "desktop launch packet must consume activation receipt evidence")
 assert(launch_packet.fetch("activation_receipt_safe_for_kde") == true, "desktop launch packet must keep receipt evidence safe for KDE")
 assert(launch_packet.fetch("desktop_exec_uses_external_app_handle") == true, "desktop launch packet must prove handle-only desktop Exec routing")
@@ -494,10 +521,10 @@ kde_page, kde_stdout = run_json(
 )
 File.write(kde_page_output, JSON.pretty_generate(kde_page) + "\n")
 cards = kde_page.fetch("known_app_gui_evidence_cards")
-assert(kde_page.fetch("application_id") == APP_ID, "KDE page must target the imported app")
+assert(kde_page.fetch("application_id") == app_id, "KDE page must target the imported app")
 assert(kde_page.fetch("known_app_gui_evidence_count") == 1, "KDE page must consume one real GUI evidence item")
 assert(cards.length == 1, "KDE page must render one real GUI evidence card")
-assert(cards.first.fetch("app_id") == APP_ID, "KDE GUI evidence card must target the imported app")
+assert(cards.first.fetch("app_id") == app_id, "KDE GUI evidence card must target the imported app")
 assert(cards.first.fetch("external_app_run_record_consumed") == true, "KDE GUI evidence card must preserve external run consumption")
 assert(cards.first.fetch("external_app_handle_consumed") == true, "KDE GUI evidence card must preserve external app handle consumption")
 assert(cards.first.fetch("external_app_import_record_consumed") == true, "KDE GUI evidence card must preserve import-record consumption")
@@ -514,14 +541,15 @@ assert_no_forbidden(kde_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to
 packet = {
   "schema_version" => SCHEMA_VERSION,
   "status" => "passed",
-  "app_id" => APP_ID,
-  "display_name" => APP_NAME,
+  "fixture" => fixture,
+  "app_id" => app_id,
+  "display_name" => app_name,
   "version" => VERSION,
   "desktop_exec_uses_external_app_handle" => stage.fetch("desktop_exec_uses_external_app_handle"),
   "external_app_desktop_handle_ready" => stage.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_external_app_desktop_handle_ready" => receipt_evidence.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_safe_for_kde" => receipt_evidence.fetch("safe_for_kde"),
-  "desktop_exec_invocation_exact" => launcher_argv == [staged_launcher.to_s, "--external-app-handle", APP_ID, sample_document_uri],
+  "desktop_exec_invocation_exact" => launcher_argv == [staged_launcher.to_s, "--external-app-handle", app_id, sample_document_uri],
   "launcher_context_from_environment" => true,
   "launcher_extra_arguments_appended" => false,
   "external_desktop_argument_count" => payload.fetch("external_desktop_argument_count"),
@@ -534,6 +562,7 @@ packet = {
   "external_file_bridge_winepath_translated" => payload.fetch("external_file_bridge_winepath_translated"),
   "external_file_bridge_winepath_translated_count" => payload.fetch("external_file_bridge_winepath_translated_count"),
   "external_file_bridge_ready" => payload.fetch("external_file_bridge_ready"),
+  "windows_process_file_argument_window_observed" => !window_match.empty? && payload.fetch("window_evidence_summary").include?(window_match),
   "external_file_bridge_mount_enabled" => payload.fetch("external_file_bridge_mount_enabled"),
   "raw_file_uri_arguments_exposed" => payload.fetch("raw_file_uri_arguments_exposed"),
   "desktop_launch_packet_output_written" => launch_packet_output.file?,

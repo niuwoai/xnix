@@ -28,6 +28,7 @@ const (
 	externalDesktopActivationRootEnv            = "XNIX_EXTERNAL_APP_DESKTOP_ACTIVATION_ROOT"
 	externalDesktopLaunchPacketOutputEnv        = "XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_OUTPUT"
 	externalDesktopLaunchPacketModeEnv          = "XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_MODE"
+	externalDesktopWindowMatchEnv               = "XNIX_EXTERNAL_APP_WINDOW_MATCH"
 	defaultExternalDesktopLaunchPacketModeValue = "development"
 )
 
@@ -67,6 +68,7 @@ func run(args []string, stdout io.Writer) error {
 	var externalDesktopActivationRoot string
 	var externalDesktopLaunchPacketOutput string
 	var externalDesktopLaunchPacketMode string
+	var externalDesktopWindowMatch string
 	var containerImage string
 	var containerPlatform string
 	var containerDockerPath string
@@ -97,6 +99,7 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&externalDesktopActivationRoot, "activation-root", envOrDefault(externalDesktopActivationRootEnv, ""), "staged desktop activation root used only when writing an external Windows app desktop launch packet sidecar")
 	flags.StringVar(&externalDesktopLaunchPacketOutput, "desktop-launch-packet-output", envOrDefault(externalDesktopLaunchPacketOutputEnv, ""), "optional JSON sidecar path for a KDE-safe external Windows app desktop launch packet")
 	flags.StringVar(&externalDesktopLaunchPacketMode, "desktop-launch-packet-mode", envOrDefault(externalDesktopLaunchPacketModeEnv, defaultExternalDesktopLaunchPacketModeValue), "desktop launch packet activation mode: production or development")
+	flags.StringVar(&externalDesktopWindowMatch, "external-window-match", envOrDefault(externalDesktopWindowMatchEnv, ""), "case-insensitive X window match text for external Windows app desktop launches")
 	flags.StringVar(&containerImage, "image", envOrDefault(compatLaunchContainerImageEnv, winapp.DefaultContainerImage), "local Wine X GUI container image for recipe-backed container GUI dispatch")
 	flags.StringVar(&containerPlatform, "platform", envOrDefault(compatLaunchContainerPlatformEnv, ""), "container platform for recipe-backed container GUI dispatch; empty uses the local image platform")
 	flags.StringVar(&containerDockerPath, "docker", envOrDefault(compatLaunchDockerEnv, ""), "explicit docker runner path for recipe-backed container GUI dispatch")
@@ -135,6 +138,7 @@ func run(args []string, stdout io.Writer) error {
 			StateRoot:                stateRoot,
 			ExternalAppHandle:        externalAppHandle,
 			ExternalDesktopArguments: flags.Args(),
+			WindowMatch:              externalDesktopWindowMatch,
 			Image:                    containerImage,
 			Platform:                 containerPlatform,
 			DockerPath:               containerDockerPath,
