@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc124] - 2026-07-26
+
+### Changed
+
+- Changed the Go Runtime real Windows app GUI packet to accept delegated `windows-app-container-x-gui-smoke` payloads from `xnix-compat-launch`, allowing staged desktop-launch evidence to become a Go-owned packet without Ruby synthesizing an outer report.
+- Changed `scripts/staged_desktop_notepad_smoke.rb` to persist a Go Runtime real GUI packet and KDE page after the `.desktop` entry and managed launcher run recipe-backed Notepad.
+
 ## [0.2.640-rc123] - 2026-07-26
 
 ### Changed

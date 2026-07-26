@@ -26,6 +26,8 @@ options = {
   report_output: DEFAULT_RUN_ROOT.join("staged-desktop-notepad-smoke.json").to_s,
   markdown_output: DEFAULT_RUN_ROOT.join("staged-desktop-notepad-smoke.md").to_s,
   delegated_output: DEFAULT_RUN_ROOT.join("staged-desktop-notepad-delegated-launcher.json").to_s,
+  runtime_packet_output: DEFAULT_RUN_ROOT.join("staged-desktop-notepad-real-gui-packet.json").to_s,
+  kde_page_output: DEFAULT_RUN_ROOT.join("staged-desktop-notepad-kde-page.json").to_s,
   registry: PROJECT_ROOT.join("runtime/recipes/registry.json").to_s,
   image: ENV.fetch("XNIX_WINE_IMAGE", DEFAULT_IMAGE),
   docker: ENV.fetch("XNIX_DOCKER_BIN", "docker"),
@@ -38,6 +40,8 @@ OptionParser.new do |parser|
   parser.on("--report-output PATH", "JSON packet output path") { |value| options[:report_output] = value }
   parser.on("--markdown-output PATH", "Markdown packet output path") { |value| options[:markdown_output] = value }
   parser.on("--delegated-output PATH", "Delegated launcher JSON output path") { |value| options[:delegated_output] = value }
+  parser.on("--runtime-packet-output PATH", "Go Runtime real Windows GUI packet output path") { |value| options[:runtime_packet_output] = value }
+  parser.on("--kde-page-output PATH", "KDE center page JSON output path") { |value| options[:kde_page_output] = value }
   parser.on("--registry PATH", "Development recipe registry path") { |value| options[:registry] = value }
   parser.on("--image IMAGE", "Local Wine GUI smoke image") { |value| options[:image] = value }
   parser.on("--docker PATH", "Docker runner path") { |value| options[:docker] = value }
@@ -119,6 +123,8 @@ run_root = absolute_path(options.fetch(:run_root))
 report_output = absolute_path(options.fetch(:report_output))
 markdown_output = absolute_path(options.fetch(:markdown_output))
 delegated_output = absolute_path(options.fetch(:delegated_output))
+runtime_packet_output = absolute_path(options.fetch(:runtime_packet_output))
+kde_page_output = absolute_path(options.fetch(:kde_page_output))
 build_root = run_root.join("build")
 stage_root = run_root.join("stage")
 state_root = run_root.join("state")
@@ -141,6 +147,8 @@ FileUtils.mkdir_p(GO_CACHE_ROOT.join("tmp"))
 FileUtils.mkdir_p(report_output.dirname)
 FileUtils.mkdir_p(markdown_output.dirname)
 FileUtils.mkdir_p(delegated_output.dirname)
+FileUtils.mkdir_p(runtime_packet_output.dirname)
+FileUtils.mkdir_p(kde_page_output.dirname)
 
 if docker_bin.nil?
   puts "SKIP: staged desktop Notepad smoke (Docker runner #{options.fetch(:docker)} is unavailable)"
@@ -302,6 +310,54 @@ assert(payload.fetch("session_gated_controlled_dispatch_consumed") == true, "lau
 assert(payload.fetch("controlled_execution_session_consumed") == true, "launcher smoke must consume the controlled execution session")
 assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s], "staged launcher output")
 
+runtime_packet, = run_json(
+  go_env,
+  "go", "run", "./cmd/xnix-runtime-go",
+  "real-winapp-gui-evidence-packet-preview",
+  "--gui-smoke-report", delegated_output.to_s,
+  "--app-id", APP_ID,
+  "--display-name", APP_NAME,
+  "--app-version", VERSION,
+  "--output", runtime_packet_output.to_s
+)
+assert(runtime_packet.fetch("request_type") == "real-winapp-gui-evidence-packet-preview", "Runtime packet must use the real GUI packet request type")
+assert(runtime_packet.fetch("report_consumed") == true, "Runtime packet must consume the staged delegated report")
+assert(runtime_packet.fetch("evidence_source") == "winapp-smoke-container-x-gui", "Runtime packet must preserve container GUI evidence source")
+assert(runtime_packet.fetch("recipe_backed") == true, "Runtime packet must remain recipe-backed")
+assert(runtime_packet.fetch("recipe_app_id") == APP_ID, "Runtime packet must preserve the recipe app id")
+assert(runtime_packet.fetch("known_app_gui_evidence_verified_count") == 1, "Runtime packet must verify one GUI evidence item")
+assert(runtime_packet.fetch("container_network_mode") == "none", "Runtime packet must preserve network isolation")
+assert(runtime_packet.fetch("container_host_mount_count") == 0, "Runtime packet must preserve zero host mounts")
+assert(runtime_packet.fetch("backend_launch_enabled") == false, "Runtime packet must not enable backend launch")
+assert(runtime_packet.fetch("host_root_modified") == false, "Runtime packet must not mutate the host root")
+assert(runtime_packet_output.file?, "Runtime packet file must be written")
+
+kde_page, kde_stdout = run_json(
+  go_env,
+  "go", "run", "./cmd/xnix-runtime-go",
+  "kde-center-page-preview",
+  "--registry", options.fetch(:registry),
+  "--app", APP_ID,
+  "--decision", "approved",
+  "--known-app-evidence-file", runtime_packet_output.to_s
+)
+File.write(kde_page_output, JSON.pretty_generate(kde_page) + "\n")
+cards = kde_page.fetch("known_app_gui_evidence_cards")
+assert(kde_page.fetch("known_app_gui_evidence_count") == 1, "KDE page must consume one staged real GUI evidence item")
+assert(cards.length == 1, "KDE page must render one staged real GUI evidence card")
+assert(cards.first.fetch("app_id") == APP_ID, "KDE GUI evidence card must target Notepad")
+assert(cards.first.fetch("evidence_source") == "winapp-smoke-container-x-gui", "KDE GUI evidence card must preserve container GUI source")
+assert(cards.first.fetch("recipe_backed") == true, "KDE GUI evidence card must remain recipe-backed")
+assert(cards.first.fetch("recipe_app_id") == APP_ID, "KDE GUI evidence card must preserve recipe app id")
+assert(cards.first.fetch("execution_evidence_recorded") == true, "KDE GUI evidence card must record execution evidence")
+assert(cards.first.fetch("runtime_dispatch_verified") == true, "KDE GUI evidence card must verify Runtime dispatch")
+assert(cards.first.fetch("desktop_launch_enabled") == false, "KDE GUI evidence card must not enable desktop launch")
+assert(cards.first.fetch("backend_launch_enabled") == false, "KDE GUI evidence card must not enable backend launch")
+assert(cards.first.fetch("backend_details_exposed") == false, "KDE GUI evidence card must not expose backend details")
+assert(cards.first.fetch("host_root_modified") == false, "KDE GUI evidence card must not mutate the host root")
+assert(kde_page_output.file?, "KDE page file must be written")
+assert_no_forbidden(kde_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s], "KDE page output")
+
 packet = {
   "schema_version" => SCHEMA_VERSION,
   "status" => "passed",
@@ -317,7 +373,16 @@ packet = {
   "host_root_modified" => payload.fetch("host_root_modified"),
   "docker_socket_mounted" => payload.fetch("docker_socket_mounted"),
   "broad_host_mount_required" => payload.fetch("broad_host_mount_required"),
+  "runtime_packet_output_written" => runtime_packet_output.file?,
+  "runtime_packet_consumed_report" => runtime_packet.fetch("report_consumed"),
+  "runtime_packet_evidence_source" => runtime_packet.fetch("evidence_source"),
+  "runtime_packet_known_app_gui_evidence_verified_count" => runtime_packet.fetch("known_app_gui_evidence_verified_count"),
+  "kde_page_output_written" => kde_page_output.file?,
+  "kde_page_known_app_gui_evidence_count" => kde_page.fetch("known_app_gui_evidence_count"),
+  "kde_page_card_recipe_backed" => cards.first.fetch("recipe_backed"),
   "delegated_launcher_payload_path" => delegated_output.to_s,
+  "runtime_packet_path" => runtime_packet_output.to_s,
+  "kde_page_path" => kde_page_output.to_s,
   "report_path" => report_output.to_s,
   "markdown_path" => markdown_output.to_s
 }
@@ -336,6 +401,8 @@ File.write(
     "- Container platform: #{payload.fetch("container_platform")}",
     "- Network mode: #{payload.fetch("network_mode")}",
     "- Host mount count: #{payload.fetch("host_mount_count")}",
+    "- Runtime packet evidence verified count: #{runtime_packet.fetch("known_app_gui_evidence_verified_count")}",
+    "- KDE GUI evidence count: #{kde_page.fetch("known_app_gui_evidence_count")}",
     "- Docker socket mounted: #{payload.fetch("docker_socket_mounted")}",
     "- Host root modified: #{payload.fetch("host_root_modified")}",
     ""

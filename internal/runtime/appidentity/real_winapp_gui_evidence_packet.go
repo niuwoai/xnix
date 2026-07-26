@@ -67,6 +67,32 @@ type RealWinAppGUIEvidencePacket struct {
 	DesktopSafeSummary                 string                       `json:"desktop_safe_summary"`
 }
 
+type containerXGUIRuntimePayload struct {
+	SchemaVersion               string `json:"schema_version"`
+	RequestType                 string `json:"request_type"`
+	Status                      string `json:"status"`
+	ApplicationID               string `json:"application_id"`
+	DisplayName                 string `json:"display_name"`
+	AppVersion                  string `json:"app_version"`
+	RecipeBacked                bool   `json:"recipe_backed"`
+	ApplicationName             string `json:"application_name"`
+	WindowMatch                 string `json:"window_match"`
+	ContainerImage              string `json:"container_image"`
+	ContainerPlatform           string `json:"container_platform"`
+	NetworkMode                 string `json:"network_mode"`
+	XServerStarted              bool   `json:"x_server_started"`
+	WineBootstrapAttempted      bool   `json:"wine_bootstrap_attempted"`
+	ImageAvailable              bool   `json:"image_available"`
+	XWindowObserved             bool   `json:"x_window_observed"`
+	WindowEvidenceSummary       string `json:"window_evidence_summary"`
+	HostRootModified            bool   `json:"host_root_modified"`
+	PrivilegedContainerRequired bool   `json:"privileged_container_required"`
+	HostNetworkingRequired      bool   `json:"host_networking_required"`
+	DockerSocketMounted         bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired      bool   `json:"broad_host_mount_required"`
+	HostMountCount              int    `json:"host_mount_count"`
+}
+
 func PreviewRealWinAppGUIEvidencePacket(request RealWinAppGUIEvidencePacketRequest) (RealWinAppGUIEvidencePacket, error) {
 	path := strings.TrimSpace(request.ReportPath)
 	if path == "" {
@@ -84,7 +110,19 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 	if err := json.Unmarshal(content, &report); err != nil {
 		return RealWinAppGUIEvidencePacket{}, fmt.Errorf("parse real Windows app GUI smoke report: %w", err)
 	}
-	projection, err := PreviewGUISmokeEvidenceJSON(content, GUISmokeEvidencePreviewRequest{
+	projectionContent := content
+	if report.SchemaVersion == "xnix.runtime.windows_app_container_x_gui_smoke.v1" {
+		wrapped, err := wrapContainerXGUIRuntimePayload(content)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, err
+		}
+		report = wrapped
+		projectionContent, err = json.Marshal(wrapped)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, fmt.Errorf("encode wrapped container X GUI Runtime payload: %w", err)
+		}
+	}
+	projection, err := PreviewGUISmokeEvidenceJSON(projectionContent, GUISmokeEvidencePreviewRequest{
 		AppID:       request.AppID,
 		DisplayName: request.DisplayName,
 		AppVersion:  request.AppVersion,
@@ -169,6 +207,61 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		BroadHostMountRequired:             projection.BroadHostMountRequired,
 		DesktopSafeSummary:                 projection.DesktopSafeSummary,
 	}, nil
+}
+
+func wrapContainerXGUIRuntimePayload(content []byte) (guiSmokeReport, error) {
+	var payload containerXGUIRuntimePayload
+	if err := json.Unmarshal(content, &payload); err != nil {
+		return guiSmokeReport{}, fmt.Errorf("parse container X GUI Runtime payload: %w", err)
+	}
+	if payload.SchemaVersion != "xnix.runtime.windows_app_container_x_gui_smoke.v1" ||
+		payload.RequestType != "windows-app-container-x-gui-smoke" {
+		return guiSmokeReport{}, errors.New("real Windows app GUI evidence packet requires a container X GUI Runtime payload")
+	}
+	report := guiSmokeReport{
+		Version:                     payload.AppVersion,
+		SchemaVersion:               "xnix.runtime.winapp_smoke_report.v1",
+		ReportType:                  "winapp-smoke",
+		Status:                      payload.Status,
+		Backend:                     "container-x-gui",
+		ContainerGUIApp:             payload.ApplicationName,
+		ContainerSmokeInvoked:       true,
+		ContainerXGUISmokeInvoked:   true,
+		SmokeInvoked:                true,
+		XServerStarted:              payload.XServerStarted,
+		StartupWindowObserved:       payload.XWindowObserved,
+		ContainerImageAvailable:     payload.ImageAvailable,
+		ContainerRecipeBacked:       payload.RecipeBacked,
+		ContainerApplicationID:      payload.ApplicationID,
+		ContainerDisplayName:        payload.DisplayName,
+		ContainerAppVersion:         payload.AppVersion,
+		HostRootModified:            payload.HostRootModified,
+		PrivilegedContainerRequired: payload.PrivilegedContainerRequired,
+		HostNetworkingRequired:      payload.HostNetworkingRequired,
+		DockerSocketMounted:         payload.DockerSocketMounted,
+		BroadHostMountRequired:      payload.BroadHostMountRequired,
+		KDESafeOutputSummary:        payload.WindowEvidenceSummary,
+	}
+	report.ContainerPayload.SchemaVersion = payload.SchemaVersion
+	report.ContainerPayload.RequestType = payload.RequestType
+	report.ContainerPayload.Status = payload.Status
+	report.ContainerPayload.ApplicationID = payload.ApplicationID
+	report.ContainerPayload.DisplayName = payload.DisplayName
+	report.ContainerPayload.AppVersion = payload.AppVersion
+	report.ContainerPayload.RecipeBacked = payload.RecipeBacked
+	report.ContainerPayload.NetworkMode = payload.NetworkMode
+	report.ContainerPayload.XServerStarted = payload.XServerStarted
+	report.ContainerPayload.WineBootstrapAttempted = payload.WineBootstrapAttempted
+	report.ContainerPayload.ImageAvailable = payload.ImageAvailable
+	report.ContainerPayload.XWindowObserved = payload.XWindowObserved
+	report.ContainerPayload.WindowEvidenceSummary = payload.WindowEvidenceSummary
+	report.ContainerPayload.HostRootModified = payload.HostRootModified
+	report.ContainerPayload.PrivilegedContainerRequired = payload.PrivilegedContainerRequired
+	report.ContainerPayload.HostNetworkingRequired = payload.HostNetworkingRequired
+	report.ContainerPayload.DockerSocketMounted = payload.DockerSocketMounted
+	report.ContainerPayload.BroadHostMountRequired = payload.BroadHostMountRequired
+	report.ContainerPayload.HostMountCount = payload.HostMountCount
+	return report, nil
 }
 
 func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (KnownAppSmokeEvidenceSummary, error) {

@@ -110,3 +110,68 @@ func TestKnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(t *testing.T) {
 		t.Fatalf("unexpected evidence from real GUI packet: %#v", evidence)
 	}
 }
+
+func TestPreviewRealWinAppGUIEvidencePacketConsumesRawContainerRuntimePayload(t *testing.T) {
+	packet, err := PreviewRealWinAppGUIEvidencePacketJSON([]byte(rawContainerXGUIRuntimePayloadFixture()), RealWinAppGUIEvidencePacketRequest{
+		AppID:       "org.xnix.sample.notepad",
+		DisplayName: "Sample Notepad",
+		AppVersion:  "0.2.640-test",
+	})
+	if err != nil {
+		t.Fatalf("PreviewRealWinAppGUIEvidencePacketJSON returned error: %v", err)
+	}
+	if packet.SchemaVersion != RealWinAppGUIEvidencePacketSchemaVersion ||
+		packet.RequestType != RealWinAppGUIEvidencePacketRequestType ||
+		packet.Version != "0.2.640-test" ||
+		packet.AppID != "org.xnix.sample.notepad" ||
+		packet.DisplayName != "Sample Notepad" ||
+		packet.AppVersion != "0.2.640-test" ||
+		packet.GUIAppName != "notepad.exe" ||
+		packet.EvidenceSource != GUISmokeEvidenceSourceContainerXGUI ||
+		!packet.RecipeBacked ||
+		packet.RecipeAppID != "org.xnix.sample.notepad" ||
+		packet.CompatibilityState != "real-gui-container-wine-verified" ||
+		packet.CenterCardState != "validated-real-gui-container-run" ||
+		packet.KnownAppGUIEvidenceCount != 1 ||
+		packet.KnownAppGUIEvidenceVerifiedCount != 1 ||
+		!packet.ContainerRuntimeUsed ||
+		packet.ContainerNetworkMode != "none" ||
+		packet.ContainerHostMountCount != 0 ||
+		!packet.XWindowObserved ||
+		packet.XWindowChildCount != 1 ||
+		packet.DesktopLaunchEnabled ||
+		packet.BackendLaunchEnabled ||
+		packet.BackendDetailsExposed ||
+		packet.HostRootModified ||
+		packet.DockerSocketMounted {
+		t.Fatalf("unexpected real Windows app GUI evidence packet from raw Runtime payload: %#v", packet)
+	}
+}
+
+func rawContainerXGUIRuntimePayloadFixture() string {
+	return `{
+  "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",
+  "request_type": "windows-app-container-x-gui-smoke",
+  "status": "passed",
+  "application_id": "org.xnix.sample.notepad",
+  "display_name": "Sample Notepad",
+  "app_version": "0.2.640-test",
+  "recipe_backed": true,
+  "application_name": "notepad.exe",
+  "window_match": "notepad.exe",
+  "container_image": "xnix-wine-smoke:local",
+  "container_platform": "linux/arm64",
+  "network_mode": "none",
+  "x_server_started": true,
+  "wine_bootstrap_attempted": true,
+  "image_available": true,
+  "x_window_observed": true,
+  "window_evidence_summary": "0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\")",
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "host_mount_count": 0
+}`
+}

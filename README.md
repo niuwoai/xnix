@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc123`.
+The project is currently at `v0.2.640-rc124`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc123`.
 
 ## Current Checkpoint
 
-v0.2.640-rc123 lets `compatibility-center-preview` and `kde-center-page-preview` consume the Go Runtime `real-winapp-gui-evidence-packet-preview` file directly through `--known-app-evidence-file`. The container GUI evidence packet harness now renders the KDE page from that Go-owned packet instead of the older GUI evidence projection.
+v0.2.640-rc124 lets the staged desktop Notepad smoke carry its real `.desktop`/managed-launcher run into Go Runtime real GUI packet evidence and a KDE page. The Go packet now accepts the delegated `windows-app-container-x-gui-smoke` payload returned by `xnix-compat-launch`, so Ruby does not need to wrap the launcher result into a synthetic report.
+
+The previous v0.2.640-rc123 checkpoint let `compatibility-center-preview` and `kde-center-page-preview` consume the Go Runtime `real-winapp-gui-evidence-packet-preview` file directly through `--known-app-evidence-file`. The container GUI evidence packet harness now renders the KDE page from that Go-owned packet instead of the older GUI evidence projection.
 
 The previous v0.2.640-rc122 checkpoint changed the container GUI evidence packet smoke harness to call the Go Runtime `real-winapp-gui-evidence-packet-preview` command and persist its packet before rendering the KDE page. Ruby still orchestrates the test, while Runtime packet semantics now stay in Go.
 

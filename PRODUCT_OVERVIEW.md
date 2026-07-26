@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc123
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc124
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc124 checkpoint candidate brings the staged desktop Notepad path into the same Go-owned evidence flow. `real-winapp-gui-evidence-packet-preview` now accepts the delegated `windows-app-container-x-gui-smoke` payload produced by `xnix-compat-launch`, and `scripts/staged_desktop_notepad_smoke.rb` writes a real GUI packet plus a KDE page after the `.desktop` entry and managed launcher actually run Notepad. This proves the desktop-entry path can feed Runtime/KDE evidence without Ruby synthesizing a report.
 
 The v0.2.640-rc123 checkpoint candidate makes the Go Runtime real Windows app GUI packet a first-class desktop evidence source. `compatibility-center-preview` and `kde-center-page-preview` now accept a `real-winapp-gui-evidence-packet-preview` JSON file through `--known-app-evidence-file`, validate the packet's safe nested evidence, and render the same Notepad GUI card without falling back to the older GUI evidence projection. The one-shot container GUI evidence harness now renders the KDE page from the Go-owned packet.
 
