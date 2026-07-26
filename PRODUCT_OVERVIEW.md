@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc164
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc165
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc165 checkpoint candidate adds a native Go `xnix-compat-open` command for Dolphin file-open previews. The command loads the digest-verified Runtime recipe registry directly, preserves the existing `--recipe-dir` development alias, defaults production lookup to `/usr/share/xnix/compatibility/recipes/registry.json`, supports explicit application selection and activation receipt evidence, and emits the Go-owned `xnix.runtime.file_open.v1` preview schema. The q4 remote Go build now includes `./cmd/xnix-compat-open` by default, keeping compile-heavy validation on q4 while the macOS host stays limited to lightweight checks. Backend launch, owner service argument exposure, state-root path exposure, raw backend details, direct host-file reads, host networking, Docker socket mounts, privileged containers, broad host mounts, and host-root mutation remain closed.
 
 The v0.2.640-rc164 checkpoint candidate makes Dolphin's `xnix-compat-open` service-menu entry point prefer the Go Runtime file-open preview. The Ruby command remains the installed desktop wrapper, but its default `auto` engine now invokes `xnix-runtime-go file-open-preview --registry <registry> [--app <id>] file://...` when the Go Runtime command and recipe registry are available, returning the Go-owned `xnix.runtime.file_open.v1` preview schema. `--preview-engine ruby` keeps the old lightweight model for development environments, and `--preview-engine go` fail-closes when the Go preview is unavailable. This moves Dolphin file-open intent toward the independent AI Compatibility Runtime without enabling backend launch, owner service argument exposure, state-root access, raw backend details, direct host-file reads, host networking, Docker socket mounts, privileged containers, broad host mounts, or host-root mutation.
 

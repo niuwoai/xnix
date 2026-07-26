@@ -21,6 +21,7 @@ DEFAULT_PACKAGES = %w[
   ./cmd/xnix-runtime-go
   ./cmd/xnix-runtime-owner
   ./cmd/xnix-compat-launch
+  ./cmd/xnix-compat-open
 ].freeze
 
 options = {

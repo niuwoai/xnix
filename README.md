@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc164`.
+The project is currently at `v0.2.640-rc165`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc164`.
 
 ## Current Checkpoint
 
-v0.2.640-rc164 makes the Dolphin `xnix-compat-open` entry point Go Runtime-first. The Ruby command remains a lightweight compatibility wrapper, but in `auto` mode it now delegates to `xnix-runtime-go file-open-preview --registry ...` whenever the Go Runtime command and recipe registry are available, preserving a Ruby fallback only for environments without the Go preview binary. This moves the user-facing Dolphin file-open path closer to the independent AI Compatibility Runtime while keeping backend launch, host mutation, owner service arguments, and raw backend details closed.
+v0.2.640-rc165 adds a native Go `xnix-compat-open` command for Dolphin file-open previews. The command loads the digest-verified recipe registry, supports the existing `--recipe-dir` development alias, defaults production recipe lookup to `/usr/share/xnix/compatibility/recipes/registry.json`, and emits the Go-owned `xnix.runtime.file_open.v1` preview without enabling backend launch, direct host-file access, backend detail exposure, or host-root mutation. The q4 remote Go build now includes `./cmd/xnix-compat-open` by default so compile-heavy validation stays off the macOS host.
+
+The previous v0.2.640-rc164 checkpoint made the Dolphin `xnix-compat-open` entry point Go Runtime-first. The Ruby command remains a lightweight compatibility wrapper, but in `auto` mode it now delegates to `xnix-runtime-go file-open-preview --registry ...` whenever the Go Runtime command and recipe registry are available, preserving a Ruby fallback only for environments without the Go preview binary. This moves the user-facing Dolphin file-open path closer to the independent AI Compatibility Runtime while keeping backend launch, host mutation, owner service arguments, and raw backend details closed.
 
 The previous v0.2.640-rc163 checkpoint carried owner-controlled file-open evidence through the KDE controlled-launch action preview. When the KDE page provides a verified owner file-open GUI card, `kde-controlled-launch-action-preview` now exposes `owner_file_open_verified`, safe delegated file-argument counts, Wine path translation status, and safe window-match evidence while still forwarding only the Runtime evidence handle to D-Bus. The action preview fail-closes raw file argument paths, owner service arguments, state roots, backend details, and direct launch authority; q4 remains the default compile-heavy validation path.
 

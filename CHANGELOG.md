@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc165] - 2026-07-26
+
+### Added
+
+- Added a native Go `xnix-compat-open` command that emits the Runtime file-open preview from the digest-verified recipe registry.
+- Added `./cmd/xnix-compat-open` to the default q4 remote Go build target set so compile-heavy validation stays off the macOS host.
+
+### Changed
+
+- Preserved the `--recipe-dir` file-open development alias while defaulting production lookup to `/usr/share/xnix/compatibility/recipes/registry.json`.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc165`.
+
 ## [0.2.640-rc164] - 2026-07-26
 
 ### Changed

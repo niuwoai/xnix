@@ -1018,7 +1018,7 @@ remote_wine_guest_gui_smoke = read_project_file("scripts/remote_wine_guest_gui_s
   assert(remote_wine_guest_gui_smoke.include?(token), "remote Wine guest GUI smoke script must include #{token}")
 end
 remote_go_build = read_project_file("scripts/remote_go_build.rb")
-%w[xnix.scripts.remote_go_build.v1 remote-go-build root@q4 --execute --no-sync-source --source-sync-mode --package --goos --goarch source_sync_entries source_sync_mode runtime full DEFAULT_PACKAGES ./cmd/xnix-runtime-go ./cmd/xnix-runtime-owner ./cmd/xnix-compat-launch /home/xnix-build /home/xnix-build-cache /home/xnix-toolchains/go1.24.4-linux-amd64/bin/go remote_output_root host_compilation_avoided remote_build_planned GOCACHE GOMODCACHE GOTMPDIR GOOS GOARCH BatchMode=yes ServerAliveInterval=15 --timeout --contimeout docs/claude-code-implementation-packages.md privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
+%w[xnix.scripts.remote_go_build.v1 remote-go-build root@q4 --execute --no-sync-source --source-sync-mode --package --goos --goarch source_sync_entries source_sync_mode runtime full DEFAULT_PACKAGES ./cmd/xnix-runtime-go ./cmd/xnix-runtime-owner ./cmd/xnix-compat-launch ./cmd/xnix-compat-open /home/xnix-build /home/xnix-build-cache /home/xnix-toolchains/go1.24.4-linux-amd64/bin/go remote_output_root host_compilation_avoided remote_build_planned GOCACHE GOMODCACHE GOTMPDIR GOOS GOARCH BatchMode=yes ServerAliveInterval=15 --timeout --contimeout docs/claude-code-implementation-packages.md privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
   assert(remote_go_build.include?(token), "remote Go build script must include #{token}")
 end
 
@@ -1087,6 +1087,14 @@ assert(file_association_source.include?("\"backend_details_exposed\" => false"),
 file_open_request_source = read_project_file("lib/xnix/compatibility/file_open_request.rb")
 %w[file-open-preview --preview-engine --runtime-bin --runtime-registry XNIX_RUNTIME_GO xnix-runtime-go Open3.capture2].each do |token|
   assert(file_open_request_source.include?(token), "File open request wrapper must preserve Go Runtime delegation token #{token}")
+end
+compat_open_command = read_project_file("cmd/xnix-compat-open/main.go")
+%w[xnix-compat-open packagedRecipeRegistryDir /usr/share/xnix/compatibility/recipes recipe-dir registry recipe-root activation-root LoadRecipesFromRegistry NewFileOpenPreviewWithOptions].each do |token|
+  assert(compat_open_command.include?(token), "Go file-open command must include #{token}")
+end
+compat_open_test = read_project_file("cmd/xnix-compat-open/main_test.go")
+%w[xnix.runtime.file_open.v1 host_root_modified backend_launch_enabled direct_host_file_access backend_details_exposed].each do |token|
+  assert(compat_open_test.include?(token), "Go file-open command tests must include #{token}")
 end
 
 engine_catalog_source = read_project_file("lib/xnix/compatibility/compatibility_engine_catalog.rb")

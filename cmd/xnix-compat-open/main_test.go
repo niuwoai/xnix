@@ -1,0 +1,174 @@
+package main
+
+import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+func TestCompatOpenBuildsRuntimeFileOpenPreview(t *testing.T) {
+	registryPath := writeCompatOpenRegistry(t)
+
+	var output bytes.Buffer
+	err := run([]string{
+		"--registry", registryPath,
+		"--app", "org.example.notes",
+		"file:///home/test/Documents/report.txt",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.file_open.v1" ||
+		payload["request_type"] != "file-open-preview" ||
+		payload["source"] != "dolphin-service-menu" ||
+		payload["application_id"] != "org.example.notes" ||
+		payload["display_name"] != "Example Notes" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["portal_required"] != true ||
+		payload["portal_interface"] != "org.freedesktop.portal.FileChooser" ||
+		payload["portal_method"] != "OpenFile" ||
+		payload["file_count"] != float64(1) ||
+		payload["selected_extension"] != ".txt" ||
+		payload["selection_mode"] != "explicit-application" ||
+		payload["runtime_owned"] != true ||
+		payload["backend_launch_enabled"] != false ||
+		payload["direct_host_file_access"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected file-open payload: %#v", payload)
+	}
+	action := payload["action"].(map[string]any)
+	argv := action["argv"].([]any)
+	if action["type"] != "runtime-file-open" ||
+		argv[0] != "xnix-compat-open" ||
+		argv[1] != "--app" ||
+		argv[2] != "org.example.notes" ||
+		argv[3] != "%U" {
+		t.Fatalf("unexpected action payload: %#v", action)
+	}
+	assertCompatOpenSafe(t, output.String())
+}
+
+func TestCompatOpenSelectsRecipeByExtension(t *testing.T) {
+	registryPath := writeCompatOpenRegistry(t)
+
+	var output bytes.Buffer
+	err := run([]string{
+		"--registry", registryPath,
+		"file:///home/test/Documents/ledger.abc",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["application_id"] != "org.example.ledger" ||
+		payload["selected_extension"] != ".abc" ||
+		payload["selection_mode"] != "extension-match" {
+		t.Fatalf("unexpected selected recipe payload: %#v", payload)
+	}
+}
+
+func TestCompatOpenAcceptsRecipeDirAlias(t *testing.T) {
+	registryPath := writeCompatOpenRegistry(t)
+
+	var output bytes.Buffer
+	err := run([]string{
+		"--recipe-dir", filepath.Dir(registryPath),
+		"file:///home/test/Documents/report.txt",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	if !strings.Contains(output.String(), `"application_id": "org.example.notes"`) {
+		t.Fatalf("recipe-dir alias did not load registry: %s", output.String())
+	}
+}
+
+func TestCompatOpenRejectsUnsafeRequests(t *testing.T) {
+	registryPath := writeCompatOpenRegistry(t)
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{
+			name: "missing file uri",
+			args: []string{"--registry", registryPath},
+			want: "requires at least one file URI",
+		},
+		{
+			name: "non file uri",
+			args: []string{"--registry", registryPath, "https://example.invalid/report.txt"},
+			want: "only file URIs are accepted",
+		},
+		{
+			name: "unknown app",
+			args: []string{"--registry", registryPath, "--app", "org.example.missing", "file:///home/test/Documents/report.txt"},
+			want: "unknown application",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var output bytes.Buffer
+			err := run(test.args, &output)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("expected %q rejection, got %v", test.want, err)
+			}
+		})
+	}
+}
+
+func writeCompatOpenRegistry(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	ledgerData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	notesData := []byte(`{"id":"org.example.notes","name":"Example Notes","icon":"accessories-text-editor","mode":"automatic","supported_extensions":[".txt"]}`)
+	writeRecipe := func(name string, data []byte) string {
+		t.Helper()
+		if err := os.WriteFile(filepath.Join(root, name), data, 0o600); err != nil {
+			t.Fatalf("WriteFile %s returned error: %v", name, err)
+		}
+		sum := sha256.Sum256(data)
+		return hex.EncodeToString(sum[:])
+	}
+	ledgerDigest := writeRecipe("org.example.ledger.json", ledgerData)
+	notesDigest := writeRecipe("org.example.notes.json", notesData)
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + ledgerDigest + `","signature_status":"development-only"},{"id":"org.example.notes","path":"org.example.notes.json","sha256":"` + notesDigest + `","signature_status":"development-only"}]}`)
+	registryPath := filepath.Join(root, "registry.json")
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+	return registryPath
+}
+
+func assertCompatOpenSafe(t *testing.T, text string) {
+	t.Helper()
+	for _, forbidden := range []string{
+		"backend_process_started",
+		"docker_socket_mounted\": true",
+		"host_networking_required\": true",
+		"broad_host_mount_required\": true",
+		"host_root_modified\": true",
+		"direct_host_file_access\": true",
+		"backend_details_exposed\": true",
+	} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("file-open command exposed unsafe term %q in %s", forbidden, text)
+		}
+	}
+}
