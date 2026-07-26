@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc197
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc198
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc198 checkpoint reduces the real Windows app run path to one q4 operator command. `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --acceptance-json` still builds and runs on q4, starts QEMU from the Go Runtime, executes the known Windows app through guest Wine, persists the run report and serial log, and then immediately asks `xnix-runtime-go known-existing-winapp-acceptance-preview` to consume that report. The command returns the desktop-safe Go acceptance JSON instead of a PASS line when requested, so operators no longer need to manually locate the q4 report and run the second acceptance command. Host compilation remains avoided, output stays redacted, and unsafe host/container gates stay closed. rc198 validation ran 7zr 26.02 through this one-command q4 acceptance JSON path.
 
 The v0.2.640-rc197 checkpoint carries the accepted verified-catalog q4 run back into desktop read models. Compatibility Center and KDE Center page previews now accept `--known-app-verified-catalog-run-acceptance ACCEPTANCE.json`, validate that the evidence came from a matched verified catalog run plan plus a passed known Windows app run report, and project it as a desktop-safe card with `verified-catalog-real-q4-run-accepted` state. The card shows that a specific catalog app completed real q4 QEMU/Wine acceptance without exposing q4 paths, remote hosts, raw output, runner arguments, artifact paths, backend details, or host/container mutation. The desktop still does not launch directly from this evidence; it remains a reviewable Runtime-owned signal for the next controlled-launch step.
 

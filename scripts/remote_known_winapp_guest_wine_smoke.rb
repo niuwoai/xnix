@@ -30,6 +30,7 @@ options = {
   remote_materials_root: DEFAULT_REMOTE_MATERIALS_ROOT,
   remote_go: DEFAULT_REMOTE_GO,
   app_id: DEFAULT_APP_ID,
+  acceptance_json: false,
   timeout: ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
   boot_timeout: ENV.fetch("XNIX_KNOWN_WINAPP_QEMU_BOOT_TIMEOUT", "180s")
 }
@@ -46,6 +47,7 @@ OptionParser.new do |parser|
   parser.on("--remote-materials-root PATH", "Remote run materials root under /home/xnix*.") { |value| options[:remote_materials_root] = value }
   parser.on("--remote-go PATH", "Remote Go binary path.") { |value| options[:remote_go] = value }
   parser.on("--app APP_ID", "Known Windows app id, default: #{DEFAULT_APP_ID}") { |value| options[:app_id] = value }
+  parser.on("--acceptance-json", "Return Go-owned known existing Windows app acceptance JSON after a passed q4 run.") { options[:acceptance_json] = true }
   parser.on("--timeout DURATION", "Guest Wine execution timeout.") { |value| options[:timeout] = value }
   parser.on("--qemu-boot-timeout DURATION", "QEMU SSH boot timeout.") { |value| options[:boot_timeout] = value }
 end.parse!
@@ -143,6 +145,8 @@ plan = {
   "remote_build_root" => remote_build_root,
   "remote_materials_root" => remote_materials_root,
   "app_id" => options.fetch(:app_id),
+  "acceptance_json_planned" => options.fetch(:acceptance_json),
+  "acceptance_request_type" => "known-existing-winapp-acceptance-preview",
   "backend" => "guest-wine",
   "start_qemu" => true,
   "guest_port" => "auto",
@@ -210,7 +214,39 @@ when "passed"
   abort "remote known Windows app smoke did not start QEMU from Go" unless payload.fetch("guest_started") == true
   abort "remote known Windows app smoke did not redact output" unless payload.fetch("raw_output_redacted") == true
 
-  puts "PASS: remote known Windows app QEMU guest Wine smoke (#{payload.fetch("app_id")} #{payload.fetch("app_version")})"
+  if options.fetch(:acceptance_json)
+    acceptance_args = [
+      remote_bin,
+      "known-existing-winapp-acceptance-preview",
+      "--known-winapp-run", remote_report
+    ]
+    acceptance_stdout, acceptance_stderr, acceptance_status = run_shell(options.fetch(:local_shell), shell_join(["ssh", remote_host, shell_join(acceptance_args)]))
+    unless acceptance_status.zero?
+      warn acceptance_stdout unless acceptance_stdout.empty?
+      warn acceptance_stderr unless acceptance_stderr.empty?
+      warn "FAIL: remote known Windows app acceptance JSON command failed"
+      exit 1
+    end
+
+    acceptance = JSON.parse(acceptance_stdout)
+    abort "remote known Windows app acceptance used unexpected request type" unless acceptance.fetch("request_type") == "known-existing-winapp-acceptance-preview"
+    abort "remote known Windows app acceptance did not match app id" unless acceptance.fetch("app_id") == payload.fetch("app_id")
+    abort "remote known Windows app acceptance was not ready" unless acceptance.fetch("acceptance_ready") == true
+    abort "remote known Windows app acceptance exposed report path" unless acceptance.fetch("run_report_path_exposed") == false
+    abort "remote known Windows app acceptance exposed remote host" unless acceptance.fetch("remote_host_exposed") == false
+    abort "remote known Windows app acceptance exposed raw output" unless acceptance.fetch("raw_output_exposed") == false
+    abort "remote known Windows app acceptance exposed runtime argv" unless acceptance.fetch("runtime_argv_exposed") == false
+    abort "remote known Windows app acceptance exposed runner path" unless acceptance.fetch("runner_path_exposed") == false
+    abort "remote known Windows app acceptance required unsafe host access" unless acceptance.fetch("host_root_modified") == false &&
+                                                                       acceptance.fetch("privileged_container_required") == false &&
+                                                                       acceptance.fetch("host_networking_required") == false &&
+                                                                       acceptance.fetch("docker_socket_mounted") == false &&
+                                                                       acceptance.fetch("broad_host_mount_required") == false
+
+    puts JSON.pretty_generate(acceptance)
+  else
+    puts "PASS: remote known Windows app QEMU guest Wine smoke (#{payload.fetch("app_id")} #{payload.fetch("app_version")})"
+  end
 when "skipped"
   puts "SKIP: remote known Windows app QEMU guest Wine smoke (#{payload.fetch("skip_reason")})"
 else

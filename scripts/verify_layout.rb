@@ -271,6 +271,7 @@ REQUIRED_FILES = %w[
   scripts/winapp_guest_wine_smoke.rb
   scripts/known_winapp_fetch.rb
   scripts/known_winapp_guest_wine_smoke.rb
+  scripts/remote_known_winapp_guest_wine_smoke.rb
   scripts/q4_sample_notepad_smoke.rb
   scripts/q4_winapp_smoke.rb
   scripts/q4_messagebox_smoke.rb
@@ -1066,6 +1067,10 @@ end
 known_existing_winapp_acceptance = read_project_file("internal/runtime/appidentity/known_existing_winapp_acceptance.go")
 %w[xnix.runtime.known_existing_winapp_acceptance.v1 known-existing-winapp-acceptance-preview windows-known-app-run known-existing-windows-app-real-run-acceptance run_report_consumed run_report_path_exposed guest_endpoint_exposed raw_path_exposed raw_output_exposed runtime_argv_exposed runner_path_exposed existing_windows_app known_portable_catalog_backed managed-isolated-compatibility checksum_verified marker_observed isolated_guest_execution_observed compatibility_engine_execution_observed loopback_only_networking package_manager_invoked 7zr busybox-w32 validateNoBackendTerms].each do |token|
   assert(known_existing_winapp_acceptance.include?(token), "known existing Windows app acceptance must include #{token}")
+end
+remote_known_winapp_guest_wine_smoke = read_project_file("scripts/remote_known_winapp_guest_wine_smoke.rb")
+%w[--acceptance-json known-existing-winapp-acceptance-preview --known-winapp-run acceptance_json_planned acceptance_request_type windows-known-app-run --start-qemu --port auto --redact-output --report-output --qemu-serial-log DEFAULT_REMOTE_GO DEFAULT_LOCAL_SHELL DEFAULT_SOURCE_SYNC_MODE /home/xnix-toolchains/go1.24.4-linux-amd64/bin/go /home/xnix-run-materials /home/xnix-build-cache docs/claude-code-implementation-packages.md host_root_modified privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required].each do |token|
+  assert(remote_known_winapp_guest_wine_smoke.include?(token), "remote known Windows app guest Wine smoke must include #{token}")
 end
 
 buildroot_helper = read_project_file("lib/xnix/buildroot.rb")

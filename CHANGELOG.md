@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc198] - 2026-07-27
+
+### Added
+
+- Added `--acceptance-json` to `scripts/remote_known_winapp_guest_wine_smoke.rb` so one q4 operator command can run a real known Windows app and return Go-owned `known-existing-winapp-acceptance-preview` JSON.
+- Added lightweight Ruby coverage for the acceptance JSON plan mode and its closed host/container safety gates.
+
+### Changed
+
+- Updated the remote known Windows app smoke plan to expose the Go acceptance request type while preserving the default PASS text output unless `--acceptance-json` is requested.
+- Verified the rc198 one-command acceptance JSON path with a q4 `7zr` known Windows app QEMU/Wine run.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc198`.
+
 ## [0.2.640-rc197] - 2026-07-27
 
 ### Added

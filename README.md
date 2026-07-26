@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc197`.
+The project is currently at `v0.2.640-rc198`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc197`.
 
 ## Current Checkpoint
 
-v0.2.640-rc197 lets desktop read models consume accepted verified-catalog q4 run evidence. `compatibility-center-preview` and `kde-center-page-preview` now accept `--known-app-verified-catalog-run-acceptance ACCEPTANCE.json`, validate the matched catalog plan plus passed real run evidence, and expose a desktop-safe `verified-catalog-real-q4-run-accepted` card without leaking q4 paths, remote hosts, raw output, runner arguments, artifact paths, backend details, or host/container mutation.
+v0.2.640-rc198 makes the real known Windows app acceptance path a one-command q4 operation. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --acceptance-json` builds and runs on q4, starts QEMU from the Go Runtime, executes the app through guest Wine, persists the report and serial log, and returns the Go-owned `known-existing-winapp-acceptance-preview` JSON instead of requiring a second manual command. rc198 validation ran 7zr 26.02 through this path and returned `acceptance_ready=true`.
+
+The previous v0.2.640-rc197 checkpoint lets desktop read models consume accepted verified-catalog q4 run evidence. `compatibility-center-preview` and `kde-center-page-preview` now accept `--known-app-verified-catalog-run-acceptance ACCEPTANCE.json`, validate the matched catalog plan plus passed real run evidence, and expose a desktop-safe `verified-catalog-real-q4-run-accepted` card without leaking q4 paths, remote hosts, raw output, runner arguments, artifact paths, backend details, or host/container mutation.
 
 The previous v0.2.640-rc196 checkpoint adds Go-owned acceptance for verified catalog app runs. `xnix-runtime-go known-app-verified-catalog-run-acceptance-preview --run-plan RUN_PLAN.json --known-winapp-run RUN_REPORT.json` consumes the rc195 run plan and a passed `windows-known-app-run` report, requires the app ids to match, reuses the known existing Windows app acceptance checks, and emits a desktop-safe `verified-catalog-app-q4-real-run-acceptance` result. This closes the loop from verified catalog card to q4 run plan to real QEMU/Wine run evidence without exposing q4 paths, raw output, runner argv, or host compilation. rc196 validation ran 7zr 26.02 through the q4 remote known Windows app QEMU/Wine smoke.
 
