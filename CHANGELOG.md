@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc138] - 2026-07-26
+
+### Added
+
+- Added `scripts/staged_desktop_external_winapp_smoke.rb`, a maintained real smoke that imports a real Windows GUI executable, stages the handle-based KDE `.desktop` entry, invokes the staged `xnix-compat-launch --external-app-handle APPID` path, and persists Runtime/KDE evidence.
+- Added `ruby scripts/container.rb staged-external-winapp-desktop-smoke` so the external imported-app desktop smoke is available from the constrained project container harness.
+
 ## [0.2.640-rc137] - 2026-07-26
 
 ### Added

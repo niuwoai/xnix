@@ -93,6 +93,10 @@ module Xnix
       tools_cache_run_command(["ruby", "scripts/staged_launcher_dispatch_smoke.rb"])
     end
 
+    def staged_external_winapp_desktop_smoke_command
+      tools_cache_run_command(["ruby", "scripts/staged_desktop_external_winapp_smoke.rb"])
+    end
+
     def runtime_status_owner_service_session_bus_smoke_command
       tools_cache_run_command(["ruby", "scripts/runtime_status_owner_service_session_bus_smoke.rb"])
     end

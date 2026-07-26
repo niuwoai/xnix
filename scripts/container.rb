@@ -121,6 +121,10 @@ when "staged-launcher-dispatch-smoke"
   abort "Usage: ruby scripts/container.rb staged-launcher-dispatch-smoke" unless ARGV.empty?
 
   exec(*container.staged_launcher_dispatch_smoke_command)
+when "staged-external-winapp-desktop-smoke"
+  abort "Usage: ruby scripts/container.rb staged-external-winapp-desktop-smoke" unless ARGV.empty?
+
+  exec(*container.staged_external_winapp_desktop_smoke_command)
 when "runtime-status-owner-service-session-bus-smoke"
   abort "Usage: ruby scripts/container.rb runtime-status-owner-service-session-bus-smoke" unless ARGV.empty?
 
@@ -159,5 +163,5 @@ when "boot-system"
 
   exec(*container.tools_cache_run_command(["timeout", "180s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-tools|build-wine-guest|configure-system|configure-wine-guest|dbus-controlled-launch-owner-fixture-smoke|desktop-trigger-request-preflight-smoke|download-system|download-wine-guest|fetch-known-winapp|fetch-sources|kde-center-dbus-smoke|kde-controlled-launch-action-dbus-fixture-smoke|kde-controlled-launch-action-smoke|known-winapp-guest-wine-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|runtime-status-owner-service-session-bus-smoke|ssh-smoke|staged-launcher-dispatch-smoke|start-build-ssh-wine-guest|start-build-system|winapp-container-x-gui-smoke|winapp-guest-wine-smoke}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-tools|build-wine-guest|configure-system|configure-wine-guest|dbus-controlled-launch-owner-fixture-smoke|desktop-trigger-request-preflight-smoke|download-system|download-wine-guest|fetch-known-winapp|fetch-sources|kde-center-dbus-smoke|kde-controlled-launch-action-dbus-fixture-smoke|kde-controlled-launch-action-smoke|known-winapp-guest-wine-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|runtime-status-owner-service-session-bus-smoke|ssh-smoke|staged-external-winapp-desktop-smoke|staged-launcher-dispatch-smoke|start-build-ssh-wine-guest|start-build-system|winapp-container-x-gui-smoke|winapp-guest-wine-smoke}"
 end

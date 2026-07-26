@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc137
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc138
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc138 checkpoint candidate makes the imported-app desktop path reproducible as a real smoke. `scripts/staged_desktop_external_winapp_smoke.rb` obtains a real Wine Notepad `.exe` from the local `xnix-wine-smoke:local` image unless an operator supplies another executable, records it as a Runtime-managed external app, stages the KDE handle-based `.desktop` entry and managed launcher into a restricted root, invokes that staged launcher with only `--external-app-handle`, and verifies the resulting Wine/Xvfb window. The smoke persists the delegated Runtime run, real GUI evidence packet, and KDE page evidence while proving network mode `none`, zero host mounts, no Docker socket mount, no broad host mount, and no host-root mutation.
 
 The v0.2.640-rc137 checkpoint candidate gives imported Windows GUI apps a KDE desktop entry path. `desktop-entry-preview --external-app-import-record RECORD.json` projects the Runtime import record into a normal KDE `.desktop` file whose `Exec=` uses only `xnix-compat-launch --external-app-handle APPID %U`, and `desktop-activation-stage --external-app-import-record RECORD.json` can stage that entry plus the managed launcher artifacts into a restricted test root. The launcher now resolves handle-only desktop invocations through Runtime state-root defaults or `XNIX_EXTERNAL_APP_STATE_ROOT`, keeping raw import-record, state-root, executable, backend, Docker socket, host network, broad host mount, privileged container, and host-root mutation details out of KDE material.
 
