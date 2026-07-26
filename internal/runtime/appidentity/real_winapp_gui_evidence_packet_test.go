@@ -60,6 +60,8 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesContainerNotepadReport(t *tes
 	}
 	if packet.KnownAppSmokeEvidence.EvidenceKind != "known-application-gui-smoke" ||
 		packet.KnownAppSmokeEvidence.EvidenceSource != GUISmokeEvidenceSourceContainerXGUI ||
+		!packet.KnownAppSmokeEvidence.XWindowObserved ||
+		!packet.KnownAppSmokeEvidence.WindowObserved ||
 		!packet.KnownAppSmokeEvidence.ExecutionEvidenceRecorded ||
 		!packet.KnownAppSmokeEvidence.RuntimeDispatchVerified ||
 		packet.KnownAppSmokeEvidence.DesktopLaunchEnabled ||
@@ -102,6 +104,8 @@ func TestKnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(t *testing.T) {
 		evidence.CompatibilityState != "real-gui-container-wine-verified" ||
 		evidence.CenterCardState != "validated-real-gui-container-run" ||
 		evidence.SmokeStatus != "passed" ||
+		!evidence.XWindowObserved ||
+		!evidence.WindowObserved ||
 		!evidence.ExecutionEvidenceRecorded ||
 		!evidence.RuntimeDispatchVerified ||
 		evidence.DesktopLaunchEnabled ||
@@ -215,6 +219,8 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesRawExternalExecutableRuntimeP
 		evidence.ImportedArtifactSHA256 != packet.ImportedArtifactSHA256 ||
 		evidence.CompatibilityState != "real-gui-container-wine-verified" ||
 		evidence.CenterCardState != "validated-real-gui-container-run" ||
+		!evidence.XWindowObserved ||
+		!evidence.WindowObserved ||
 		!evidence.ExecutionEvidenceRecorded ||
 		!evidence.RuntimeDispatchVerified ||
 		evidence.DesktopLaunchEnabled ||
@@ -260,6 +266,8 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesExternalAppRunRecord(t *testi
 		!evidence.ExternalAppImportRecordConsumed ||
 		!evidence.ImportedArtifactDigestVerified ||
 		evidence.ImportedArtifactSHA256 != packet.ImportedArtifactSHA256 ||
+		!evidence.XWindowObserved ||
+		!evidence.WindowObserved ||
 		!evidence.ExecutionEvidenceRecorded ||
 		!evidence.RuntimeDispatchVerified ||
 		evidence.DesktopLaunchEnabled ||
@@ -284,6 +292,8 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesExternalAppRunRecord(t *testi
 		!page.KnownAppGUIEvidenceCards[0].ExternalAppImportRecordConsumed ||
 		!page.KnownAppGUIEvidenceCards[0].ImportedArtifactDigestVerified ||
 		page.KnownAppGUIEvidenceCards[0].ImportedArtifactSHA256 != packet.ImportedArtifactSHA256 ||
+		!page.KnownAppGUIEvidenceCards[0].XWindowObserved ||
+		!page.KnownAppGUIEvidenceCards[0].WindowObserved ||
 		page.LaunchEnabled ||
 		page.BackendProcessStarted ||
 		page.BackendDetailsExposed ||
@@ -321,6 +331,8 @@ func TestExternalAppRecipeFromRealWinAppGUIEvidencePacket(t *testing.T) {
 		evidence.AppVersion != recipe.Version ||
 		evidence.RecipeBacked ||
 		evidence.RecipeAppID != "" ||
+		!evidence.XWindowObserved ||
+		!evidence.WindowObserved ||
 		!evidence.ExecutionEvidenceRecorded ||
 		!evidence.RuntimeDispatchVerified ||
 		evidence.DesktopLaunchEnabled ||
@@ -345,6 +357,8 @@ func TestExternalAppRecipeFromRealWinAppGUIEvidencePacket(t *testing.T) {
 		!page.KnownAppGUIEvidenceCards[0].ExternalAppImportRecordConsumed ||
 		!page.KnownAppGUIEvidenceCards[0].ImportedArtifactDigestVerified ||
 		page.KnownAppGUIEvidenceCards[0].ImportedArtifactSHA256 != evidence.ImportedArtifactSHA256 ||
+		!page.KnownAppGUIEvidenceCards[0].XWindowObserved ||
+		!page.KnownAppGUIEvidenceCards[0].WindowObserved ||
 		page.LaunchEnabled ||
 		page.BackendProcessStarted ||
 		page.BackendDetailsExposed ||

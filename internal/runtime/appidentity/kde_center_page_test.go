@@ -685,6 +685,8 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 			EvidenceKind:                         "known-application-gui-smoke",
 			EvidenceSource:                       "wine-guest-gui-smoke",
 			SmokeStatus:                          "passed",
+			XWindowObserved:                      true,
+			WindowObserved:                       true,
 			CompatibilityState:                   "owner-controlled-gui-qemu-wine-verified",
 			CenterCardState:                      "validated-owner-controlled-gui-runtime-run",
 			ExecutionEvidenceRecorded:            true,
@@ -714,6 +716,8 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 	if card.AppID != "org.xnix.apps.messagebox" ||
 		card.CompatibilityState != "owner-controlled-gui-qemu-wine-verified" ||
 		card.CenterCardState != "validated-owner-controlled-gui-runtime-run" ||
+		!card.XWindowObserved ||
+		!card.WindowObserved ||
 		card.PrimaryActionID != KnownAppKDERuntimeStatusLaunchAction ||
 		card.PrimaryActionLabel != "Show Runtime-controlled launch" ||
 		card.PrimaryActionKind != "runtime-status" ||
@@ -773,6 +777,8 @@ func TestKDECenterPagePreviewSurfacesBuiltinGUIRouteWithoutManagedCopy(t *testin
 			EvidenceKind:                         "known-application-gui-smoke",
 			EvidenceSource:                       "wine-guest-gui-smoke",
 			SmokeStatus:                          "passed",
+			XWindowObserved:                      true,
+			WindowObserved:                       true,
 			CompatibilityState:                   "owner-controlled-gui-qemu-wine-verified",
 			CenterCardState:                      "validated-owner-controlled-gui-runtime-run",
 			PrimaryActionID:                      KnownAppKDERuntimeStatusLaunchAction,
@@ -801,6 +807,8 @@ func TestKDECenterPagePreviewSurfacesBuiltinGUIRouteWithoutManagedCopy(t *testin
 	}
 	card := preview.KnownAppGUIEvidenceCards[0]
 	if card.AppID != "org.xnix.apps.mines" ||
+		!card.XWindowObserved ||
+		!card.WindowObserved ||
 		card.DesktopCallableRoute != "kde-dbus-runtime-status-action" ||
 		card.DesktopCallableRuntimeMethod != "ShowRuntimeControlledLaunch" ||
 		card.DesktopCallableExecutionType != KnownAppKDERuntimeStatusLaunchExecutionRequestType ||

@@ -854,6 +854,8 @@ type KnownAppSmokeEvidenceSummary struct {
 	ImportedArtifactDigestVerified        bool   `json:"imported_artifact_digest_verified"`
 	ImportedArtifactSHA256                string `json:"imported_artifact_sha256,omitempty"`
 	SmokeStatus                           string `json:"smoke_status"`
+	XWindowObserved                       bool   `json:"x_window_observed"`
+	WindowObserved                        bool   `json:"window_observed"`
 	CompatibilityState                    string `json:"compatibility_state"`
 	CenterCardState                       string `json:"center_card_state"`
 	LaunchAuthorizationState              string `json:"launch_authorization_state"`
@@ -2868,6 +2870,9 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		(knownAppGUIEvidenceSource(evidenceSource) && status == "passed" && item.ExecutionEvidenceRecorded && item.StagedLauncherVerified)
 	matrixRunVerified := evidenceSource == "remote-known-winapp-matrix-smoke" && passed
 	guiRunVerified := knownAppGUIEvidenceSource(evidenceSource) && status == "passed" && item.ExecutionEvidenceRecorded
+	if guiRunVerified && (!item.XWindowObserved || !item.WindowObserved) {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app GUI smoke evidence requires generic and X-specific observed-window evidence")
+	}
 	ownerControlledGUIRunVerified := guiRunVerified && (item.OwnerControlledRuntimeLaunchVerified || item.StagedLauncherVerified || item.CompatibilityState == "owner-controlled-gui-qemu-wine-verified")
 	ownerManagedCopyVerified := ownerControlledGUIRunVerified && (item.OwnerManagedCopyVerified || strings.Contains(item.Summary, "managed launcher copied"))
 	ownerEvidenceRelativePath := strings.TrimSpace(item.OwnerEvidenceRelativePath)
@@ -2994,6 +2999,8 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		ImportedArtifactDigestVerified:        item.ImportedArtifactDigestVerified,
 		ImportedArtifactSHA256:                importedArtifactSHA256,
 		SmokeStatus:                           status,
+		XWindowObserved:                       item.XWindowObserved,
+		WindowObserved:                        item.WindowObserved,
 		CompatibilityState:                    compatibilityState,
 		CenterCardState:                       centerCardState,
 		LaunchAuthorizationState:              launchAuthorizationState,

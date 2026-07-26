@@ -173,6 +173,8 @@ type KDECenterPageKnownAppMatrixCard struct {
 	ImportedArtifactDigestVerified       bool     `json:"imported_artifact_digest_verified"`
 	ImportedArtifactSHA256               string   `json:"imported_artifact_sha256,omitempty"`
 	SmokeStatus                          string   `json:"smoke_status"`
+	XWindowObserved                      bool     `json:"x_window_observed"`
+	WindowObserved                       bool     `json:"window_observed"`
 	CompatibilityState                   string   `json:"compatibility_state"`
 	CenterCardState                      string   `json:"center_card_state"`
 	PrimaryActionID                      string   `json:"primary_action_id"`
@@ -1261,6 +1263,8 @@ func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) [
 			ImportedArtifactDigestVerified:       item.ImportedArtifactDigestVerified,
 			ImportedArtifactSHA256:               item.ImportedArtifactSHA256,
 			SmokeStatus:                          item.SmokeStatus,
+			XWindowObserved:                      item.XWindowObserved,
+			WindowObserved:                       item.WindowObserved,
 			CompatibilityState:                   item.CompatibilityState,
 			CenterCardState:                      item.CenterCardState,
 			PrimaryActionID:                      item.PrimaryActionID,
@@ -1312,6 +1316,8 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 			ImportedArtifactDigestVerified:       item.ImportedArtifactDigestVerified,
 			ImportedArtifactSHA256:               item.ImportedArtifactSHA256,
 			SmokeStatus:                          item.SmokeStatus,
+			XWindowObserved:                      item.XWindowObserved,
+			WindowObserved:                       item.WindowObserved,
 			CompatibilityState:                   item.CompatibilityState,
 			CenterCardState:                      item.CenterCardState,
 			PrimaryActionID:                      item.PrimaryActionID,

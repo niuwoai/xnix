@@ -198,6 +198,8 @@ def write_markdown_report(markdown_output, packet)
       "- Delegated launcher payload: #{packet.fetch("delegated_launcher_payload_path")}",
       "- Runtime packet: #{packet.fetch("runtime_packet_path")}",
       "- KDE page: #{packet.fetch("kde_page_path")}",
+      "- KDE card window observed: #{packet.fetch("kde_page_card_window_observed")}",
+      "- KDE card X window observed: #{packet.fetch("kde_page_card_x_window_observed")}",
       ""
     ].join("\n")
   )
@@ -375,6 +377,8 @@ assert(cards.first.fetch("app_id") == APP_ID, "KDE GUI evidence card must target
 assert(cards.first.fetch("external_app_run_record_consumed") == true, "KDE GUI evidence card must preserve external run consumption")
 assert(cards.first.fetch("external_app_import_record_consumed") == true, "KDE GUI evidence card must preserve import-record consumption")
 assert(cards.first.fetch("imported_artifact_digest_verified") == true, "KDE GUI evidence card must preserve digest verification")
+assert(cards.first.fetch("window_observed") == true, "KDE GUI evidence card must preserve generic observed-window evidence")
+assert(cards.first.fetch("x_window_observed") == true, "KDE GUI evidence card must preserve X observed-window evidence")
 assert(cards.first.fetch("desktop_launch_enabled") == false, "KDE GUI evidence card must not enable desktop launch")
 assert(cards.first.fetch("backend_launch_enabled") == false, "KDE GUI evidence card must not enable backend launch")
 assert(cards.first.fetch("backend_details_exposed") == false, "KDE GUI evidence card must not expose backend details")
@@ -406,6 +410,8 @@ packet = {
   "kde_page_output_written" => kde_page_output.file?,
   "kde_page_known_app_gui_evidence_count" => kde_page.fetch("known_app_gui_evidence_count"),
   "kde_page_card_external_app_run_record_consumed" => cards.first.fetch("external_app_run_record_consumed"),
+  "kde_page_card_window_observed" => cards.first.fetch("window_observed"),
+  "kde_page_card_x_window_observed" => cards.first.fetch("x_window_observed"),
   "delegated_launcher_payload_path" => delegated_output.to_s,
   "runtime_packet_path" => runtime_packet_output.to_s,
   "kde_page_path" => kde_page_output.to_s,

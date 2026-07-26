@@ -566,6 +566,10 @@ func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (Known
 		evidence.CenterCardState != packet.CenterCardState {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet summary does not match nested evidence")
 	}
+	if evidence.XWindowObserved != packet.XWindowObserved ||
+		evidence.WindowObserved != packet.WindowObserved {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet window evidence summary does not match nested evidence")
+	}
 	if evidence.ExternalAppImportRecordConsumed != packet.ExternalAppImportRecordConsumed ||
 		evidence.ExternalAppRunRecordConsumed != packet.ExternalAppRunRecordConsumed ||
 		evidence.ImportedArtifactDigestVerified != packet.ImportedArtifactDigestVerified ||

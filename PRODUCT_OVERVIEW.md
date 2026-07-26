@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc143
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc144
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc144 checkpoint candidate carries observed-window evidence into KDE-facing Runtime read models. GUI smoke projections, known app smoke evidence summaries, and KDE Compatibility Center GUI evidence cards now expose both `window_observed` and `x_window_observed`, packet consumption verifies that the nested summary matches the packet-level window evidence, and the staged external desktop smoke persists the KDE card window evidence before desktop surfaces consume it.
 
 The v0.2.640-rc143 checkpoint candidate makes observed-window evidence a required Runtime consumption invariant for imported external Windows GUI apps. Direct Runtime CLI runs, launcher-mediated handle runs, and real GUI evidence packets must now carry both `window_observed` and `x_window_observed`, keeping desktop-facing consumers aligned with the actual Wine/Xvfb window evidence.
 

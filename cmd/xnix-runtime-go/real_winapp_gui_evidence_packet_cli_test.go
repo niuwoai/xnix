@@ -82,6 +82,8 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesContainerNotepadReport
 	evidence := payload["known_app_smoke_evidence"].(map[string]any)
 	if evidence["evidence_kind"] != "known-application-gui-smoke" ||
 		evidence["evidence_source"] != "winapp-smoke-container-x-gui" ||
+		evidence["x_window_observed"] != true ||
+		evidence["window_observed"] != true ||
 		evidence["execution_evidence_recorded"] != true ||
 		evidence["runtime_dispatch_verified"] != true ||
 		evidence["desktop_launch_enabled"] != false ||
@@ -134,6 +136,8 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesContainerNotepadReport
 		card["recipe_app_id"] != "org.xnix.sample.notepad" ||
 		card["compatibility_state"] != "real-gui-container-wine-verified" ||
 		card["center_card_state"] != "validated-real-gui-container-run" ||
+		card["x_window_observed"] != true ||
+		card["window_observed"] != true ||
 		card["execution_evidence_recorded"] != true ||
 		card["runtime_dispatch_verified"] != true ||
 		card["desktop_launch_enabled"] != false ||
@@ -193,6 +197,8 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesRawContainerRuntimePay
 	}
 	evidence := payload["known_app_smoke_evidence"].(map[string]any)
 	if evidence["staged_launcher_verified"] != true ||
+		evidence["x_window_observed"] != true ||
+		evidence["window_observed"] != true ||
 		evidence["launch_authorization_receipt_id"] != "known-app-launch-authorization-org.xnix.sample.notepad-0.2.640-test" ||
 		evidence["launch_gate_state"] != "controlled-dispatch-ready" ||
 		evidence["launch_gate_consumed"] != true ||
@@ -295,6 +301,8 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesRawExternalExecutableR
 		card["recipe_backed"] != false ||
 		card["compatibility_state"] != "real-gui-container-wine-verified" ||
 		card["center_card_state"] != "validated-real-gui-container-run" ||
+		card["x_window_observed"] != true ||
+		card["window_observed"] != true ||
 		card["execution_evidence_recorded"] != true ||
 		card["runtime_dispatch_verified"] != true ||
 		card["desktop_launch_enabled"] != false ||
@@ -329,6 +337,8 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesRawExternalExecutableR
 	externalCard := externalCards[0].(map[string]any)
 	if externalCard["app_id"] != externalPage["application_id"] ||
 		externalCard["recipe_backed"] != false ||
+		externalCard["x_window_observed"] != true ||
+		externalCard["window_observed"] != true ||
 		externalCard["execution_evidence_recorded"] != true ||
 		externalCard["runtime_dispatch_verified"] != true ||
 		externalCard["desktop_launch_enabled"] != false ||
@@ -390,6 +400,8 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesExternalAppRunRecord(t
 	if evidence["external_app_run_record_consumed"] != true ||
 		evidence["external_app_import_record_consumed"] != true ||
 		evidence["imported_artifact_digest_verified"] != true ||
+		evidence["x_window_observed"] != true ||
+		evidence["window_observed"] != true ||
 		evidence["desktop_launch_enabled"] != false ||
 		evidence["backend_launch_enabled"] != false ||
 		evidence["backend_details_exposed"] != false ||
@@ -413,6 +425,8 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesExternalAppRunRecord(t
 		card["external_app_import_record_consumed"] != true ||
 		card["imported_artifact_digest_verified"] != true ||
 		card["imported_artifact_sha256"] != "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208" ||
+		card["x_window_observed"] != true ||
+		card["window_observed"] != true ||
 		card["desktop_launch_enabled"] != false ||
 		card["backend_launch_enabled"] != false ||
 		card["host_root_modified"] != false {

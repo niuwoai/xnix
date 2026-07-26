@@ -296,6 +296,8 @@ func kdeControlledLaunchActionGUICard(record KnownAppKDERuntimeStatusLaunchEvide
 		EvidenceKind:                         "known-application-gui-smoke",
 		EvidenceSource:                       "wine-guest-gui-smoke",
 		SmokeStatus:                          "passed",
+		XWindowObserved:                      true,
+		WindowObserved:                       true,
 		CompatibilityState:                   "owner-controlled-gui-qemu-wine-verified",
 		CenterCardState:                      "validated-owner-controlled-gui-runtime-run",
 		PrimaryActionID:                      KnownAppKDERuntimeStatusLaunchAction,

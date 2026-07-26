@@ -30,6 +30,7 @@ func TestPreviewGUISmokeEvidenceConsumesPassedMessageBoxReport(t *testing.T) {
 		!preview.ExecutableCopied ||
 		!preview.WinebootInvoked ||
 		!preview.XWindowObserved ||
+		!preview.WindowObserved ||
 		preview.XWindowChildCount != 14 ||
 		preview.XWinInfoBytes != 1228 ||
 		preview.GuestStderrBytes != 0 ||
@@ -58,6 +59,8 @@ func TestPreviewGUISmokeEvidenceConsumesPassedMessageBoxReport(t *testing.T) {
 		evidence.EvidenceKind != "known-application-gui-smoke" ||
 		evidence.EvidenceSource != "wine-guest-gui-smoke" ||
 		evidence.SmokeStatus != "passed" ||
+		!evidence.XWindowObserved ||
+		!evidence.WindowObserved ||
 		evidence.CompatibilityState != "real-gui-qemu-wine-verified" ||
 		evidence.CenterCardState != "validated-real-gui-runtime-run" ||
 		evidence.PrimaryActionID != "review-known-app-gui-evidence" ||
@@ -84,6 +87,8 @@ func TestPreviewGUISmokeEvidenceConsumesPassedMessageBoxReport(t *testing.T) {
 	if normalized.CompatibilityState != "real-gui-qemu-wine-verified" ||
 		normalized.CenterCardState != "validated-real-gui-runtime-run" ||
 		normalized.EvidenceKind != "known-application-gui-smoke" ||
+		!normalized.XWindowObserved ||
+		!normalized.WindowObserved ||
 		!normalized.ExecutionEvidenceRecorded ||
 		!normalized.RuntimeDispatchVerified {
 		t.Fatalf("unexpected normalized GUI evidence: %#v", normalized)
@@ -110,6 +115,8 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		preview.OwnerDelegatedEvidenceSource != "wine-guest-gui-smoke" ||
 		!preview.OwnerDelegatedExecutionStarted ||
 		!preview.OwnerDelegatedWindowObserved ||
+		!preview.XWindowObserved ||
+		!preview.WindowObserved ||
 		!preview.OwnerControlledLaunchVerified ||
 		!preview.OwnerManagedCopyVerified ||
 		!preview.OwnerEvidenceHandoffReady ||
@@ -126,6 +133,8 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		evidence.PrimaryActionID != KnownAppKDERuntimeStatusLaunchAction ||
 		evidence.PrimaryActionLabel != "Show Runtime-controlled launch" ||
 		evidence.PrimaryActionKind != "runtime-status" ||
+		!evidence.XWindowObserved ||
+		!evidence.WindowObserved ||
 		!evidence.ExecutionEvidenceRecorded ||
 		!evidence.StagedLauncherVerified ||
 		!evidence.OwnerControlledRuntimeLaunchVerified ||
@@ -158,6 +167,7 @@ func TestPreviewGUISmokeEvidenceConsumesContainerXGUIReport(t *testing.T) {
 		preview.GUIAppName != "notepad.exe" ||
 		!preview.WinebootInvoked ||
 		!preview.XWindowObserved ||
+		!preview.WindowObserved ||
 		preview.XWindowChildCount != 1 ||
 		preview.XWinInfoBytes == 0 ||
 		!preview.CompatibilityCenterProjectionReady ||
@@ -181,6 +191,8 @@ func TestPreviewGUISmokeEvidenceConsumesContainerXGUIReport(t *testing.T) {
 		evidence.EvidenceSource != "winapp-smoke-container-x-gui" ||
 		!evidence.RecipeBacked ||
 		evidence.RecipeAppID != "org.xnix.sample.notepad" ||
+		!evidence.XWindowObserved ||
+		!evidence.WindowObserved ||
 		evidence.CompatibilityState != "real-gui-container-wine-verified" ||
 		evidence.CenterCardState != "validated-real-gui-container-run" ||
 		!evidence.ExecutionEvidenceRecorded ||
@@ -198,6 +210,8 @@ func TestPreviewGUISmokeEvidenceConsumesContainerXGUIReport(t *testing.T) {
 	if normalized.EvidenceSource != "winapp-smoke-container-x-gui" ||
 		!normalized.RecipeBacked ||
 		normalized.RecipeAppID != "org.xnix.sample.notepad" ||
+		!normalized.XWindowObserved ||
+		!normalized.WindowObserved ||
 		normalized.CompatibilityState != "real-gui-container-wine-verified" ||
 		normalized.CenterCardState != "validated-real-gui-container-run" ||
 		!normalized.ExecutionEvidenceRecorded ||

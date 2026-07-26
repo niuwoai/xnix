@@ -56,6 +56,7 @@ type GUISmokeEvidencePreview struct {
 	OwnerEvidenceRelativePath           string                       `json:"owner_evidence_relative_path,omitempty"`
 	WinebootInvoked                     bool                         `json:"wineboot_invoked"`
 	XWindowObserved                     bool                         `json:"x_window_observed"`
+	WindowObserved                      bool                         `json:"window_observed"`
 	XWindowChildCount                   int                          `json:"x_window_child_count"`
 	XWinInfoBytes                       int                          `json:"xwininfo_bytes"`
 	GuestStderrBytes                    int                          `json:"guest_stderr_bytes"`
@@ -252,6 +253,7 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 		OwnerEvidenceRelativePath:           strings.TrimSpace(report.OwnerEvidenceRelativePath),
 		WinebootInvoked:                     winebootInvoked,
 		XWindowObserved:                     xWindowObserved,
+		WindowObserved:                      xWindowObserved,
 		XWindowChildCount:                   xWindowChildCount,
 		XWinInfoBytes:                       xWinInfoBytes,
 		GuestStderrBytes:                    report.GuestStderrBytes,
@@ -457,6 +459,7 @@ func guiSmokeOwnerControlledEvidencePresent(report guiSmokeReport) bool {
 
 func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion string, evidenceSource string, report guiSmokeReport, projectionReady bool, ownerControlledLaunchVerified bool, ownerManagedCopyVerified bool, ownerEvidenceHandoffReady bool) KnownAppSmokeEvidenceSummary {
 	status := report.Status
+	xWindowObserved := guiSmokeXWindowObserved(report)
 	recipeBacked := guiSmokeRecipeBacked(report)
 	recipeAppID := ""
 	if recipeBacked {
@@ -508,6 +511,8 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		ImportedArtifactDigestVerified:       report.ContainerPayload.ImportedArtifactDigestVerified,
 		ImportedArtifactSHA256:               strings.TrimSpace(report.ContainerPayload.ImportedArtifactSHA256),
 		SmokeStatus:                          status,
+		XWindowObserved:                      xWindowObserved,
+		WindowObserved:                       xWindowObserved,
 		CompatibilityState:                   compatibilityState,
 		CenterCardState:                      centerCardState,
 		LaunchAuthorizationState:             "review-required",

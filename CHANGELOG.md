@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc144] - 2026-07-26
+
+### Changed
+
+- Added generic `window_observed` and X-specific `x_window_observed` evidence to GUI smoke projections, known app smoke evidence summaries, and KDE Compatibility Center GUI evidence cards.
+- Tightened real GUI evidence packet consumption so nested known-app evidence must match the packet-level observed-window fields before KDE surfaces can consume it.
+- Updated the staged external Windows GUI desktop smoke report to require and persist KDE card observed-window evidence.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc144`.
+
 ## [0.2.640-rc143] - 2026-07-26
 
 ### Changed
