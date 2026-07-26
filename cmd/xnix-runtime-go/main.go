@@ -259,6 +259,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKnownAppVerifiedCatalogRunPlanPreview(args[1:], stdout)
 	case "known-app-verified-catalog-run-plan-execution":
 		return runKnownAppVerifiedCatalogRunPlanExecution(args[1:], stdout)
+	case "known-app-verified-catalog-app-execution":
+		return runKnownAppVerifiedCatalogAppExecution(args[1:], stdout)
 	case "known-app-verified-catalog-run-acceptance-preview":
 		return runKnownAppVerifiedCatalogRunAcceptancePreview(args[1:], stdout)
 	case "known-app-verified-catalog-launch-handoff-record":

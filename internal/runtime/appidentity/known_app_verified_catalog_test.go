@@ -391,6 +391,102 @@ func TestRunKnownAppVerifiedCatalogRunPlanExecutionConsumesGUIRunReport(t *testi
 	}
 }
 
+func TestRunKnownAppVerifiedCatalogAppExecutionConsumesGUIRunReport(t *testing.T) {
+	catalog, err := PreviewKnownAppVerifiedCatalogWithGUIEvidenceJSON(knownAppVerifiedCatalogMatrixEvidenceFixture(t), []byte(knownAppVerifiedCatalogGUIEvidencePacketFixture()))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogWithGUIEvidenceJSON returned error: %v", err)
+	}
+	catalogContent, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal catalog returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, catalogContent, 0o600); err != nil {
+		t.Fatalf("WriteFile catalog returned error: %v", err)
+	}
+	reportPath := filepath.Join(t.TempDir(), "q4-messagebox-smoke.json")
+	if err := os.WriteFile(reportPath, []byte(knownAppVerifiedCatalogMessageBoxRunReportFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile q4 MessageBox report returned error: %v", err)
+	}
+
+	result, err := RunKnownAppVerifiedCatalogAppExecution(KnownAppVerifiedCatalogAppExecutionRequest{
+		VerifiedCatalogPath: catalogPath,
+		AppID:               "org.xnix.apps.messagebox",
+		SmokeReportPath:     reportPath,
+	})
+	if err != nil {
+		t.Fatalf("RunKnownAppVerifiedCatalogAppExecution returned error: %v", err)
+	}
+	if result.SchemaVersion != KnownAppVerifiedCatalogAppExecutionSchemaVersion ||
+		result.RequestType != KnownAppVerifiedCatalogAppExecutionRequestType ||
+		result.Source != "known-app-verified-catalog+runtime-owned-app-execution" ||
+		result.RuntimeMethod != "RunKnownVerifiedApplicationFromCatalog" ||
+		result.ReadMethod != "ReadKnownVerifiedApplicationCatalog" ||
+		result.ExecutionMethod != "InvokeKnownVerifiedApplicationSmokeHarness" ||
+		result.AppID != "org.xnix.apps.messagebox" ||
+		!result.VerifiedCatalogConsumed ||
+		result.RequestedAppID != "org.xnix.apps.messagebox" ||
+		!result.RunPlanGenerated ||
+		result.DirectRunPlanInput ||
+		!result.RunPlanConsumed ||
+		result.RunPlanRequestType != KnownAppVerifiedCatalogRunPlanRequestType ||
+		!result.RuntimeOwnedActionReady ||
+		result.DesktopCallableActionID != "review-known-app-gui-evidence" ||
+		result.DesktopCallableRoute != "runtime-owner://known-app-verified-catalog/run-plan" ||
+		result.DesktopCallableExecutionType != "review-only-q4-gui-smoke" ||
+		result.DesktopForwardedArgumentCount != 1 ||
+		!result.DesktopForwardsOnlyAppID ||
+		result.DesktopReceiptFieldsReconstructed ||
+		result.DesktopKDEStateRootAccess ||
+		result.DesktopOwnerInputsExposed {
+		t.Fatalf("unexpected app execution schema: %#v", result)
+	}
+	if !result.GUIEvidenceRequired ||
+		!result.GUIEvidenceConsumed ||
+		!result.WindowObservationRequired ||
+		!result.WindowObserved ||
+		!result.WindowMatchObserved ||
+		!result.OwnerFileOpenRequired ||
+		!result.OwnerFileOpenVerified ||
+		!result.OwnerFileOpenEntrypointInvoked ||
+		!result.DocumentContentMarkerObserved ||
+		!result.SmokeReportConsumed ||
+		result.SmokeRequestType != "q4-messagebox-smoke" ||
+		result.SmokeStatus != "passed" ||
+		!result.SmokePassed ||
+		!result.ActualWindowsAppRunObserved ||
+		!result.GoOwnedQ4WinAppAcceptanceReady ||
+		!result.GoOwnedQ4WinAppAcceptanceConsumed ||
+		result.GoOwnedQ4WinAppAcceptancePathExposed {
+		t.Fatalf("unexpected app execution evidence: %#v", result)
+	}
+	if result.ExecutionRequested ||
+		result.ExecutionStarted ||
+		result.ExecutionCompleted ||
+		result.HostCompilationRequired ||
+		!result.HostCompilationAvoided ||
+		!result.TargetedRemoteVerificationReady ||
+		!result.RuntimeOwned ||
+		!result.GoRuntimeBacked ||
+		result.KDEPolicyOwner ||
+		!result.ReviewOnly ||
+		result.DirectLaunchEnabled ||
+		result.LaunchEnabled ||
+		result.DesktopFilesWritten ||
+		result.HostRootModified ||
+		result.BackendLaunchEnabled ||
+		result.BackendDetailsExposed ||
+		result.RawOutputExposed ||
+		result.RemotePathExposed ||
+		result.SmokeCommandArgumentsExposed ||
+		result.PrivilegedContainerRequired ||
+		result.HostNetworkingRequired ||
+		result.DockerSocketMounted ||
+		result.BroadHostMountRequired {
+		t.Fatalf("unexpected app execution safety flags: %#v", result)
+	}
+}
+
 func TestPreviewKnownAppVerifiedCatalogRunAcceptanceConsumesMatchedRun(t *testing.T) {
 	catalog, err := PreviewKnownAppVerifiedCatalogJSON(knownAppVerifiedCatalogMatrixEvidenceFixture(t))
 	if err != nil {

@@ -15,6 +15,8 @@ import (
 const (
 	KnownAppVerifiedCatalogRunPlanExecutionSchemaVersion = "xnix.runtime.known_app_verified_catalog_run_plan_execution.v1"
 	KnownAppVerifiedCatalogRunPlanExecutionRequestType   = "known-app-verified-catalog-run-plan-execution"
+	KnownAppVerifiedCatalogAppExecutionSchemaVersion     = "xnix.runtime.known_app_verified_catalog_app_execution.v1"
+	KnownAppVerifiedCatalogAppExecutionRequestType       = "known-app-verified-catalog-app-execution"
 )
 
 type KnownAppVerifiedCatalogRunPlanExecutionRequest struct {
@@ -24,6 +26,16 @@ type KnownAppVerifiedCatalogRunPlanExecutionRequest struct {
 	WorkDir         string
 	Timeout         time.Duration
 	RecordedAtUTC   time.Time
+}
+
+type KnownAppVerifiedCatalogAppExecutionRequest struct {
+	VerifiedCatalogPath string
+	AppID               string
+	SmokeReportPath     string
+	Execute             bool
+	WorkDir             string
+	Timeout             time.Duration
+	RecordedAtUTC       time.Time
 }
 
 type KnownAppVerifiedCatalogRunPlanExecutionResult struct {
@@ -37,6 +49,10 @@ type KnownAppVerifiedCatalogRunPlanExecutionResult struct {
 	AppID                                string   `json:"app_id"`
 	DisplayName                          string   `json:"display_name"`
 	AppVersion                           string   `json:"app_version"`
+	VerifiedCatalogConsumed              bool     `json:"verified_catalog_consumed"`
+	RequestedAppID                       string   `json:"requested_app_id"`
+	RunPlanGenerated                     bool     `json:"run_plan_generated"`
+	DirectRunPlanInput                   bool     `json:"direct_run_plan_input"`
 	RunPlanConsumed                      bool     `json:"run_plan_consumed"`
 	RunPlanRequestType                   string   `json:"run_plan_request_type"`
 	RuntimeOwnedActionReady              bool     `json:"runtime_owned_action_ready"`
@@ -111,6 +127,50 @@ func RunKnownAppVerifiedCatalogRunPlanExecution(request KnownAppVerifiedCatalogR
 	if err := json.Unmarshal(content, &runPlan); err != nil {
 		return KnownAppVerifiedCatalogRunPlanExecutionResult{}, fmt.Errorf("parse known app verified catalog run plan: %w", err)
 	}
+	return runKnownAppVerifiedCatalogRunPlanExecution(runPlan, request)
+}
+
+func RunKnownAppVerifiedCatalogAppExecution(request KnownAppVerifiedCatalogAppExecutionRequest) (KnownAppVerifiedCatalogRunPlanExecutionResult, error) {
+	if request.VerifiedCatalogPath == "" {
+		return KnownAppVerifiedCatalogRunPlanExecutionResult{}, errors.New("known app verified catalog app execution requires --verified-catalog")
+	}
+	if request.AppID == "" {
+		return KnownAppVerifiedCatalogRunPlanExecutionResult{}, errors.New("known app verified catalog app execution requires --app")
+	}
+	runPlan, err := PreviewKnownAppVerifiedCatalogRunPlan(KnownAppVerifiedCatalogRunPlanRequest{
+		VerifiedCatalogPath: request.VerifiedCatalogPath,
+		AppID:               request.AppID,
+	})
+	if err != nil {
+		return KnownAppVerifiedCatalogRunPlanExecutionResult{}, err
+	}
+	result, err := runKnownAppVerifiedCatalogRunPlanExecution(runPlan, KnownAppVerifiedCatalogRunPlanExecutionRequest{
+		SmokeReportPath: request.SmokeReportPath,
+		Execute:         request.Execute,
+		WorkDir:         request.WorkDir,
+		Timeout:         request.Timeout,
+		RecordedAtUTC:   request.RecordedAtUTC,
+	})
+	if err != nil {
+		return KnownAppVerifiedCatalogRunPlanExecutionResult{}, err
+	}
+	result.SchemaVersion = KnownAppVerifiedCatalogAppExecutionSchemaVersion
+	result.RequestType = KnownAppVerifiedCatalogAppExecutionRequestType
+	result.Source = "known-app-verified-catalog+runtime-owned-app-execution"
+	result.RuntimeMethod = "RunKnownVerifiedApplicationFromCatalog"
+	result.ReadMethod = "ReadKnownVerifiedApplicationCatalog"
+	result.VerifiedCatalogConsumed = true
+	result.RequestedAppID = request.AppID
+	result.RunPlanGenerated = true
+	result.DirectRunPlanInput = false
+	result.DesktopSafeSummary = result.DisplayName + " can be executed by the Runtime owner from the verified catalog and app id while KDE forwards only the app id."
+	if err := validateNoBackendTerms(result, "known app verified catalog app execution"); err != nil {
+		return KnownAppVerifiedCatalogRunPlanExecutionResult{}, err
+	}
+	return result, nil
+}
+
+func runKnownAppVerifiedCatalogRunPlanExecution(runPlan KnownAppVerifiedCatalogRunPlanPreview, request KnownAppVerifiedCatalogRunPlanExecutionRequest) (KnownAppVerifiedCatalogRunPlanExecutionResult, error) {
 	if err := validateKnownAppVerifiedCatalogRunPlanExecutionInput(runPlan); err != nil {
 		return KnownAppVerifiedCatalogRunPlanExecutionResult{}, err
 	}
@@ -266,6 +326,10 @@ func knownAppVerifiedCatalogRunPlanExecutionBaseResult(runPlan KnownAppVerifiedC
 		AppID:                             runPlan.AppID,
 		DisplayName:                       runPlan.DisplayName,
 		AppVersion:                        runPlan.AppVersion,
+		VerifiedCatalogConsumed:           false,
+		RequestedAppID:                    runPlan.AppID,
+		RunPlanGenerated:                  false,
+		DirectRunPlanInput:                true,
 		RunPlanConsumed:                   true,
 		RunPlanRequestType:                runPlan.RequestType,
 		RuntimeOwnedActionReady:           runPlan.RuntimeOwnedActionReady,

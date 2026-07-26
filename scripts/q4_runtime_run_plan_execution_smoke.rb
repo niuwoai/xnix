@@ -37,7 +37,7 @@ options = {
 
 OptionParser.new do |parser|
   parser.banner = "Usage: ruby scripts/q4_runtime_run_plan_execution_smoke.rb [--execute]"
-  parser.on("--execute", "Build a host Runtime binary on q4, fetch it, and execute the MessageBox run plan through Go Runtime.") { options[:execute] = true }
+  parser.on("--execute", "Build a host Runtime binary on q4, fetch it, and execute MessageBox from the verified catalog through Go Runtime.") { options[:execute] = true }
   parser.on("--local-shell PATH", "Local shell used for ssh/rsync alias resolution.") { |value| options[:local_shell] = value }
   parser.on("--remote HOST", "Remote SSH target, default: #{DEFAULT_REMOTE_HOST}.") { |value| options[:remote_host] = value }
   parser.on("--remote-source-root PATH", "Remote source root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_source_root] = value }
@@ -299,6 +299,8 @@ def require_passed_runtime_execution!(result)
     execution_completed
     smoke_report_consumed
     smoke_passed
+    verified_catalog_consumed
+    run_plan_generated
     actual_windows_app_run_observed
     go_owned_q4_winapp_acceptance_ready
     go_owned_q4_winapp_acceptance_consumed
@@ -315,6 +317,7 @@ def require_passed_runtime_execution!(result)
     desktop_receipt_fields_reconstructed
     desktop_kde_state_root_access
     desktop_owner_inputs_exposed
+    direct_run_plan_input
     go_owned_q4_winapp_acceptance_path_exposed
     host_compilation_required
     kde_policy_owner
@@ -356,8 +359,11 @@ plan = {
   "runtime_binary_built_on_q4" => false,
   "runtime_binary_fetched" => false,
   "runtime_binary_path_exposed" => false,
-  "runtime_command" => "known-app-verified-catalog-run-plan-execution",
+  "runtime_command" => "known-app-verified-catalog-app-execution",
   "runtime_command_execute_planned" => true,
+  "verified_catalog_to_app_execution_planned" => true,
+  "run_plan_generated_by_runtime" => false,
+  "direct_run_plan_input" => false,
   "go_runtime_entrypoint_invoked" => false,
   "app_id" => MESSAGEBOX_APP_ID,
   "q4_messagebox_smoke_planned" => true,
@@ -413,7 +419,6 @@ FileUtils.mkdir_p(work_root)
 matrix_path = work_root.join("known-app-matrix-evidence.json")
 gui_packet_path = work_root.join("real-winapp-gui-evidence-packet.json")
 catalog_path = work_root.join("known-app-verified-catalog.json")
-run_plan_path = work_root.join("known-app-verified-catalog-run-plan-messagebox.json")
 write_json(matrix_path, matrix_evidence_fixture)
 write_json(gui_packet_path, gui_evidence_packet_fixture)
 
@@ -422,13 +427,8 @@ catalog = run_json_command(
   timeout_seconds: options.fetch(:timeout_seconds)
 )
 write_json(catalog_path, catalog)
-run_plan = run_json_command(
-  [local_runtime.to_s, "known-app-verified-catalog-run-plan-preview", "--verified-catalog", catalog_path.to_s, "--app", MESSAGEBOX_APP_ID],
-  timeout_seconds: options.fetch(:timeout_seconds)
-)
-write_json(run_plan_path, run_plan)
 result = run_json_command(
-  [local_runtime.to_s, "known-app-verified-catalog-run-plan-execution", "--run-plan", run_plan_path.to_s, "--execute", "--workdir", PROJECT_ROOT.to_s, "--timeout-seconds", options.fetch(:timeout_seconds).to_s],
+  [local_runtime.to_s, "known-app-verified-catalog-app-execution", "--verified-catalog", catalog_path.to_s, "--app", MESSAGEBOX_APP_ID, "--execute", "--workdir", PROJECT_ROOT.to_s, "--timeout-seconds", options.fetch(:timeout_seconds).to_s],
   timeout_seconds: options.fetch(:timeout_seconds)
 )
 require_passed_runtime_execution!(result)
@@ -439,6 +439,10 @@ summary = plan.merge(
   "runtime_binary_fetched" => true,
   "runtime_command_request_type" => result.fetch("request_type"),
   "runtime_command_schema_version" => result.fetch("schema_version"),
+  "verified_catalog_consumed" => result.fetch("verified_catalog_consumed"),
+  "requested_app_id" => result.fetch("requested_app_id"),
+  "run_plan_generated_by_runtime" => result.fetch("run_plan_generated"),
+  "direct_run_plan_input" => result.fetch("direct_run_plan_input"),
   "go_runtime_entrypoint_invoked" => true,
   "runtime_execution_requested" => result.fetch("execution_requested"),
   "runtime_execution_completed" => result.fetch("execution_completed"),

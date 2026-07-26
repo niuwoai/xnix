@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc211] - 2026-07-27
+
+### Added
+
+- Added `known-app-verified-catalog-app-execution`, a Go Runtime command that consumes a verified catalog plus an app id, generates the run plan inside the Runtime owner, and executes or dry-runs the selected app without requiring a caller-supplied run-plan file.
+- Added Go, CLI, layout, and q4 smoke-script coverage proving verified-catalog app execution consumes the catalog, targets the requested app id, generates its run plan internally, consumes the real MessageBox GUI smoke evidence, and keeps Runtime paths, raw output, command arguments, host-root mutation, and unsafe host/container gates closed.
+
+### Changed
+
+- Updated `scripts/q4_runtime_run_plan_execution_smoke.rb` to use the q4-built host `xnix-runtime-go` binary for direct verified-catalog app execution instead of manually generating and passing a run-plan JSON file.
+- Updated q4 targeted Go test defaults, Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc211`.
+
 ## [0.2.640-rc210] - 2026-07-27
 
 ### Added

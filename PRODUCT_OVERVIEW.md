@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc210
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc211
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc211 checkpoint removes the remaining caller-supplied run-plan step from the real MessageBox GUI path. `known-app-verified-catalog-app-execution --verified-catalog CATALOG.json --app org.xnix.apps.messagebox --execute` now consumes the verified catalog and app id, generates the run plan inside the Go Runtime owner, and invokes the real q4 MessageBox GUI smoke while KDE still forwards only the app id. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` keeps compile-heavy work on q4 by asking q4 to cross-compile the host `xnix-runtime-go`, fetching that q4-built binary into `/tmp/xnix-*`, and running the one-step Runtime command from that binary. The desktop-facing summary proves verified-catalog consumption, Runtime-generated run planning, actual Windows GUI execution, owner file-open evidence, document-marker observation, q4 compilation ownership, host compilation avoidance, and closed path/raw-output/argument/host-container gates.
 
 The v0.2.640-rc210 checkpoint makes the q4-built Go Runtime binary the tested entrypoint for the real MessageBox GUI path. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` asks q4 to cross-compile a host `xnix-runtime-go` binary, fetches it into `/tmp/xnix-*`, uses that binary to generate the verified catalog and GUI run plan, and then executes `known-app-verified-catalog-run-plan-execution --execute` against the real q4 MessageBox smoke. This proves the user-facing Runtime entrypoint can drive an actual Windows GUI app run while q4 performs compilation, Ruby remains the harness, and the desktop-facing result keeps q4 paths, raw smoke output, command arguments, host-root mutation, and unsafe host/container gates closed.
 

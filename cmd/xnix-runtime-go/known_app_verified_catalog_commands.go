@@ -100,6 +100,40 @@ func runKnownAppVerifiedCatalogRunPlanExecution(args []string, stdout io.Writer)
 	return encoder.Encode(result)
 }
 
+func runKnownAppVerifiedCatalogAppExecution(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet(appidentity.KnownAppVerifiedCatalogAppExecutionRequestType, flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	verifiedCatalog := flags.String("verified-catalog", "", "Go-owned known app verified catalog JSON path")
+	appID := flags.String("app", "", "known Windows app id to execute from the verified catalog")
+	smokeReport := flags.String("smoke-report", "", "optional q4 smoke JSON report to consume instead of invoking the smoke harness")
+	execute := flags.Bool("execute", false, "invoke the selected app smoke harness from the Runtime owner")
+	workDir := flags.String("workdir", "", "working directory for executing the smoke harness")
+	timeoutSeconds := flags.Int("timeout-seconds", 600, "execution timeout in seconds")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", appidentity.KnownAppVerifiedCatalogAppExecutionRequestType)
+	}
+
+	result, err := appidentity.RunKnownAppVerifiedCatalogAppExecution(appidentity.KnownAppVerifiedCatalogAppExecutionRequest{
+		VerifiedCatalogPath: *verifiedCatalog,
+		AppID:               *appID,
+		SmokeReportPath:     *smokeReport,
+		Execute:             *execute,
+		WorkDir:             *workDir,
+		Timeout:             time.Duration(*timeoutSeconds) * time.Second,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 func runKnownAppVerifiedCatalogRunAcceptancePreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet(appidentity.KnownAppVerifiedCatalogRunAcceptanceRequestType, flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
