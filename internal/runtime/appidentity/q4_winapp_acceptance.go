@@ -51,6 +51,8 @@ type Q4WinAppAcceptance struct {
 	KDEActionOutputWritten                        bool   `json:"kde_action_output_written"`
 	WindowObserved                                bool   `json:"window_observed"`
 	WindowMatchObserved                           bool   `json:"window_match_observed"`
+	DocumentContentMarkerObservationRequired      bool   `json:"document_content_marker_observation_required"`
+	DocumentContentMarkerObserved                 bool   `json:"document_content_marker_observed"`
 	RealRunReceiptSummaryReady                    bool   `json:"real_run_receipt_summary_ready"`
 	RealRunReceiptSummaryFileOpenVerified         bool   `json:"real_run_receipt_summary_file_open_verified"`
 	RealRunAcceptanceOutputWritten                bool   `json:"real_run_acceptance_output_written"`
@@ -115,6 +117,7 @@ func PreviewQ4WinAppAcceptanceJSON(content []byte) (Q4WinAppAcceptance, error) {
 	realRunAcceptanceReady := !realRunAcceptanceRequired ||
 		(remoteString(report, "launch_mode") == "owner-controlled-launch" &&
 			remoteBool(report, "file_open_entrypoint_requested") &&
+			(!remoteBool(report, "document_content_marker_observation_required") || remoteBool(report, "document_content_marker_observed")) &&
 			remoteBool(report, "real_run_receipt_summary_ready") &&
 			remoteBool(report, "real_run_receipt_summary_file_open_verified") &&
 			remoteBool(report, "real_run_acceptance_output_written") &&
@@ -177,6 +180,8 @@ func PreviewQ4WinAppAcceptanceJSON(content []byte) (Q4WinAppAcceptance, error) {
 		KDEActionOutputWritten:                        remoteBool(report, "kde_action_output_written"),
 		WindowObserved:                                true,
 		WindowMatchObserved:                           true,
+		DocumentContentMarkerObservationRequired:      remoteBool(report, "document_content_marker_observation_required"),
+		DocumentContentMarkerObserved:                 remoteBool(report, "document_content_marker_observed"),
 		RealRunReceiptSummaryReady:                    remoteBool(report, "real_run_receipt_summary_ready"),
 		RealRunReceiptSummaryFileOpenVerified:         remoteBool(report, "real_run_receipt_summary_file_open_verified"),
 		RealRunAcceptanceOutputWritten:                remoteBool(report, "real_run_acceptance_output_written"),

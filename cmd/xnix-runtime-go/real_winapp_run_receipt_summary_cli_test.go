@@ -43,6 +43,8 @@ func TestRealWinAppRunReceiptSummaryPreviewCommandConsumesRemoteQ4Smoke(t *testi
 		payload["real_execution_observed"] != true ||
 		payload["window_observed"] != true ||
 		payload["file_open_verified"] != true ||
+		payload["document_content_marker_observation_required"] != true ||
+		payload["document_content_marker_observed"] != true ||
 		payload["owner_controlled_launch_verified"] != true ||
 		payload["owner_file_open_entrypoint_invoked"] != true ||
 		payload["runtime_evidence_consumed"] != true ||
@@ -207,6 +209,8 @@ func realWinAppRunReceiptSummaryCLIFixture(version string) string {
   "raw_file_argument_path_exposed": false,
   "window_match": "sample-document.txt",
   "window_match_observed": true,
+  "document_content_marker_observation_required": true,
+  "document_content_marker_observed": true,
   "x_window_observed": true,
   "runtime_evidence_report_consumed": true,
   "runtime_evidence_window_observed": true,

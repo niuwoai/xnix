@@ -16,6 +16,7 @@ DEFAULT_SOURCE_SYNC_MODE = ENV.fetch("XNIX_SOURCE_SYNC_MODE", "runtime")
 DEFAULT_REMOTE_SOURCE_ROOT = ENV.fetch("XNIX_REMOTE_SOURCE_ROOT", "/home/xnix-build/xnix-runtime-source-gui-#{DEFAULT_SOURCE_SYNC_MODE}-#{VERSION}")
 DEFAULT_REMOTE_MATERIALS_ROOT = ENV.fetch("XNIX_REMOTE_MATERIALS_ROOT", "/home/xnix-run-materials")
 DEFAULT_LOCAL_SHELL = ENV.fetch("XNIX_LOCAL_SHELL", "/bin/zsh")
+SAMPLE_FILE_CONTENT_MARKER = "Xnix document opened by Windows app"
 OWNER_FILE_OPEN_ENV_KEYS = %w[
   XNIX_COMPAT_LAUNCH
   XNIX_COMPAT_OPEN_REGISTRY
@@ -396,7 +397,7 @@ if sample_file_argument_requested
   sample_prepare = [
     "set -eu",
     shell_join(["mkdir", "-p", Pathname.new(remote_file_argument).dirname.to_s]),
-    shell_join(["ruby", "-e", "File.write(ARGV.fetch(0), \"Xnix document opened by Windows app\\n\")", remote_file_argument])
+    shell_join(["ruby", "-e", "File.write(ARGV.fetch(0), ARGV.fetch(1) + \"\\n\")", remote_file_argument, SAMPLE_FILE_CONTENT_MARKER])
   ].join("\n")
   sample_stdout, sample_stderr, sample_status = run_shell(options.fetch(:local_shell), shell_join(ssh_command(remote_host, sample_prepare)), timeout_seconds: options.fetch(:remote_timeout_seconds))
   warn sample_stdout unless sample_stdout.empty?
@@ -590,6 +591,8 @@ summary_reader = <<~RUBY
     "raw_file_argument_path_exposed" => smoke.fetch("raw_file_argument_path_exposed", false),
     "window_match" => smoke.fetch("window_match", ""),
     "window_match_observed" => smoke.fetch("window_match_observed", false),
+    "document_content_marker_observation_required" => ARGV.fetch(17) == "true",
+    "document_content_marker_observed" => ARGV.fetch(17) == "true" && smoke.fetch("window_match", "") == ARGV.fetch(18) && smoke.fetch("window_match_observed", false),
     "window_evidence_summary" => smoke.fetch("window_evidence_summary", ""),
     "x_window_observed" => smoke.fetch("x_window_observed"),
     "x_window_child_count" => smoke.fetch("x_window_child_count"),
@@ -659,7 +662,9 @@ summary_args = [
   real_run_receipt_summary_center_output,
   real_run_receipt_summary_kde_page_output,
   real_run_receipt_summary_planned.to_s,
-  real_run_acceptance_output
+  real_run_acceptance_output,
+  (sample_file_argument_requested && options.fetch(:window_match).strip == SAMPLE_FILE_CONTENT_MARKER).to_s,
+  SAMPLE_FILE_CONTENT_MARKER
 ]
 summary_stdout, summary_stderr, summary_status = run_shell(
   options.fetch(:local_shell),
@@ -727,6 +732,8 @@ if real_run_receipt_summary_planned
       "real_run_receipt_summary_output_written" => File.exist?(ARGV.fetch(1)),
       "real_run_receipt_summary_ready" => receipt.fetch("receipt_ready"),
       "real_run_receipt_summary_file_open_verified" => receipt.fetch("file_open_verified"),
+      "real_run_receipt_summary_document_content_marker_observation_required" => receipt.fetch("document_content_marker_observation_required", false),
+      "real_run_receipt_summary_document_content_marker_observed" => receipt.fetch("document_content_marker_observed", false),
       "real_run_receipt_summary_center_output_written" => File.exist?(ARGV.fetch(2)),
       "real_run_receipt_summary_center_known_app_smoke_evidence_count" => center.fetch("known_app_smoke_evidence_count"),
       "real_run_receipt_summary_kde_page_output_written" => File.exist?(ARGV.fetch(3)),
@@ -775,6 +782,8 @@ if real_run_receipt_summary_planned
     summary.merge!(
       "real_run_acceptance_output_written" => File.exist?(ARGV.fetch(1)),
       "real_run_acceptance_ready" => acceptance.fetch("acceptance_ready"),
+      "real_run_acceptance_document_content_marker_observation_required" => acceptance.fetch("document_content_marker_observation_required", false),
+      "real_run_acceptance_document_content_marker_observed" => acceptance.fetch("document_content_marker_observed", false),
       "real_run_acceptance_center_projection_consumed" => acceptance.fetch("compatibility_center_projection_consumed"),
       "real_run_acceptance_kde_page_projection_consumed" => acceptance.fetch("kde_page_projection_consumed")
     )

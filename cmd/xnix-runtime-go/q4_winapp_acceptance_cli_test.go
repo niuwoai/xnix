@@ -42,6 +42,8 @@ func TestQ4WinAppAcceptancePreviewCommandConsumesGenericWrapperEvidence(t *testi
 		payload["remote_executable_configured"] != false ||
 		payload["host_compilation_avoided"] != true ||
 		payload["window_match_observed"] != true ||
+		payload["document_content_marker_observation_required"] != true ||
+		payload["document_content_marker_observed"] != true ||
 		payload["acceptance_ready"] != true {
 		t.Fatalf("unexpected q4 Windows app acceptance CLI payload: %#v", payload)
 	}
@@ -102,6 +104,8 @@ func q4WinAppAcceptanceCLIFixture(version string) string {
   "kde_action_output_written": true,
   "window_observed": true,
   "window_match_observed": true,
+  "document_content_marker_observation_required": true,
+  "document_content_marker_observed": true,
   "real_run_receipt_summary_ready": true,
   "real_run_receipt_summary_file_open_verified": true,
   "real_run_acceptance_output_written": true,

@@ -30,6 +30,8 @@ func TestPreviewRealWinAppRunReceiptSummaryConsumesPassedQ4FileOpenSmoke(t *test
 		summary.WindowObserved != true ||
 		summary.WindowMatch != "sample-document.txt" ||
 		summary.WindowMatchObserved != true ||
+		summary.DocumentContentMarkerObservationRequired != true ||
+		summary.DocumentContentMarkerObserved != true ||
 		summary.FileOpenVerified != true ||
 		summary.FileArgumentCount != 1 ||
 		summary.FileArgumentCopiedCount != 1 ||
@@ -79,6 +81,10 @@ func TestPreviewRealWinAppRunReceiptSummaryRejectsIncompleteEvidence(t *testing.
 	unsafe := strings.Replace(fixture, `"host_root_modified": false`, `"host_root_modified": true`, 1)
 	if _, err := PreviewRealWinAppRunReceiptSummaryJSON([]byte(unsafe)); err == nil {
 		t.Fatalf("receipt summary must reject unsafe host mutation evidence")
+	}
+	missingDocumentMarker := strings.Replace(fixture, `"document_content_marker_observed": true`, `"document_content_marker_observed": false`, 1)
+	if _, err := PreviewRealWinAppRunReceiptSummaryJSON([]byte(missingDocumentMarker)); err == nil {
+		t.Fatalf("receipt summary must reject missing required document content marker evidence")
 	}
 }
 
@@ -179,6 +185,8 @@ func realWinAppRunReceiptSummaryRemoteSmokeFixture(version string) string {
   "raw_file_argument_path_exposed": false,
   "window_match": "sample-document.txt",
   "window_match_observed": true,
+  "document_content_marker_observation_required": true,
+  "document_content_marker_observed": true,
   "window_evidence_summary": "0xa00003 \"file-1-sample-document.txt - Notepad\": (\"notepad.exe\" \"notepad.exe\")",
   "x_window_observed": true,
   "runtime_evidence_report_consumed": true,

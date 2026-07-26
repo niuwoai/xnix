@@ -24,6 +24,8 @@ assert(source.include?("--remote-executable"), "q4 Windows app smoke must suppor
 assert(source.include?("--owner-file-open"), "q4 Windows app smoke must support owner-controlled file-open runs")
 assert(source.include?("--require-real-run-acceptance"), "q4 Windows app smoke must optionally require real-run acceptance")
 assert(source.include?("owner_file_open_entrypoint_invoked"), "q4 Windows app smoke must preserve owner file-open entrypoint evidence")
+assert(source.include?("document_content_marker_observed"), "q4 Windows app smoke must preserve document content marker evidence")
+assert(source.include?("go_owned_q4_winapp_acceptance_document_content_marker_observed"), "q4 Windows app smoke must expose Go-owned document marker acceptance evidence")
 assert(!source.include?("--owner-file-open requires --known-app-id"), "q4 Windows app smoke must allow remote executables through owner file-open")
 assert(source.include?("q4-winapp-acceptance-preview"), "q4 Windows app smoke must call the Go-owned generic q4 acceptance")
 assert(source.include?("go_owned_q4_winapp_acceptance_ready"), "q4 Windows app smoke must expose Go-owned q4 acceptance readiness")

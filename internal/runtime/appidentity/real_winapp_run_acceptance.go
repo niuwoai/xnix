@@ -39,6 +39,8 @@ type RealWinAppRunAcceptance struct {
 	RealExecutionObserved                         bool   `json:"real_execution_observed"`
 	WindowObserved                                bool   `json:"window_observed"`
 	WindowMatchObserved                           bool   `json:"window_match_observed"`
+	DocumentContentMarkerObservationRequired      bool   `json:"document_content_marker_observation_required"`
+	DocumentContentMarkerObserved                 bool   `json:"document_content_marker_observed"`
 	OwnerControlledFileOpenVerified               bool   `json:"owner_controlled_file_open_verified"`
 	OwnerFileOpenEntrypointInvoked                bool   `json:"owner_file_open_entrypoint_invoked"`
 	RuntimeEvidenceConsumed                       bool   `json:"runtime_evidence_consumed"`
@@ -104,6 +106,8 @@ func PreviewRealWinAppRunAcceptanceJSON(content []byte) (RealWinAppRunAcceptance
 		remoteBool(result, "docker_socket_mounted") ||
 		remoteBool(result, "broad_host_mount_required")
 	realExecutionObserved := remoteBool(result, "x_window_observed") && remoteBool(result, "runtime_evidence_window_observed")
+	documentContentMarkerReady := !remoteBool(result, "document_content_marker_observation_required") ||
+		remoteBool(result, "document_content_marker_observed")
 	ownerFileOpenVerified := remoteBool(result, "owner_controlled_launch_requested") &&
 		remoteBool(result, "file_open_entrypoint_requested") &&
 		remoteBool(result, "owner_file_open_entrypoint_invoked") &&
@@ -126,6 +130,7 @@ func PreviewRealWinAppRunAcceptanceJSON(content []byte) (RealWinAppRunAcceptance
 		remoteInt(result, "real_run_receipt_summary_kde_page_owner_file_open_entrypoint_count") > 0
 	acceptanceReady := realExecutionObserved &&
 		remoteBool(result, "window_match_observed") &&
+		documentContentMarkerReady &&
 		ownerFileOpenVerified &&
 		remoteBool(result, "runtime_evidence_report_consumed") &&
 		receiptSummaryReady &&
@@ -137,34 +142,36 @@ func PreviewRealWinAppRunAcceptanceJSON(content []byte) (RealWinAppRunAcceptance
 	}
 
 	acceptance := RealWinAppRunAcceptance{
-		Version:                               remoteString(result, "version"),
-		SchemaVersion:                         RealWinAppRunAcceptanceSchemaVersion,
-		RequestType:                           RealWinAppRunAcceptanceRequestType,
-		Source:                                "remote-gui-smoke+real-run-receipt-summary+desktop-projection",
-		RuntimeMethod:                         "PreviewRealWinAppRunAcceptance",
-		ReadMethod:                            "GetRealWinAppRunAcceptance",
-		AcceptanceType:                        "real-windows-app-run-acceptance",
-		ExecuteResultConsumed:                 true,
-		ExecuteResultPathExposed:              false,
-		ReceiptSummaryPathExposed:             false,
-		CenterProjectionPathExposed:           false,
-		KDEPageProjectionPathExposed:          false,
-		RemoteHostExposed:                     false,
-		AppID:                                 appID,
-		DisplayName:                           displayName,
-		AppVersion:                            appVersion,
-		LaunchMode:                            remoteString(result, "launch_mode"),
-		RunPassed:                             true,
-		RealExecutionObserved:                 true,
-		WindowObserved:                        true,
-		WindowMatchObserved:                   true,
-		OwnerControlledFileOpenVerified:       true,
-		OwnerFileOpenEntrypointInvoked:        true,
-		RuntimeEvidenceConsumed:               true,
-		ReceiptSummaryGenerated:               true,
-		ReceiptSummaryReady:                   true,
-		ReceiptSummaryFileOpenVerified:        true,
-		CompatibilityCenterProjectionConsumed: true,
+		Version:                                  remoteString(result, "version"),
+		SchemaVersion:                            RealWinAppRunAcceptanceSchemaVersion,
+		RequestType:                              RealWinAppRunAcceptanceRequestType,
+		Source:                                   "remote-gui-smoke+real-run-receipt-summary+desktop-projection",
+		RuntimeMethod:                            "PreviewRealWinAppRunAcceptance",
+		ReadMethod:                               "GetRealWinAppRunAcceptance",
+		AcceptanceType:                           "real-windows-app-run-acceptance",
+		ExecuteResultConsumed:                    true,
+		ExecuteResultPathExposed:                 false,
+		ReceiptSummaryPathExposed:                false,
+		CenterProjectionPathExposed:              false,
+		KDEPageProjectionPathExposed:             false,
+		RemoteHostExposed:                        false,
+		AppID:                                    appID,
+		DisplayName:                              displayName,
+		AppVersion:                               appVersion,
+		LaunchMode:                               remoteString(result, "launch_mode"),
+		RunPassed:                                true,
+		RealExecutionObserved:                    true,
+		WindowObserved:                           true,
+		WindowMatchObserved:                      true,
+		DocumentContentMarkerObservationRequired: remoteBool(result, "document_content_marker_observation_required"),
+		DocumentContentMarkerObserved:            remoteBool(result, "document_content_marker_observed"),
+		OwnerControlledFileOpenVerified:          true,
+		OwnerFileOpenEntrypointInvoked:           true,
+		RuntimeEvidenceConsumed:                  true,
+		ReceiptSummaryGenerated:                  true,
+		ReceiptSummaryReady:                      true,
+		ReceiptSummaryFileOpenVerified:           true,
+		CompatibilityCenterProjectionConsumed:    true,
 		CompatibilityCenterKnownAppSmokeEvidenceCount: remoteInt(result, "real_run_receipt_summary_center_known_app_smoke_evidence_count"),
 		KDEPageProjectionConsumed:                     true,
 		KDEPageKnownAppGUIEvidenceCount:               remoteInt(result, "real_run_receipt_summary_kde_page_known_app_gui_evidence_count"),

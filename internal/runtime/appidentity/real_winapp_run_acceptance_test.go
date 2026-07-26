@@ -28,6 +28,8 @@ func TestPreviewRealWinAppRunAcceptanceConsumesReceiptBackedExecuteResult(t *tes
 		acceptance.RealExecutionObserved != true ||
 		acceptance.WindowObserved != true ||
 		acceptance.WindowMatchObserved != true ||
+		acceptance.DocumentContentMarkerObservationRequired != true ||
+		acceptance.DocumentContentMarkerObserved != true ||
 		acceptance.OwnerControlledFileOpenVerified != true ||
 		acceptance.OwnerFileOpenEntrypointInvoked != true ||
 		acceptance.RuntimeEvidenceConsumed != true ||
@@ -77,6 +79,10 @@ func TestPreviewRealWinAppRunAcceptanceRejectsIncompleteReceiptProjection(t *tes
 	unsafe := strings.Replace(fixture, `"host_root_modified": false`, `"host_root_modified": true`, 1)
 	if _, err := PreviewRealWinAppRunAcceptanceJSON([]byte(unsafe)); err == nil {
 		t.Fatalf("acceptance must reject unsafe host mutation evidence")
+	}
+	missingDocumentMarker := strings.Replace(fixture, `"document_content_marker_observed": true`, `"document_content_marker_observed": false`, 1)
+	if _, err := PreviewRealWinAppRunAcceptanceJSON([]byte(missingDocumentMarker)); err == nil {
+		t.Fatalf("acceptance must reject missing required document content marker evidence")
 	}
 }
 
@@ -153,6 +159,8 @@ func realWinAppRunAcceptanceExecuteResultFixture(version string) string {
   "raw_file_argument_path_exposed": false,
   "window_match": "sample-document.txt",
   "window_match_observed": true,
+  "document_content_marker_observation_required": true,
+  "document_content_marker_observed": true,
   "window_evidence_summary": "0xa00003 \"file-1-sample-document.txt - Notepad\": (\"notepad.exe\" \"notepad.exe\")",
   "x_window_observed": true,
   "runtime_evidence_report_consumed": true,

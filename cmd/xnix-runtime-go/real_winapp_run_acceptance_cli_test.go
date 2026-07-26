@@ -43,6 +43,8 @@ func TestRealWinAppRunAcceptancePreviewCommandConsumesReceiptBackedExecuteResult
 		payload["real_execution_observed"] != true ||
 		payload["owner_controlled_file_open_verified"] != true ||
 		payload["owner_file_open_entrypoint_invoked"] != true ||
+		payload["document_content_marker_observation_required"] != true ||
+		payload["document_content_marker_observed"] != true ||
 		payload["receipt_summary_generated"] != true ||
 		payload["receipt_summary_ready"] != true ||
 		payload["compatibility_center_projection_consumed"] != true ||
@@ -103,6 +105,8 @@ func realWinAppRunAcceptanceCLIFixture(version string) string {
   "file_open_entrypoint_requested": true,
   "x_window_observed": true,
   "window_match_observed": true,
+  "document_content_marker_observation_required": true,
+  "document_content_marker_observed": true,
   "window_evidence_summary": "0xa00003 \"file-1-sample-document.txt - Notepad\": (\"notepad.exe\" \"notepad.exe\")",
   "runtime_evidence_report_consumed": true,
   "runtime_evidence_window_observed": true,

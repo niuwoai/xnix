@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc186
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc187
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc187 checkpoint makes document-content marker observation a Go-owned acceptance signal. The remote Wine GUI smoke emits explicit marker-required and marker-observed evidence, and the real-run receipt summary, real-run acceptance summary, generic q4 Windows app acceptance, and MessageBox wrapper all carry that signal forward. Owner file-open MessageBox acceptance now fails unless q4 observes the desktop-safe `Xnix document opened by Windows app` marker, so the product evidence says the Windows process read the delegated document rather than merely opening a generic window. Compile-heavy build/test and real GUI validation continue to run on q4 by default, keeping the macOS host reserved for lightweight Ruby/layout checks.
 
 The v0.2.640-rc186 checkpoint makes the q4 MessageBox Windows fixture prove that the Windows app consumed the opened document. The fixture reads the first file-open argument and places the document's first-line marker in the MessageBox window title, while `scripts/q4_messagebox_smoke.rb` owner mode now matches the desktop-safe `Xnix document opened by Windows app` marker during q4 GUI observation. This turns the external executable lane from "a Windows window appeared" into stronger evidence that a Linux desktop file-open action reached a Windows process through the independent Runtime and that the process read the delegated document.
 

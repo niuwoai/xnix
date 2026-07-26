@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc186`.
+The project is currently at `v0.2.640-rc187`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc186`.
 
 ## Current Checkpoint
 
-v0.2.640-rc186 makes the q4 MessageBox run prove real file consumption by the Windows app itself. The MessageBox fixture now reads the first file-open argument and places the opened document's first-line marker in the window title. `scripts/q4_messagebox_smoke.rb` owner mode matches the desktop-safe `Xnix document opened by Windows app` marker, so the q4 GUI evidence now proves that the Linux desktop file-open path reached the Windows process and that the process consumed the document content.
+v0.2.640-rc187 promotes document-content consumption into Go-owned real Windows app acceptance. q4 owner file-open smokes now carry explicit `document_content_marker_*` fields from the remote Wine GUI execute result through the real-run receipt summary, real-run acceptance summary, generic q4 Windows app acceptance, and MessageBox wrapper. Owner file-open MessageBox acceptance now requires observing the desktop-safe `Xnix document opened by Windows app` marker, while compile-heavy validation remains q4-first and the macOS host stays limited to lightweight Ruby/layout checks.
+
+The previous v0.2.640-rc186 checkpoint made the q4 MessageBox run prove real file consumption by the Windows app itself. The MessageBox fixture now reads the first file-open argument and places the opened document's first-line marker in the window title. `scripts/q4_messagebox_smoke.rb` owner mode matches the desktop-safe `Xnix document opened by Windows app` marker, so the q4 GUI evidence now proves that the Linux desktop file-open path reached the Windows process and that the process consumed the document content.
 
 The previous v0.2.640-rc185 checkpoint made the q4 MessageBox lane desktop-file-open shaped by default. `scripts/q4_messagebox_smoke.rb` runs the q4-built external Windows `.exe` through `scripts/q4_winapp_smoke.rb --owner-file-open --require-real-run-acceptance` with a generated sample file, while `xnix-compat-open` forwards the owner-supplied external executable into `xnix-compat-launch` so managed artifact copy evidence remains intact. Real-run receipts and acceptance summaries also accept safe Runtime/KDE app identity for q4-hosted external executables instead of requiring a built-in known-app id. The real q4 run must prove owner-controlled launch, the `xnix-compat-open %U` file-open entrypoint, Runtime evidence consumption, KDE page file-open consumption, real-run acceptance readiness, and Go-owned generic q4 acceptance. The generic q4 wrapper allows q4-hosted remote executables, not only known app ids, to use the owner file-open path.
 

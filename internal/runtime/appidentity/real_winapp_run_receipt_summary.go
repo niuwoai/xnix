@@ -40,6 +40,8 @@ type RealWinAppRunReceiptSummary struct {
 	WindowObserved                                bool   `json:"window_observed"`
 	WindowMatch                                   string `json:"window_match,omitempty"`
 	WindowMatchObserved                           bool   `json:"window_match_observed"`
+	DocumentContentMarkerObservationRequired      bool   `json:"document_content_marker_observation_required"`
+	DocumentContentMarkerObserved                 bool   `json:"document_content_marker_observed"`
 	FileOpenVerified                              bool   `json:"file_open_verified"`
 	FileArgumentCount                             int    `json:"file_argument_count"`
 	FileArgumentCopiedCount                       int    `json:"file_argument_copied_count"`
@@ -103,6 +105,8 @@ func PreviewRealWinAppRunReceiptSummaryJSON(content []byte) (RealWinAppRunReceip
 	}
 
 	windowObserved := remoteBool(report, "x_window_observed") || remoteBool(report, "runtime_evidence_window_observed")
+	documentContentMarkerReady := !remoteBool(report, "document_content_marker_observation_required") ||
+		remoteBool(report, "document_content_marker_observed")
 	fileOpenVerified := remoteBool(report, "runtime_evidence_owner_file_open_verified") &&
 		remoteBool(report, "kde_action_owner_file_open_verified") &&
 		remoteBool(report, "owner_delegated_file_arguments_passed") &&
@@ -122,6 +126,7 @@ func PreviewRealWinAppRunReceiptSummaryJSON(content []byte) (RealWinAppRunReceip
 		remoteBool(report, "docker_socket_mounted") ||
 		remoteBool(report, "broad_host_mount_required")
 	receiptReady := windowObserved &&
+		documentContentMarkerReady &&
 		fileOpenVerified &&
 		ownerControlledLaunchVerified &&
 		remoteBool(report, "runtime_evidence_report_consumed") &&
@@ -133,41 +138,43 @@ func PreviewRealWinAppRunReceiptSummaryJSON(content []byte) (RealWinAppRunReceip
 	}
 
 	summary := RealWinAppRunReceiptSummary{
-		Version:                              remoteString(report, "version"),
-		SchemaVersion:                        RealWinAppRunReceiptSummarySchemaVersion,
-		RequestType:                          RealWinAppRunReceiptSummaryRequestType,
-		Source:                               "remote-wine-guest-gui-smoke+runtime-real-run-receipt-summary",
-		RuntimeMethod:                        "PreviewRealWinAppRunReceiptSummary",
-		ReadMethod:                           "GetRealWinAppRunReceiptSummary",
-		ReceiptType:                          "real-windows-app-run-receipt-summary",
-		ReportConsumed:                       true,
-		ReportPathExposed:                    false,
-		RemoteHostExposed:                    false,
-		AppID:                                appID,
-		DisplayName:                          displayName,
-		AppVersion:                           appVersion,
-		GUIAppName:                           "known-gui-app",
-		ExecutionHostClass:                   "q4-remote-validation-host",
-		BackendClass:                         "managed-guest-gui",
-		LaunchMode:                           remoteString(report, "launch_mode"),
-		RunPassed:                            true,
-		RealExecutionObserved:                true,
-		WindowObserved:                       windowObserved,
-		WindowMatch:                          remoteString(report, "window_match"),
-		WindowMatchObserved:                  remoteBool(report, "window_match_observed"),
-		FileOpenVerified:                     fileOpenVerified,
-		FileArgumentCount:                    remoteInt(report, "file_argument_count"),
-		FileArgumentCopiedCount:              remoteInt(report, "file_argument_copied_count"),
-		FileArgumentsPassed:                  remoteBool(report, "file_arguments_passed"),
-		FileArgumentWinePathTranslated:       remoteBool(report, "file_argument_winepath_translated"),
-		FileArgumentWinePathTranslatedCount:  remoteInt(report, "file_argument_winepath_translated_count"),
-		RawFileArgumentPathExposed:           remoteBool(report, "raw_file_argument_path_exposed") || remoteBool(report, "owner_delegated_raw_file_argument_path_exposed"),
-		OwnerControlledLaunchVerified:        ownerControlledLaunchVerified,
-		OwnerManagedLauncherInvoked:          remoteBool(report, "owner_managed_launcher_invoked"),
-		OwnerFileOpenEntrypointInvoked:       remoteBool(report, "owner_file_open_entrypoint_invoked"),
-		OwnerDelegatedSmokePassed:            remoteBool(report, "owner_delegated_smoke_passed"),
-		RuntimeEvidenceConsumed:              remoteBool(report, "runtime_evidence_report_consumed"),
-		RuntimeEvidenceOwnerFileOpenVerified: remoteBool(report, "runtime_evidence_owner_file_open_verified"),
+		Version:                                  remoteString(report, "version"),
+		SchemaVersion:                            RealWinAppRunReceiptSummarySchemaVersion,
+		RequestType:                              RealWinAppRunReceiptSummaryRequestType,
+		Source:                                   "remote-wine-guest-gui-smoke+runtime-real-run-receipt-summary",
+		RuntimeMethod:                            "PreviewRealWinAppRunReceiptSummary",
+		ReadMethod:                               "GetRealWinAppRunReceiptSummary",
+		ReceiptType:                              "real-windows-app-run-receipt-summary",
+		ReportConsumed:                           true,
+		ReportPathExposed:                        false,
+		RemoteHostExposed:                        false,
+		AppID:                                    appID,
+		DisplayName:                              displayName,
+		AppVersion:                               appVersion,
+		GUIAppName:                               "known-gui-app",
+		ExecutionHostClass:                       "q4-remote-validation-host",
+		BackendClass:                             "managed-guest-gui",
+		LaunchMode:                               remoteString(report, "launch_mode"),
+		RunPassed:                                true,
+		RealExecutionObserved:                    true,
+		WindowObserved:                           windowObserved,
+		WindowMatch:                              remoteString(report, "window_match"),
+		WindowMatchObserved:                      remoteBool(report, "window_match_observed"),
+		DocumentContentMarkerObservationRequired: remoteBool(report, "document_content_marker_observation_required"),
+		DocumentContentMarkerObserved:            remoteBool(report, "document_content_marker_observed"),
+		FileOpenVerified:                         fileOpenVerified,
+		FileArgumentCount:                        remoteInt(report, "file_argument_count"),
+		FileArgumentCopiedCount:                  remoteInt(report, "file_argument_copied_count"),
+		FileArgumentsPassed:                      remoteBool(report, "file_arguments_passed"),
+		FileArgumentWinePathTranslated:           remoteBool(report, "file_argument_winepath_translated"),
+		FileArgumentWinePathTranslatedCount:      remoteInt(report, "file_argument_winepath_translated_count"),
+		RawFileArgumentPathExposed:               remoteBool(report, "raw_file_argument_path_exposed") || remoteBool(report, "owner_delegated_raw_file_argument_path_exposed"),
+		OwnerControlledLaunchVerified:            ownerControlledLaunchVerified,
+		OwnerManagedLauncherInvoked:              remoteBool(report, "owner_managed_launcher_invoked"),
+		OwnerFileOpenEntrypointInvoked:           remoteBool(report, "owner_file_open_entrypoint_invoked"),
+		OwnerDelegatedSmokePassed:                remoteBool(report, "owner_delegated_smoke_passed"),
+		RuntimeEvidenceConsumed:                  remoteBool(report, "runtime_evidence_report_consumed"),
+		RuntimeEvidenceOwnerFileOpenVerified:     remoteBool(report, "runtime_evidence_owner_file_open_verified"),
 		RuntimeEvidenceOwnerFileOpenEntrypointInvoked: remoteBool(report, "runtime_evidence_owner_file_open_entrypoint_invoked"),
 		KDEPageEvidenceConsumed:                       kdePageEvidenceConsumed,
 		KDEActionEvidenceConsumed:                     kdeActionEvidenceConsumed,
@@ -229,6 +236,8 @@ func KnownAppSmokeEvidenceFromRealWinAppRunReceiptSummary(payload []byte) (Known
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary must not expose backend or launcher details")
 	case strings.TrimSpace(summary.WindowMatch) == "" || !singleLine(summary.WindowMatch) || !summary.WindowMatchObserved:
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary requires safe observed window-match evidence")
+	case summary.DocumentContentMarkerObservationRequired && !summary.DocumentContentMarkerObserved:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary requires observed document content marker evidence")
 	}
 
 	evidence, err := normalizeKnownAppSmokeEvidenceItem(KnownAppSmokeEvidenceSummary{

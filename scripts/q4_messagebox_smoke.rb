@@ -284,6 +284,7 @@ delegated = JSON.parse(stdout)
 unless delegated.fetch("status") == "passed" &&
        bool(delegated, "window_observed") &&
        bool(delegated, "window_match_observed") &&
+       (!options.fetch(:owner_file_open) || bool(delegated, "document_content_marker_observed")) &&
        bool(delegated, "go_owned_q4_winapp_acceptance_ready")
   warn stdout
   warn "FAIL: q4 MessageBox delegated Windows app smoke did not satisfy Go-owned acceptance"
@@ -303,10 +304,16 @@ result = plan.merge(
   "kde_page_output_written" => bool(delegated, "kde_page_output_written"),
   "window_observed" => bool(delegated, "window_observed"),
   "window_match_observed" => bool(delegated, "window_match_observed"),
+  "document_content_marker_observation_required" => bool(delegated, "document_content_marker_observation_required"),
+  "document_content_marker_observed" => bool(delegated, "document_content_marker_observed"),
   "real_run_receipt_summary_ready" => bool(delegated, "real_run_receipt_summary_ready"),
   "real_run_receipt_summary_file_open_verified" => bool(delegated, "real_run_receipt_summary_file_open_verified"),
+  "real_run_receipt_summary_document_content_marker_observation_required" => bool(delegated, "real_run_receipt_summary_document_content_marker_observation_required"),
+  "real_run_receipt_summary_document_content_marker_observed" => bool(delegated, "real_run_receipt_summary_document_content_marker_observed"),
   "real_run_acceptance_output_written" => bool(delegated, "real_run_acceptance_output_written"),
   "real_run_acceptance_ready" => bool(delegated, "real_run_acceptance_ready"),
+  "real_run_acceptance_document_content_marker_observation_required" => bool(delegated, "real_run_acceptance_document_content_marker_observation_required"),
+  "real_run_acceptance_document_content_marker_observed" => bool(delegated, "real_run_acceptance_document_content_marker_observed"),
   "real_run_acceptance_center_projection_consumed" => bool(delegated, "real_run_acceptance_center_projection_consumed"),
   "real_run_acceptance_kde_page_projection_consumed" => bool(delegated, "real_run_acceptance_kde_page_projection_consumed"),
   "owner_file_open_entrypoint_invoked" => bool(delegated, "owner_file_open_entrypoint_invoked"),
@@ -316,6 +323,8 @@ result = plan.merge(
   "go_owned_q4_winapp_acceptance_request_type" => delegated.fetch("go_owned_q4_winapp_acceptance_request_type"),
   "go_owned_q4_winapp_acceptance_ready" => delegated.fetch("go_owned_q4_winapp_acceptance_ready"),
   "go_owned_q4_winapp_acceptance_consumed" => delegated.fetch("go_owned_q4_winapp_acceptance_consumed"),
+  "go_owned_q4_winapp_acceptance_document_content_marker_observation_required" => delegated.fetch("go_owned_q4_winapp_acceptance_document_content_marker_observation_required"),
+  "go_owned_q4_winapp_acceptance_document_content_marker_observed" => delegated.fetch("go_owned_q4_winapp_acceptance_document_content_marker_observed"),
   "go_owned_q4_winapp_acceptance_path_exposed" => delegated.fetch("go_owned_q4_winapp_acceptance_path_exposed"),
   "go_owned_q4_winapp_acceptance_remote_host_exposed" => delegated.fetch("go_owned_q4_winapp_acceptance_remote_host_exposed"),
   "go_owned_q4_winapp_acceptance_delegated_command_exposed" => delegated.fetch("go_owned_q4_winapp_acceptance_delegated_command_exposed"),

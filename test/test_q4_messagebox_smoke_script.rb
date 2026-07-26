@@ -27,6 +27,8 @@ assert(source.include?("go_owned_q4_winapp_acceptance_ready"), "q4 MessageBox sm
 assert(source.include?("--owner-file-open"), "q4 MessageBox smoke must support owner-controlled file-open")
 assert(source.include?("--require-real-run-acceptance"), "q4 MessageBox smoke must require real-run acceptance in owner mode")
 assert(source.include?("Xnix document opened by Windows app"), "q4 MessageBox smoke must use file content as owner window evidence")
+assert(source.include?("document_content_marker_observed"), "q4 MessageBox smoke must require explicit document marker evidence")
+assert(source.include?("go_owned_q4_winapp_acceptance_document_content_marker_observed"), "q4 MessageBox smoke must expose Go-owned document marker acceptance evidence")
 assert(source.include?("host_compilation_avoided"), "q4 MessageBox smoke must document host compilation avoidance")
 assert(fixture_source.include?("os.ReadFile"), "MessageBox fixture must read the opened file argument")
 assert(fixture_source.include?("messageBoxBaseTitle + \" - \" + marker"), "MessageBox fixture must expose opened file content in the window title")

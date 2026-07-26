@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc187] - 2026-07-26
+
+### Changed
+
+- Changed the q4 remote Wine GUI smoke, real-run receipt summary, real-run acceptance summary, generic q4 Windows app acceptance, and MessageBox wrapper to carry explicit document-content marker observation evidence.
+- Changed owner file-open MessageBox acceptance to require the observed desktop-safe document marker before reporting Go-owned q4 Windows app acceptance readiness.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc187`.
+
 ## [0.2.640-rc186] - 2026-07-26
 
 ### Changed

@@ -41,6 +41,8 @@ func TestPreviewQ4WinAppAcceptanceConsumesGenericKnownAppEvidence(t *testing.T) 
 		acceptance.KDEActionOutputWritten != true ||
 		acceptance.WindowObserved != true ||
 		acceptance.WindowMatchObserved != true ||
+		acceptance.DocumentContentMarkerObservationRequired != true ||
+		acceptance.DocumentContentMarkerObserved != true ||
 		acceptance.RealRunReceiptSummaryReady != true ||
 		acceptance.RealRunReceiptSummaryFileOpenVerified != true ||
 		acceptance.RealRunAcceptanceReady != true ||
@@ -96,6 +98,10 @@ func TestPreviewQ4WinAppAcceptanceRejectsIncompleteEvidence(t *testing.T) {
 	if _, err := PreviewQ4WinAppAcceptanceJSON([]byte(missingRealAcceptance)); err == nil {
 		t.Fatalf("q4 Windows app acceptance must reject missing required real-run acceptance")
 	}
+	missingDocumentMarker := strings.Replace(fixture, `"document_content_marker_observed": true`, `"document_content_marker_observed": false`, 1)
+	if _, err := PreviewQ4WinAppAcceptanceJSON([]byte(missingDocumentMarker)); err == nil {
+		t.Fatalf("q4 Windows app acceptance must reject missing required document content marker evidence")
+	}
 }
 
 func q4WinAppAcceptanceFixture(version string, knownAppID string, remoteExecutableConfigured bool, requireRealRunAcceptance bool) string {
@@ -110,6 +116,8 @@ func q4WinAppAcceptanceFixture(version string, knownAppID string, remoteExecutab
 	realRunAcceptanceKDEPageProjectionConsumed := false
 	realRunReceiptSummaryReady := false
 	realRunReceiptSummaryFileOpenVerified := false
+	documentContentMarkerObservationRequired := false
+	documentContentMarkerObserved := false
 	ownerFileOpenEntrypointInvoked := false
 	runtimeEvidenceOwnerFileOpenEntrypointInvoked := false
 	kdePageOwnerFileOpenEntrypointCount := 0
@@ -125,6 +133,8 @@ func q4WinAppAcceptanceFixture(version string, knownAppID string, remoteExecutab
 		realRunAcceptanceKDEPageProjectionConsumed = true
 		realRunReceiptSummaryReady = true
 		realRunReceiptSummaryFileOpenVerified = true
+		documentContentMarkerObservationRequired = true
+		documentContentMarkerObserved = true
 		ownerFileOpenEntrypointInvoked = true
 		runtimeEvidenceOwnerFileOpenEntrypointInvoked = true
 		kdePageOwnerFileOpenEntrypointCount = 1
@@ -167,6 +177,8 @@ func q4WinAppAcceptanceFixture(version string, knownAppID string, remoteExecutab
   "kde_action_output_written": true,
   "window_observed": true,
   "window_match_observed": true,
+  "document_content_marker_observation_required": %t,
+  "document_content_marker_observed": %t,
   "real_run_receipt_summary_ready": %t,
   "real_run_receipt_summary_file_open_verified": %t,
   "real_run_acceptance_output_written": %t,
@@ -176,5 +188,5 @@ func q4WinAppAcceptanceFixture(version string, knownAppID string, remoteExecutab
   "owner_file_open_entrypoint_invoked": %t,
   "runtime_evidence_owner_file_open_entrypoint_invoked": %t,
   "kde_page_known_app_owner_file_open_entrypoint_count": %d
-}`, version, knownAppID, remoteExecutableConfigured, appID, displayName, sampleFileArgument, launchMode, fileOpenEntrypointRequested, requireRealRunAcceptance, realRunReceiptSummaryReady, realRunReceiptSummaryFileOpenVerified, realRunAcceptanceOutputWritten, realRunAcceptanceReady, realRunAcceptanceCenterProjectionConsumed, realRunAcceptanceKDEPageProjectionConsumed, ownerFileOpenEntrypointInvoked, runtimeEvidenceOwnerFileOpenEntrypointInvoked, kdePageOwnerFileOpenEntrypointCount)
+}`, version, knownAppID, remoteExecutableConfigured, appID, displayName, sampleFileArgument, launchMode, fileOpenEntrypointRequested, requireRealRunAcceptance, documentContentMarkerObservationRequired, documentContentMarkerObserved, realRunReceiptSummaryReady, realRunReceiptSummaryFileOpenVerified, realRunAcceptanceOutputWritten, realRunAcceptanceReady, realRunAcceptanceCenterProjectionConsumed, realRunAcceptanceKDEPageProjectionConsumed, ownerFileOpenEntrypointInvoked, runtimeEvidenceOwnerFileOpenEntrypointInvoked, kdePageOwnerFileOpenEntrypointCount)
 }
