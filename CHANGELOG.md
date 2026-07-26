@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc153] - 2026-07-26
+
+### Changed
+
+- Added a copy-only external file bridge for KDE `%U` file-open arguments on imported external Windows GUI app launches.
+- Passed container-local file paths to Wine/Xvfb app runs after validating and copying local file URI targets with `docker cp`.
+- Preserved Runtime and desktop launch packet evidence for file bridge copy readiness while keeping raw file URI/path output and host mounts disabled.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc153`.
+
 ## [0.2.640-rc152] - 2026-07-26
 
 ### Changed

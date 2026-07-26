@@ -41,6 +41,7 @@ type ContainerRequest struct {
 
 type ContainerXGUIRequest struct {
 	ExecutablePath                  string
+	FileArgumentPaths               []string
 	ApplicationName                 string
 	WindowMatch                     string
 	ApplicationID                   string
@@ -99,6 +100,10 @@ type ContainerXGUIResult struct {
 	RecipeBacked                    bool   `json:"recipe_backed"`
 	ExecutableName                  string `json:"executable_name,omitempty"`
 	LocalExecutableCopied           bool   `json:"local_executable_copied"`
+	FileBridgeCopyEnabled           bool   `json:"file_bridge_copy_enabled"`
+	FileBridgeCopiedCount           int    `json:"file_bridge_copied_count"`
+	FileArgumentCount               int    `json:"file_argument_count"`
+	RawFileArgumentPathExposed      bool   `json:"raw_file_argument_path_exposed"`
 	ExternalAppImportRecordConsumed bool   `json:"external_app_import_record_consumed"`
 	ImportedArtifactDigestVerified  bool   `json:"imported_artifact_digest_verified"`
 	ImportedArtifactSHA256          string `json:"imported_artifact_sha256,omitempty"`
@@ -282,7 +287,7 @@ func RunContainerXGUISmoke(ctx context.Context, request ContainerXGUIRequest) (C
 		command.Stderr = &stderr
 		err = command.Run()
 	} else {
-		err = runContainerXGUIWithCopiedExecutable(runCtx, dockerPath, executablePath, result, &stdout, &stderr)
+		err = runContainerXGUIWithCopiedExecutable(runCtx, dockerPath, executablePath, request.FileArgumentPaths, &result, &stdout, &stderr)
 	}
 	result.DurationMillis = time.Since(startedAt).Milliseconds()
 	output := stdout.String() + "\n" + stderr.String()
@@ -375,6 +380,9 @@ func baseContainerXGUIResult(request ContainerXGUIRequest) ContainerXGUIResult {
 		DisplayName:                     strings.TrimSpace(request.DisplayName),
 		AppVersion:                      strings.TrimSpace(request.AppVersion),
 		RecipeBacked:                    request.RecipeBacked,
+		FileArgumentCount:               len(request.FileArgumentPaths),
+		FileBridgeCopyEnabled:           len(request.FileArgumentPaths) > 0,
+		RawFileArgumentPathExposed:      false,
 		ExternalAppImportRecordConsumed: request.ExternalAppImportRecordConsumed,
 		ImportedArtifactDigestVerified:  request.ImportedArtifactDigestVerified,
 		ImportedArtifactSHA256:          strings.TrimSpace(request.ImportedArtifactSHA256),
@@ -428,8 +436,12 @@ func inspectLocalImagePlatform(ctx context.Context, dockerPath string, image str
 	return strings.TrimSpace(string(output)), nil
 }
 
-func runContainerXGUIWithCopiedExecutable(ctx context.Context, dockerPath string, executablePath string, result ContainerXGUIResult, stdout *bytes.Buffer, stderr *bytes.Buffer) error {
-	createOutput, createError, err := runDockerCapture(ctx, dockerPath, restrictedDockerXGUICreateArgs(result.ApplicationName, result.WindowMatch, result.ContainerImage, result.ContainerPlatform))
+func runContainerXGUIWithCopiedExecutable(ctx context.Context, dockerPath string, executablePath string, fileArgumentPaths []string, result *ContainerXGUIResult, stdout *bytes.Buffer, stderr *bytes.Buffer) error {
+	copiedFileArgs, err := containerXGUIFileArgumentPaths(fileArgumentPaths)
+	if err != nil {
+		return err
+	}
+	createOutput, createError, err := runDockerCapture(ctx, dockerPath, restrictedDockerXGUICreateArgs(result.ApplicationName, result.WindowMatch, result.ContainerImage, result.ContainerPlatform, copiedFileArgs))
 	stderr.Write(createError.Bytes())
 	if err != nil {
 		stdout.Write(createOutput.Bytes())
@@ -446,11 +458,40 @@ func runContainerXGUIWithCopiedExecutable(ctx context.Context, dockerPath string
 	if err != nil {
 		return err
 	}
+	for index, filePath := range fileArgumentPaths {
+		containerPath := copiedFileArgs[index]
+		_, copyError, err := runDockerCapture(ctx, dockerPath, []string{"cp", filePath, containerID + ":" + containerPath})
+		stderr.Write(copyError.Bytes())
+		if err != nil {
+			return err
+		}
+	}
+	result.FileBridgeCopiedCount = len(copiedFileArgs)
 
-	startCommand := exec.CommandContext(ctx, dockerPath, "start", "-a", containerID)
+	startArgs := append([]string{"start", "-a"}, containerID)
+	startCommand := exec.CommandContext(ctx, dockerPath, startArgs...)
 	startCommand.Stdout = stdout
 	startCommand.Stderr = stderr
 	return startCommand.Run()
+}
+
+func containerXGUIFileArgumentPaths(fileArgumentPaths []string) ([]string, error) {
+	copiedFileArgs := make([]string, 0, len(fileArgumentPaths))
+	for index, filePath := range fileArgumentPaths {
+		trimmed := strings.TrimSpace(filePath)
+		if trimmed == "" {
+			return nil, errors.New("X GUI file argument path is required")
+		}
+		info, err := os.Stat(trimmed)
+		if err != nil {
+			return nil, fmt.Errorf("validate X GUI file argument: %w", err)
+		}
+		if info.IsDir() {
+			return nil, errors.New("X GUI file argument must be a file")
+		}
+		copiedFileArgs = append(copiedFileArgs, fmt.Sprintf("/file-%d-%s", index+1, filepath.Base(trimmed)))
+	}
+	return copiedFileArgs, nil
 }
 
 func runDockerCapture(ctx context.Context, dockerPath string, args []string) (*bytes.Buffer, *bytes.Buffer, error) {
@@ -464,14 +505,14 @@ func runDockerCapture(ctx context.Context, dockerPath string, args []string) (*b
 }
 
 func restrictedDockerXGUIRunArgs(appName string, windowMatch string, image string, platform string) []string {
-	return append([]string{"run", "--rm"}, restrictedDockerXGUIContainerArgs(appName, windowMatch, image, platform)...)
+	return append([]string{"run", "--rm"}, restrictedDockerXGUIContainerArgs(appName, windowMatch, image, platform, nil)...)
 }
 
-func restrictedDockerXGUICreateArgs(appName string, windowMatch string, image string, platform string) []string {
-	return append([]string{"create"}, restrictedDockerXGUIContainerArgs(appName, windowMatch, image, platform)...)
+func restrictedDockerXGUICreateArgs(appName string, windowMatch string, image string, platform string, fileArgumentPaths []string) []string {
+	return append([]string{"create"}, restrictedDockerXGUIContainerArgs(appName, windowMatch, image, platform, fileArgumentPaths)...)
 }
 
-func restrictedDockerXGUIContainerArgs(appName string, windowMatch string, image string, platform string) []string {
+func restrictedDockerXGUIContainerArgs(appName string, windowMatch string, image string, platform string, fileArgumentPaths []string) []string {
 	launcher := strings.Join([]string{
 		"set -eu",
 		"Xvfb \"$DISPLAY\" -screen 0 1024x768x24 -ac >/tmp/xvfb.log 2>&1 &",
@@ -483,7 +524,12 @@ func restrictedDockerXGUIContainerArgs(appName string, windowMatch string, image
 		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'",
 		"wineboot --init >/tmp/wineboot.log 2>&1 || true",
 		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'",
-		"if [ -f \"$XNIX_GUI_APP\" ]; then wine start /unix \"$XNIX_GUI_APP\" >/tmp/wine-gui.log 2>&1 & else wine \"$XNIX_GUI_APP\" >/tmp/wine-gui.log 2>&1 & fi",
+		"set --",
+		"if [ -n \"${XNIX_GUI_FILE_ARGS:-}\" ]; then while IFS= read -r _xnix_file_arg; do [ -n \"$_xnix_file_arg\" ] && set -- \"$@\" \"$_xnix_file_arg\"; done <<EOF",
+		"$XNIX_GUI_FILE_ARGS",
+		"EOF",
+		"fi",
+		"if [ -f \"$XNIX_GUI_APP\" ]; then wine start /unix \"$XNIX_GUI_APP\" \"$@\" >/tmp/wine-gui.log 2>&1 & else wine \"$XNIX_GUI_APP\" \"$@\" >/tmp/wine-gui.log 2>&1 & fi",
 		"app_pid=$!",
 		"observed=0",
 		"for _attempt in $(seq 1 20); do",
@@ -512,6 +558,9 @@ func restrictedDockerXGUIContainerArgs(appName string, windowMatch string, image
 		"--env", "DISPLAY=:99",
 		"--env", "XNIX_GUI_APP=" + appName,
 		"--env", "XNIX_WINDOW_MATCH=" + windowMatch,
+	}
+	if len(fileArgumentPaths) > 0 {
+		args = append(args, "--env", "XNIX_GUI_FILE_ARGS="+strings.Join(fileArgumentPaths, "\n"))
 	}
 	if strings.TrimSpace(platform) != "" && strings.TrimSpace(platform) != AutoContainerPlatform {
 		args = append(args, "--platform", platform)

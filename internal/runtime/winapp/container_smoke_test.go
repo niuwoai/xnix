@@ -255,11 +255,18 @@ func TestRunContainerXGUISmokeMountsExternalExecutableReadOnly(t *testing.T) {
 	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
+	documentPath := filepath.Join(tempDir, "report.docx")
+	if err := os.WriteFile(documentPath, []byte("file-open fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
 	logPath := filepath.Join(tempDir, "docker-x-gui-executable.log")
 	dockerPath := writeFakeXGUIDocker(t, tempDir, logPath)
 
 	result, err := RunContainerXGUISmoke(context.Background(), ContainerXGUIRequest{
-		ExecutablePath:  executablePath,
+		ExecutablePath: executablePath,
+		FileArgumentPaths: []string{
+			documentPath,
+		},
 		ApplicationName: "/xnix-messagebox-smoke.exe",
 		WindowMatch:     "Xnix Windows GUI Smoke",
 		Image:           "local/wine-x-gui:test",
@@ -273,6 +280,10 @@ func TestRunContainerXGUISmokeMountsExternalExecutableReadOnly(t *testing.T) {
 	if result.Status != PassedStatus ||
 		result.ExecutableName != "xnix-messagebox-smoke.exe" ||
 		!result.LocalExecutableCopied ||
+		!result.FileBridgeCopyEnabled ||
+		result.FileBridgeCopiedCount != 1 ||
+		result.FileArgumentCount != 1 ||
+		result.RawFileArgumentPathExposed ||
 		result.ApplicationName != "/xnix-messagebox-smoke.exe" ||
 		result.WindowMatch != "Xnix Windows GUI Smoke" ||
 		!result.XWindowObserved ||
@@ -294,7 +305,10 @@ func TestRunContainerXGUISmokeMountsExternalExecutableReadOnly(t *testing.T) {
 		"create --pull never --network none",
 		"--env XNIX_GUI_APP=/xnix-messagebox-smoke.exe",
 		"--env XNIX_WINDOW_MATCH=Xnix Windows GUI Smoke",
+		"--env XNIX_GUI_FILE_ARGS=/file-1-report.docx",
 		"cp " + executablePath,
+		"cp " + documentPath,
+		"fake-x-gui-container:/file-1-report.docx",
 		"start -a",
 		"wine \"$XNIX_GUI_APP\"",
 	} {

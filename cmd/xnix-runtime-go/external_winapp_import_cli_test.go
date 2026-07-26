@@ -258,6 +258,11 @@ func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
 	if err := json.Unmarshal(importOutput.Bytes(), &importPayload); err != nil {
 		t.Fatalf("Unmarshal import output returned error: %v", err)
 	}
+	documentPath := filepath.Join(tempDir, "report.docx")
+	if err := os.WriteFile(documentPath, []byte("external app file-open fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	documentURI := "file://" + filepath.ToSlash(documentPath)
 
 	dockerLog := filepath.Join(tempDir, "fake-docker.log")
 	dockerPath := filepath.Join(tempDir, "fake-docker")
@@ -286,7 +291,7 @@ func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
 		"--platform", "linux/amd64",
 		"--docker", dockerPath,
 		"--timeout", "5s",
-		"file:///home/alice/Documents/report.docx",
+		documentURI,
 	}, &output); err != nil {
 		t.Fatalf("external app handle run returned error: %v", err)
 	}
@@ -304,6 +309,9 @@ func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
 		payload["external_desktop_argument_count"] != float64(1) ||
 		payload["external_file_uri_arguments_accepted"] != true ||
 		payload["external_file_open_requested"] != true ||
+		payload["external_file_bridge_copy_enabled"] != true ||
+		payload["external_file_bridge_copied_count"] != float64(1) ||
+		payload["external_file_bridge_ready"] != true ||
 		payload["external_file_bridge_mount_enabled"] != false ||
 		payload["raw_file_uri_arguments_exposed"] != false ||
 		payload["imported_artifact_digest_verified"] != true ||
@@ -318,9 +326,20 @@ func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
 		payload["window_observed"] != true {
 		t.Fatalf("unexpected external app handle run payload: %#v", payload)
 	}
+	dockerInvocation, err := os.ReadFile(dockerLog)
+	if err != nil {
+		t.Fatalf("ReadFile docker log returned error: %v", err)
+	}
+	if !strings.Contains(string(dockerInvocation), documentPath) ||
+		!strings.Contains(string(dockerInvocation), "/file-1-report.docx") ||
+		!strings.Contains(string(dockerInvocation), "XNIX_GUI_FILE_ARGS=/file-1-report.docx") {
+		t.Fatalf("fake Docker did not receive copied file-open flow: %s", string(dockerInvocation))
+	}
 	if strings.Contains(output.String(), stateRoot) ||
 		strings.Contains(output.String(), executablePath) ||
 		strings.Contains(output.String(), dockerPath) ||
+		strings.Contains(output.String(), documentPath) ||
+		strings.Contains(output.String(), documentURI) ||
 		strings.Contains(output.String(), "report.docx") ||
 		strings.Contains(output.String(), "docker run") ||
 		strings.Contains(output.String(), "/var/run/docker.sock") ||

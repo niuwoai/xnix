@@ -3,6 +3,9 @@ package appidentity
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -45,6 +48,9 @@ type ExternalWinAppRunResult struct {
 	ExternalDesktopArgumentCount     int                        `json:"external_desktop_argument_count"`
 	ExternalFileURIArgumentsAccepted bool                       `json:"external_file_uri_arguments_accepted"`
 	ExternalFileOpenRequested        bool                       `json:"external_file_open_requested"`
+	ExternalFileBridgeCopyEnabled    bool                       `json:"external_file_bridge_copy_enabled"`
+	ExternalFileBridgeCopiedCount    int                        `json:"external_file_bridge_copied_count"`
+	ExternalFileBridgeReady          bool                       `json:"external_file_bridge_ready"`
 	ExternalFileBridgeMountEnabled   bool                       `json:"external_file_bridge_mount_enabled"`
 	RawFileURIArgumentsExposed       bool                       `json:"raw_file_uri_arguments_exposed"`
 	ImportedArtifactDigestVerified   bool                       `json:"imported_artifact_digest_verified"`
@@ -95,7 +101,7 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 	if importRecordPath == "" && stateRoot == "" {
 		stateRoot = DefaultExternalWinAppRuntimeStateRoot()
 	}
-	argumentCount, fileOpenRequested, err := validateExternalDesktopArguments(request.ExternalDesktopArguments)
+	argumentCount, fileOpenRequested, fileArgumentPaths, err := validateExternalDesktopArguments(request.ExternalDesktopArguments)
 	if err != nil {
 		return ExternalWinAppRunResult{}, err
 	}
@@ -116,6 +122,7 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 	runtimePayload, err := winapp.RunContainerXGUISmoke(ctx, winapp.ContainerXGUIRequest{
 		ExecutablePath:                  importedExecutablePath,
 		ApplicationName:                 "/" + record.ExecutableName,
+		FileArgumentPaths:               fileArgumentPaths,
 		WindowMatch:                     windowMatch,
 		ApplicationID:                   record.ApplicationID,
 		DisplayName:                     record.DisplayName,
@@ -150,6 +157,9 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 		ExternalDesktopArgumentCount:     argumentCount,
 		ExternalFileURIArgumentsAccepted: argumentCount > 0,
 		ExternalFileOpenRequested:        fileOpenRequested,
+		ExternalFileBridgeCopyEnabled:    runtimePayload.FileBridgeCopyEnabled,
+		ExternalFileBridgeCopiedCount:    runtimePayload.FileBridgeCopiedCount,
+		ExternalFileBridgeReady:          fileOpenRequested && runtimePayload.FileBridgeCopiedCount == argumentCount,
 		ExternalFileBridgeMountEnabled:   false,
 		RawFileURIArgumentsExposed:       false,
 		ImportedArtifactDigestVerified:   runtimePayload.ImportedArtifactDigestVerified,
@@ -193,22 +203,42 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 	return result, nil
 }
 
-func validateExternalDesktopArguments(values []string) (int, bool, error) {
+func validateExternalDesktopArguments(values []string) (int, bool, []string, error) {
 	count := 0
 	fileOpenRequested := false
+	fileArgumentPaths := []string{}
 	for _, value := range values {
 		trimmed := strings.TrimSpace(value)
 		if trimmed == "" || trimmed == "%U" || trimmed == "%u" {
 			continue
 		}
 		if !singleLine(trimmed) {
-			return 0, false, fmt.Errorf("external Windows app desktop argument must be single-line")
+			return 0, false, nil, fmt.Errorf("external Windows app desktop argument must be single-line")
 		}
 		if !strings.HasPrefix(strings.ToLower(trimmed), "file://") {
-			return 0, false, fmt.Errorf("external Windows app desktop argument must be a file URI")
+			return 0, false, nil, fmt.Errorf("external Windows app desktop argument must be a file URI")
+		}
+		parsed, err := url.Parse(trimmed)
+		if err != nil || parsed.Scheme != "file" {
+			return 0, false, nil, fmt.Errorf("external Windows app desktop argument must be a valid file URI")
+		}
+		if parsed.Host != "" && parsed.Host != "localhost" {
+			return 0, false, nil, fmt.Errorf("external Windows app desktop argument must reference a local file")
+		}
+		filePath := filepath.FromSlash(parsed.Path)
+		if !filepath.IsAbs(filePath) {
+			return 0, false, nil, fmt.Errorf("external Windows app desktop argument must reference an absolute local file")
+		}
+		info, err := os.Stat(filePath)
+		if err != nil {
+			return 0, false, nil, fmt.Errorf("external Windows app desktop argument must reference an existing local file")
+		}
+		if info.IsDir() {
+			return 0, false, nil, fmt.Errorf("external Windows app desktop argument must reference a file")
 		}
 		count++
 		fileOpenRequested = true
+		fileArgumentPaths = append(fileArgumentPaths, filePath)
 	}
-	return count, fileOpenRequested, nil
+	return count, fileOpenRequested, fileArgumentPaths, nil
 }

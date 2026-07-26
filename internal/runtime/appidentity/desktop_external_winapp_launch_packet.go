@@ -44,6 +44,9 @@ type DesktopExternalWinAppLaunchPacket struct {
 	ExternalDesktopArgumentCount     int      `json:"external_desktop_argument_count"`
 	ExternalFileURIArgumentsAccepted bool     `json:"external_file_uri_arguments_accepted"`
 	ExternalFileOpenRequested        bool     `json:"external_file_open_requested"`
+	ExternalFileBridgeCopyEnabled    bool     `json:"external_file_bridge_copy_enabled"`
+	ExternalFileBridgeCopiedCount    int      `json:"external_file_bridge_copied_count"`
+	ExternalFileBridgeReady          bool     `json:"external_file_bridge_ready"`
 	ExternalFileBridgeMountEnabled   bool     `json:"external_file_bridge_mount_enabled"`
 	RawFileURIArgumentsExposed       bool     `json:"raw_file_uri_arguments_exposed"`
 	ImportedArtifactDigestVerified   bool     `json:"imported_artifact_digest_verified"`
@@ -148,6 +151,9 @@ func (plan Plan) DesktopExternalWinAppLaunchPacketPreviewFromRunResult(activatio
 		ExternalDesktopArgumentCount:     runRecord.ExternalDesktopArgumentCount,
 		ExternalFileURIArgumentsAccepted: runRecord.ExternalFileURIArgumentsAccepted,
 		ExternalFileOpenRequested:        runRecord.ExternalFileOpenRequested,
+		ExternalFileBridgeCopyEnabled:    runRecord.ExternalFileBridgeCopyEnabled,
+		ExternalFileBridgeCopiedCount:    runRecord.ExternalFileBridgeCopiedCount,
+		ExternalFileBridgeReady:          runRecord.ExternalFileBridgeReady,
 		ExternalFileBridgeMountEnabled:   runRecord.ExternalFileBridgeMountEnabled,
 		RawFileURIArgumentsExposed:       runRecord.RawFileURIArgumentsExposed,
 		ImportedArtifactDigestVerified:   runRecord.ImportedArtifactDigestVerified,
@@ -243,6 +249,9 @@ func desktopExternalWinAppLaunchUnsafeReasons(receipt DesktopActivationStatusRec
 	}
 	if runRecord.RawFileURIArgumentsExposed {
 		reasons = append(reasons, "raw-file-uri-arguments-exposed")
+	}
+	if runRecord.ExternalFileOpenRequested && !runRecord.ExternalFileBridgeReady {
+		reasons = append(reasons, "external-file-bridge-copy-not-ready")
 	}
 	if runRecord.ExternalFileBridgeMountEnabled {
 		reasons = append(reasons, "external-file-bridge-mount-enabled-before-policy")

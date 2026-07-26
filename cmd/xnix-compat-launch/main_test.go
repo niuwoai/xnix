@@ -198,6 +198,11 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 	}); err != nil {
 		t.Fatalf("Stage returned error: %v", err)
 	}
+	documentPath := filepath.Join(tempDir, "report.docx")
+	if err := os.WriteFile(documentPath, []byte("external desktop file-open fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	documentURI := "file://" + filepath.ToSlash(documentPath)
 	dockerPath, dockerLog := writeExternalImportedFakeDocker(t, tempDir)
 	launchPacketOutput := filepath.Join(tempDir, "sidecars", "external-launch-packet.json")
 	t.Setenv(appidentity.ExternalWinAppStateRootEnv, stateRoot)
@@ -212,7 +217,7 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 	var output bytes.Buffer
 	err = run([]string{
 		"--external-app-handle", "org.xnix.external.gui",
-		"file:///home/alice/Documents/report.docx",
+		documentURI,
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -231,6 +236,9 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		payload["external_desktop_argument_count"] != float64(1) ||
 		payload["external_file_uri_arguments_accepted"] != true ||
 		payload["external_file_open_requested"] != true ||
+		payload["external_file_bridge_copy_enabled"] != true ||
+		payload["external_file_bridge_copied_count"] != float64(1) ||
+		payload["external_file_bridge_ready"] != true ||
 		payload["external_file_bridge_mount_enabled"] != false ||
 		payload["raw_file_uri_arguments_exposed"] != false ||
 		payload["imported_artifact_digest_verified"] != true ||
@@ -250,7 +258,10 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		t.Fatalf("ReadFile docker log returned error: %v", err)
 	}
 	if !strings.Contains(string(dockerInvocation), "cp") ||
-		!strings.Contains(string(dockerInvocation), "ExternalGui.exe") {
+		!strings.Contains(string(dockerInvocation), "ExternalGui.exe") ||
+		!strings.Contains(string(dockerInvocation), documentPath) ||
+		!strings.Contains(string(dockerInvocation), "/file-1-report.docx") ||
+		!strings.Contains(string(dockerInvocation), "XNIX_GUI_FILE_ARGS=/file-1-report.docx") {
 		t.Fatalf("fake Docker did not receive copied imported executable flow: %s", string(dockerInvocation))
 	}
 	packetBytes, err := os.ReadFile(launchPacketOutput)
@@ -269,6 +280,9 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		launchPacket["external_desktop_argument_count"] != float64(1) ||
 		launchPacket["external_file_uri_arguments_accepted"] != true ||
 		launchPacket["external_file_open_requested"] != true ||
+		launchPacket["external_file_bridge_copy_enabled"] != true ||
+		launchPacket["external_file_bridge_copied_count"] != float64(1) ||
+		launchPacket["external_file_bridge_ready"] != true ||
 		launchPacket["external_file_bridge_mount_enabled"] != false ||
 		launchPacket["raw_file_uri_arguments_exposed"] != false ||
 		launchPacket["activation_receipt_backed"] != true ||
@@ -292,7 +306,12 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		t.Fatalf("unexpected launch packet sidecar: %#v", launchPacket)
 	}
 	assertCompatLaunchContainerGUIDispatchSafe(t, string(packetBytes), stageRoot, stateRoot, executablePath, dockerPath)
-	if strings.Contains(output.String(), "report.docx") || strings.Contains(string(packetBytes), "report.docx") {
+	if strings.Contains(output.String(), documentPath) ||
+		strings.Contains(output.String(), documentURI) ||
+		strings.Contains(string(packetBytes), documentPath) ||
+		strings.Contains(string(packetBytes), documentURI) ||
+		strings.Contains(output.String(), "report.docx") ||
+		strings.Contains(string(packetBytes), "report.docx") {
 		t.Fatalf("external launcher exposed raw file URI argument\nstdout=%s\npacket=%s", output.String(), string(packetBytes))
 	}
 	assertCompatLaunchContainerGUIDispatchSafe(t, output.String(), stateRoot, executablePath, dockerPath)

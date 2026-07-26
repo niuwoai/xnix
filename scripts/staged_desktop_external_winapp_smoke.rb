@@ -196,6 +196,9 @@ def write_markdown_report(markdown_output, packet)
       "- External desktop argument count: #{packet.fetch("external_desktop_argument_count")}",
       "- External file URI arguments accepted: #{packet.fetch("external_file_uri_arguments_accepted")}",
       "- External file-open requested: #{packet.fetch("external_file_open_requested")}",
+      "- External file bridge copy enabled: #{packet.fetch("external_file_bridge_copy_enabled")}",
+      "- External file bridge copied count: #{packet.fetch("external_file_bridge_copied_count")}",
+      "- External file bridge ready: #{packet.fetch("external_file_bridge_ready")}",
       "- External file bridge mount enabled: #{packet.fetch("external_file_bridge_mount_enabled")}",
       "- Raw file URI arguments exposed: #{packet.fetch("raw_file_uri_arguments_exposed")}",
       "- Desktop launch packet ready: #{packet.fetch("desktop_launch_packet_ready")}",
@@ -389,6 +392,9 @@ assert(payload.fetch("external_app_handle_consumed") == true, "launcher smoke mu
 assert(payload.fetch("external_desktop_argument_count") == 1, "launcher smoke must accept one KDE file URI desktop argument")
 assert(payload.fetch("external_file_uri_arguments_accepted") == true, "launcher smoke must accept KDE file URI arguments")
 assert(payload.fetch("external_file_open_requested") == true, "launcher smoke must record the external file-open request")
+assert(payload.fetch("external_file_bridge_copy_enabled") == true, "launcher smoke must enable copy-only file bridging")
+assert(payload.fetch("external_file_bridge_copied_count") == 1, "launcher smoke must copy one file-open argument into the container")
+assert(payload.fetch("external_file_bridge_ready") == true, "launcher smoke must mark the copied file bridge ready")
 assert(payload.fetch("external_file_bridge_mount_enabled") == false, "launcher smoke must keep file bridge mounts disabled before policy")
 assert(payload.fetch("raw_file_uri_arguments_exposed") == false, "launcher smoke must not expose raw file URI arguments")
 assert(payload.fetch("imported_artifact_digest_verified") == true, "launcher smoke must verify the imported artifact digest")
@@ -400,7 +406,7 @@ assert(payload.fetch("docker_socket_mounted") == false, "launcher smoke must not
 assert(payload.fetch("host_networking_required") == false, "launcher smoke must not require host networking")
 assert(payload.fetch("broad_host_mount_required") == false, "launcher smoke must not require broad host mounts")
 assert(payload.fetch("host_root_modified") == false, "launcher smoke must not mutate the host root")
-assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, sample_document_uri, docker_bin], "staged launcher output")
+assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, sample_document_path.to_s, sample_document_uri, docker_bin], "staged launcher output")
 
 assert(launch_packet_output.file?, "staged launcher must write the desktop launch packet sidecar")
 launch_packet_text = launch_packet_output.read
@@ -422,6 +428,9 @@ assert(launch_packet.fetch("external_app_handle_consumed") == true, "desktop lau
 assert(launch_packet.fetch("external_desktop_argument_count") == 1, "desktop launch packet must preserve KDE file URI argument count")
 assert(launch_packet.fetch("external_file_uri_arguments_accepted") == true, "desktop launch packet must preserve KDE file URI argument acceptance")
 assert(launch_packet.fetch("external_file_open_requested") == true, "desktop launch packet must preserve file-open request evidence")
+assert(launch_packet.fetch("external_file_bridge_copy_enabled") == true, "desktop launch packet must preserve copy-only file bridge evidence")
+assert(launch_packet.fetch("external_file_bridge_copied_count") == 1, "desktop launch packet must preserve copied file-open count")
+assert(launch_packet.fetch("external_file_bridge_ready") == true, "desktop launch packet must preserve copied file bridge readiness")
 assert(launch_packet.fetch("external_file_bridge_mount_enabled") == false, "desktop launch packet must keep file bridge mounts disabled before policy")
 assert(launch_packet.fetch("raw_file_uri_arguments_exposed") == false, "desktop launch packet must not expose raw file URI arguments")
 assert(launch_packet.fetch("imported_artifact_digest_verified") == true, "desktop launch packet must preserve imported artifact digest verification")
@@ -442,7 +451,7 @@ assert(launch_packet.fetch("raw_executable_path_exposed") == false, "desktop lau
 assert(launch_packet.fetch("host_root_modified") == false, "desktop launch packet must not mutate the host root")
 assert(launch_packet.fetch("docker_socket_mounted") == false, "desktop launch packet must not mount the Docker socket")
 assert(launch_packet.fetch("broad_host_mount_required") == false, "desktop launch packet must not require broad host mounts")
-assert_no_forbidden(launch_packet_text, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, delegated_output.to_s, executable_path.to_s, sample_document_uri, docker_bin, "notepad.exe", "wine ", "docker run", "/var/run/docker.sock"], "desktop launch packet output")
+assert_no_forbidden(launch_packet_text, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, delegated_output.to_s, executable_path.to_s, sample_document_path.to_s, sample_document_uri, docker_bin, "notepad.exe", "wine ", "docker run", "/var/run/docker.sock"], "desktop launch packet output")
 
 runtime_packet, = run_json(
   go_env,
@@ -506,6 +515,9 @@ packet = {
   "external_desktop_argument_count" => payload.fetch("external_desktop_argument_count"),
   "external_file_uri_arguments_accepted" => payload.fetch("external_file_uri_arguments_accepted"),
   "external_file_open_requested" => payload.fetch("external_file_open_requested"),
+  "external_file_bridge_copy_enabled" => payload.fetch("external_file_bridge_copy_enabled"),
+  "external_file_bridge_copied_count" => payload.fetch("external_file_bridge_copied_count"),
+  "external_file_bridge_ready" => payload.fetch("external_file_bridge_ready"),
   "external_file_bridge_mount_enabled" => payload.fetch("external_file_bridge_mount_enabled"),
   "raw_file_uri_arguments_exposed" => payload.fetch("raw_file_uri_arguments_exposed"),
   "desktop_launch_packet_output_written" => launch_packet_output.file?,
