@@ -148,6 +148,14 @@ def messagebox_owner_gui_report(evidence_relative_path)
     "owner_delegated_evidence_source" => "wine-guest-gui-smoke",
     "owner_delegated_execution_started" => true,
     "owner_delegated_controlled_session_window_observed" => true,
+    "owner_delegated_file_argument_count" => 1,
+    "owner_delegated_file_argument_copied_count" => 1,
+    "owner_delegated_file_arguments_passed" => true,
+    "owner_delegated_file_argument_winepath_translated" => true,
+    "owner_delegated_file_argument_winepath_translated_count" => 1,
+    "owner_delegated_raw_file_argument_path_exposed" => false,
+    "owner_delegated_window_match" => "messagebox-document.txt",
+    "owner_delegated_window_match_observed" => true,
     "owner_delegated_host_root_modified" => false,
     "owner_delegated_docker_socket_mounted" => false,
     "owner_delegated_broad_host_mount_required" => false,
@@ -291,6 +299,8 @@ gui_evidence, gui_evidence_stdout = run_json(
 assert(gui_evidence["request_type"] == "gui-smoke-evidence-preview", "GUI evidence projection request type must match")
 assert(gui_evidence["owner_controlled_launch_verified"] == true, "GUI evidence must verify owner-controlled launch")
 assert(gui_evidence["owner_managed_copy_verified"] == true, "GUI evidence must verify owner-managed copy")
+assert(gui_evidence["owner_file_open_verified"] == true, "GUI evidence must verify owner file-open handoff")
+assert(gui_evidence["owner_delegated_window_match"] == "messagebox-document.txt", "GUI evidence must preserve safe owner window-match evidence")
 assert(gui_evidence["owner_evidence_handoff_ready"] == true, "GUI evidence must preserve owner handoff readiness")
 assert(gui_evidence["owner_evidence_relative_path"] == gui_evidence_relative_path, "GUI evidence must preserve the Runtime-status handoff")
 assert(gui_evidence.dig("known_app_smoke_evidence", "primary_action_id") == "show-runtime-controlled-launch", "GUI evidence card must expose the Runtime-controlled action")
@@ -316,11 +326,14 @@ assert(gui_page["application_id"] == GUI_APP_ID, "GUI page must target MessageBo
 assert(gui_page["known_app_gui_evidence_count"] == 1, "GUI page must include one GUI evidence card")
 assert(gui_page["known_app_owner_controlled_gui_evidence_count"] == 1, "GUI page must include owner-controlled GUI evidence")
 assert(gui_page["known_app_owner_managed_copy_verified_count"] == 1, "GUI page must include owner-managed copy evidence")
+assert(gui_page["known_app_owner_file_open_verified_count"] == 1, "GUI page must include owner file-open evidence")
 assert(gui_page["known_app_gui_evidence_cards"].length == 1, "GUI page must carry one safe GUI card")
 owner_gui_card = gui_page.fetch("known_app_gui_evidence_cards").first
 assert(owner_gui_card.fetch("primary_action_id") == "show-runtime-controlled-launch", "owner GUI card must expose the Runtime-controlled action")
 assert(owner_gui_card.fetch("desktop_callable_route") == "kde-dbus-runtime-status-action", "owner GUI card must expose the controlled desktop route")
 assert(owner_gui_card.fetch("kde_forwarded_arguments") == [gui_evidence_relative_path], "owner GUI card must forward only the Runtime evidence handle")
+assert(owner_gui_card.fetch("owner_file_open_verified") == true, "owner GUI card must expose owner file-open evidence")
+assert(owner_gui_card.fetch("owner_delegated_window_match") == "messagebox-document.txt", "owner GUI card must expose safe owner window-match evidence")
 assert(owner_gui_card.fetch("owner_service_args_exposed_to_kde") == false, "owner GUI card must hide owner service arguments")
 assert_false_payload(
   gui_page,
@@ -343,6 +356,8 @@ assert(gui_action["public_dbus_method"] == "org.xnix.Compatibility1.ShowRuntimeC
 assert(gui_action["kde_forwarded_arguments"] == [gui_evidence_relative_path], "GUI page action must forward only the Runtime evidence handle")
 assert(gui_action["desktop_callable_route"] == "kde-dbus-runtime-status-action", "GUI page action must preserve the controlled route")
 assert(gui_action["kde_forwards_only_evidence_handle"] == true, "GUI page action must keep KDE evidence-only")
+assert(gui_action["owner_file_open_verified"] == true, "GUI page action must expose owner file-open evidence")
+assert(gui_action["owner_delegated_window_match"] == "messagebox-document.txt", "GUI page action must expose safe owner window-match evidence")
 assert_false_payload(
   gui_action,
   %w[kde_policy_owner owner_service_args_exposed_to_kde kde_owns_owner_service_args desktop_kde_state_root_access desktop_receipt_fields_reconstructed state_root_path_exposed evidence_path_exposed managed_launcher_path_exposed raw_launcher_output_exposed backend_details_exposed host_root_modified docker_socket_mounted broad_host_mount_required privileged_container_required host_network_required desktop_launch_enabled backend_launch_enabled execution_started backend_process_started request_object_created_by_kde],

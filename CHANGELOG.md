@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc163] - 2026-07-26
+
+### Changed
+
+- Carried owner-controlled file-open evidence into `kde-controlled-launch-action-preview` so desktop actions can distinguish verified file-open runs from generic GUI launches.
+- Added fail-closed KDE action validation for delegated file argument counts, copied arguments, Wine path translation, raw-path redaction, and safe window-match evidence.
+- Extended KDE controlled-launch action smoke and q4 remote smoke summaries for owner file-open action evidence while preserving evidence-handle-only D-Bus forwarding.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc163`.
+
 ## [0.2.640-rc162] - 2026-07-26
 
 ### Changed

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc162
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc163
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc163 checkpoint candidate carries owner-controlled file-open evidence into the KDE controlled-launch action layer. `kde-controlled-launch-action-preview` now copies safe owner file-open facts from the verified KDE GUI card into the action preview, including `owner_file_open_verified`, delegated file-argument counts, copied-argument evidence, Wine path translation status, and safe window-match evidence. The action preview rejects inconsistent file-open claims and still keeps KDE on an evidence-handle-only D-Bus route, with owner service arguments, state roots, raw file argument paths, backend details, desktop launch authority, host networking, Docker socket mounts, privileged containers, broad host mounts, and host-root mutation closed. Compile-heavy builds and real GUI validation remain on q4 while the local macOS host stays limited to lightweight checks.
 
 The v0.2.640-rc162 checkpoint candidate promotes owner-controlled file-open evidence from the q4 smoke summary into the Runtime and KDE read models. `gui-smoke-evidence-preview` now fail-closes owner delegated file-open claims unless file arguments were copied, handed to the guest app, translated through Wine paths, matched against safe window evidence, and kept raw file argument paths redacted. `KnownAppSmokeEvidenceSummary`, `kde-center-page-preview`, and the Ruby KDE Compatibility Center model now expose `owner_file_open_verified`, delegated file-argument fields, and `known_app_owner_file_open_verified_count`, letting desktop consumers distinguish a real Runtime-owner file-open run from a generic GUI launch without gaining owner launch arguments, raw paths, backend details, host networking, Docker socket mounts, privileged containers, broad host mounts, or host-root mutation. Compile-heavy builds and real GUI validation remain on q4 while the local macOS host stays limited to lightweight checks.
 

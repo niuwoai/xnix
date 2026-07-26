@@ -450,6 +450,7 @@ summary_reader = <<~RUBY
   kde = JSON.parse(File.read(ARGV.fetch(2)))
   action_output = ARGV.fetch(3)
   action_written = ARGV.fetch(4) == "true" && File.exist?(action_output)
+  action = action_written ? JSON.parse(File.read(action_output)) : {}
   summary = {
     "schema_version" => "xnix.scripts.remote_wine_guest_gui_smoke.execute_result.v1",
     "request_type" => "remote-wine-guest-gui-smoke",
@@ -500,6 +501,8 @@ summary_reader = <<~RUBY
     "kde_page_known_app_gui_evidence_count" => kde.fetch("known_app_gui_evidence_count"),
     "kde_page_known_app_owner_file_open_verified_count" => kde.fetch("known_app_owner_file_open_verified_count", 0),
     "kde_page_backend_details_exposed" => kde.fetch("backend_details_exposed"),
+    "kde_action_owner_file_open_verified" => action.fetch("owner_file_open_verified", false),
+    "kde_action_owner_delegated_window_match" => action.fetch("owner_delegated_window_match", ""),
     "owner_controlled_launch_requested" => smoke.fetch("owner_controlled_launch_requested"),
     "owner_evidence_handoff_ready" => smoke.fetch("owner_evidence_handoff_ready"),
     "owner_managed_launcher_invoked" => smoke.fetch("owner_managed_launcher_invoked", false),

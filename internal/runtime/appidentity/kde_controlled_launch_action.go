@@ -20,62 +20,71 @@ type KDEControlledLaunchActionRequest struct {
 }
 
 type KDEControlledLaunchActionPreview struct {
-	SchemaVersion                     string   `json:"schema_version"`
-	RequestType                       string   `json:"request_type"`
-	Source                            string   `json:"source"`
-	Desktop                           string   `json:"desktop"`
-	KDEComponent                      string   `json:"kde_component"`
-	KDEActionID                       string   `json:"kde_action_id"`
-	KDEActionLabel                    string   `json:"kde_action_label"`
-	KDEActionState                    string   `json:"kde_action_state"`
-	RuntimeMethod                     string   `json:"runtime_method"`
-	ReadMethod                        string   `json:"read_method"`
-	ApplicationID                     string   `json:"application_id"`
-	ApplicationName                   string   `json:"application_name"`
-	ApplicationVersion                string   `json:"application_version"`
-	EvidenceID                        string   `json:"evidence_id"`
-	EvidenceRelativePath              string   `json:"evidence_relative_path"`
-	EvidenceSHA256                    string   `json:"evidence_sha256"`
-	EvidenceHandoffConsumed           bool     `json:"evidence_handoff_consumed"`
-	EvidenceDigestVerified            bool     `json:"evidence_digest_verified"`
-	PublicDBusService                 string   `json:"public_dbus_service"`
-	PublicDBusObjectPath              string   `json:"public_dbus_object_path"`
-	PublicDBusInterface               string   `json:"public_dbus_interface"`
-	PublicDBusMethod                  string   `json:"public_dbus_method"`
-	KDEForwardedArguments             []string `json:"kde_forwarded_arguments"`
-	KDEForwardedArgumentKind          string   `json:"kde_forwarded_argument_kind"`
-	KDEForwardsOnlyEvidenceHandle     bool     `json:"kde_forwards_only_evidence_handle"`
-	DesktopEvidenceHandleForwarded    bool     `json:"desktop_evidence_handle_forwarded"`
-	DesktopTriggerReady               bool     `json:"desktop_trigger_ready"`
-	DesktopCallableRoute              string   `json:"desktop_callable_route"`
-	DesktopCallableRuntimeMethod      string   `json:"desktop_callable_runtime_method"`
-	DesktopCallableExecutionType      string   `json:"desktop_callable_execution_type"`
-	RuntimeOwned                      bool     `json:"runtime_owned"`
-	GoRuntimeBacked                   bool     `json:"go_runtime_backed"`
-	KDEPolicyOwner                    bool     `json:"kde_policy_owner"`
-	KDEOwnsOwnerServiceArgs           bool     `json:"kde_owns_owner_service_args"`
-	OwnerServiceArgsExposedToKDE      bool     `json:"owner_service_args_exposed_to_kde"`
-	OwnerServiceBoundaryHiddenFromKDE bool     `json:"owner_service_boundary_hidden_from_kde"`
-	DesktopReceiptFieldsReconstructed bool     `json:"desktop_receipt_fields_reconstructed"`
-	DesktopKDEStateRootAccess         bool     `json:"desktop_kde_state_root_access"`
-	StateRootPathExposed              bool     `json:"state_root_path_exposed"`
-	EvidencePathExposed               bool     `json:"evidence_path_exposed"`
-	ManagedLauncherPathExposed        bool     `json:"managed_launcher_path_exposed"`
-	RawLauncherOutputExposed          bool     `json:"raw_launcher_output_exposed"`
-	BackendDetailsExposed             bool     `json:"backend_details_exposed"`
-	HostRootModified                  bool     `json:"host_root_modified"`
-	DockerSocketMounted               bool     `json:"docker_socket_mounted"`
-	BroadHostMountRequired            bool     `json:"broad_host_mount_required"`
-	PrivilegedContainerRequired       bool     `json:"privileged_container_required"`
-	HostNetworkRequired               bool     `json:"host_network_required"`
-	DesktopLaunchEnabled              bool     `json:"desktop_launch_enabled"`
-	BackendLaunchEnabled              bool     `json:"backend_launch_enabled"`
-	ExecutionStarted                  bool     `json:"execution_started"`
-	BackendProcessStarted             bool     `json:"backend_process_started"`
-	RequestObjectCreatedByKDE         bool     `json:"request_object_created_by_kde"`
-	RuntimePreviewCommand             []string `json:"runtime_preview_command"`
-	BlockedActions                    []string `json:"blocked_actions"`
-	DesktopSafeSummary                string   `json:"desktop_safe_summary"`
+	SchemaVersion                                     string   `json:"schema_version"`
+	RequestType                                       string   `json:"request_type"`
+	Source                                            string   `json:"source"`
+	Desktop                                           string   `json:"desktop"`
+	KDEComponent                                      string   `json:"kde_component"`
+	KDEActionID                                       string   `json:"kde_action_id"`
+	KDEActionLabel                                    string   `json:"kde_action_label"`
+	KDEActionState                                    string   `json:"kde_action_state"`
+	RuntimeMethod                                     string   `json:"runtime_method"`
+	ReadMethod                                        string   `json:"read_method"`
+	ApplicationID                                     string   `json:"application_id"`
+	ApplicationName                                   string   `json:"application_name"`
+	ApplicationVersion                                string   `json:"application_version"`
+	EvidenceID                                        string   `json:"evidence_id"`
+	EvidenceRelativePath                              string   `json:"evidence_relative_path"`
+	EvidenceSHA256                                    string   `json:"evidence_sha256"`
+	EvidenceHandoffConsumed                           bool     `json:"evidence_handoff_consumed"`
+	EvidenceDigestVerified                            bool     `json:"evidence_digest_verified"`
+	PublicDBusService                                 string   `json:"public_dbus_service"`
+	PublicDBusObjectPath                              string   `json:"public_dbus_object_path"`
+	PublicDBusInterface                               string   `json:"public_dbus_interface"`
+	PublicDBusMethod                                  string   `json:"public_dbus_method"`
+	KDEForwardedArguments                             []string `json:"kde_forwarded_arguments"`
+	KDEForwardedArgumentKind                          string   `json:"kde_forwarded_argument_kind"`
+	KDEForwardsOnlyEvidenceHandle                     bool     `json:"kde_forwards_only_evidence_handle"`
+	DesktopEvidenceHandleForwarded                    bool     `json:"desktop_evidence_handle_forwarded"`
+	DesktopTriggerReady                               bool     `json:"desktop_trigger_ready"`
+	DesktopCallableRoute                              string   `json:"desktop_callable_route"`
+	DesktopCallableRuntimeMethod                      string   `json:"desktop_callable_runtime_method"`
+	DesktopCallableExecutionType                      string   `json:"desktop_callable_execution_type"`
+	OwnerFileOpenVerified                             bool     `json:"owner_file_open_verified"`
+	OwnerDelegatedFileArgumentCount                   int      `json:"owner_delegated_file_argument_count"`
+	OwnerDelegatedFileArgumentCopiedCount             int      `json:"owner_delegated_file_argument_copied_count"`
+	OwnerDelegatedFileArgumentsPassed                 bool     `json:"owner_delegated_file_arguments_passed"`
+	OwnerDelegatedFileArgumentWinepathTranslated      bool     `json:"owner_delegated_file_argument_winepath_translated"`
+	OwnerDelegatedFileArgumentWinepathTranslatedCount int      `json:"owner_delegated_file_argument_winepath_translated_count"`
+	OwnerDelegatedRawFileArgumentPathExposed          bool     `json:"owner_delegated_raw_file_argument_path_exposed"`
+	OwnerDelegatedWindowMatch                         string   `json:"owner_delegated_window_match,omitempty"`
+	OwnerDelegatedWindowMatchObserved                 bool     `json:"owner_delegated_window_match_observed"`
+	RuntimeOwned                                      bool     `json:"runtime_owned"`
+	GoRuntimeBacked                                   bool     `json:"go_runtime_backed"`
+	KDEPolicyOwner                                    bool     `json:"kde_policy_owner"`
+	KDEOwnsOwnerServiceArgs                           bool     `json:"kde_owns_owner_service_args"`
+	OwnerServiceArgsExposedToKDE                      bool     `json:"owner_service_args_exposed_to_kde"`
+	OwnerServiceBoundaryHiddenFromKDE                 bool     `json:"owner_service_boundary_hidden_from_kde"`
+	DesktopReceiptFieldsReconstructed                 bool     `json:"desktop_receipt_fields_reconstructed"`
+	DesktopKDEStateRootAccess                         bool     `json:"desktop_kde_state_root_access"`
+	StateRootPathExposed                              bool     `json:"state_root_path_exposed"`
+	EvidencePathExposed                               bool     `json:"evidence_path_exposed"`
+	ManagedLauncherPathExposed                        bool     `json:"managed_launcher_path_exposed"`
+	RawLauncherOutputExposed                          bool     `json:"raw_launcher_output_exposed"`
+	BackendDetailsExposed                             bool     `json:"backend_details_exposed"`
+	HostRootModified                                  bool     `json:"host_root_modified"`
+	DockerSocketMounted                               bool     `json:"docker_socket_mounted"`
+	BroadHostMountRequired                            bool     `json:"broad_host_mount_required"`
+	PrivilegedContainerRequired                       bool     `json:"privileged_container_required"`
+	HostNetworkRequired                               bool     `json:"host_network_required"`
+	DesktopLaunchEnabled                              bool     `json:"desktop_launch_enabled"`
+	BackendLaunchEnabled                              bool     `json:"backend_launch_enabled"`
+	ExecutionStarted                                  bool     `json:"execution_started"`
+	BackendProcessStarted                             bool     `json:"backend_process_started"`
+	RequestObjectCreatedByKDE                         bool     `json:"request_object_created_by_kde"`
+	RuntimePreviewCommand                             []string `json:"runtime_preview_command"`
+	BlockedActions                                    []string `json:"blocked_actions"`
+	DesktopSafeSummary                                string   `json:"desktop_safe_summary"`
 }
 
 func PreviewKDEControlledLaunchAction(request KDEControlledLaunchActionRequest) (KDEControlledLaunchActionPreview, error) {
@@ -157,6 +166,20 @@ func PreviewKDEControlledLaunchAction(request KDEControlledLaunchActionRequest) 
 		BlockedActions:                    []string{"derive owner service arguments in KDE", "read Runtime state root from KDE", "reconstruct Runtime receipts in KDE", "start compatibility engine from KDE", "expose raw launcher output to KDE", "mutate host root from KDE action stub"},
 		DesktopSafeSummary:                trigger.DisplayName + " can be presented as a KDE controlled-launch action that forwards only the Runtime-status evidence handle to D-Bus.",
 	}
+	if kdeCenterGUICard != nil {
+		preview.OwnerFileOpenVerified = kdeCenterGUICard.OwnerFileOpenVerified
+		preview.OwnerDelegatedFileArgumentCount = kdeCenterGUICard.OwnerDelegatedFileArgumentCount
+		preview.OwnerDelegatedFileArgumentCopiedCount = kdeCenterGUICard.OwnerDelegatedFileArgumentCopiedCount
+		preview.OwnerDelegatedFileArgumentsPassed = kdeCenterGUICard.OwnerDelegatedFileArgumentsPassed
+		preview.OwnerDelegatedFileArgumentWinepathTranslated = kdeCenterGUICard.OwnerDelegatedFileArgumentWinepathTranslated
+		preview.OwnerDelegatedFileArgumentWinepathTranslatedCount = kdeCenterGUICard.OwnerDelegatedFileArgumentWinepathTranslatedCount
+		preview.OwnerDelegatedRawFileArgumentPathExposed = kdeCenterGUICard.OwnerDelegatedRawFileArgumentPathExposed
+		preview.OwnerDelegatedWindowMatch = strings.TrimSpace(kdeCenterGUICard.OwnerDelegatedWindowMatch)
+		preview.OwnerDelegatedWindowMatchObserved = kdeCenterGUICard.OwnerDelegatedWindowMatchObserved
+		if preview.OwnerFileOpenVerified {
+			preview.DesktopSafeSummary = trigger.DisplayName + " can be presented as a KDE controlled-launch file-open action that forwards only the Runtime-status evidence handle to D-Bus."
+		}
+	}
 	preview, err = validateKDEControlledLaunchActionPreview(preview)
 	if err != nil {
 		return KDEControlledLaunchActionPreview{}, err
@@ -220,7 +243,7 @@ func validateKDEControlledLaunchActionGUICard(card KDECenterPageKnownAppMatrixCa
 		return errors.New("KDE controlled launch action GUI card must forward only the Runtime evidence relative path")
 	case card.OwnerServiceArgsExposedToKDE || card.DesktopLaunchEnabled || card.BackendLaunchEnabled:
 		return errors.New("KDE controlled launch action GUI card must keep owner args and launch gates closed")
-	case card.HostRootModified || card.BackendDetailsExposed || card.RawArtifactPathExposed || card.KDEPolicyOwner:
+	case card.HostRootModified || card.BackendDetailsExposed || card.RawArtifactPathExposed || card.OwnerDelegatedRawFileArgumentPathExposed || card.KDEPolicyOwner:
 		return errors.New("KDE controlled launch action GUI card must keep unsafe desktop fields closed")
 	case !card.RuntimeOwned || !card.GoRuntimeBacked || !card.ExecutionEvidenceRecorded || !card.RuntimeDispatchVerified:
 		return errors.New("KDE controlled launch action GUI card requires Runtime-owned verified evidence")
@@ -228,6 +251,25 @@ func validateKDEControlledLaunchActionGUICard(card KDECenterPageKnownAppMatrixCa
 		return errors.New("KDE controlled launch action GUI card requires owner-controlled handoff readiness")
 	case card.OwnerEvidenceRelativePath != preview.EvidenceRelativePath:
 		return errors.New("KDE controlled launch action GUI card owner evidence path must match Runtime evidence")
+	}
+	if card.OwnerFileOpenVerified {
+		windowMatch := strings.TrimSpace(card.OwnerDelegatedWindowMatch)
+		switch {
+		case card.OwnerDelegatedFileArgumentCount <= 0:
+			return errors.New("KDE controlled launch action GUI card file-open evidence requires delegated file arguments")
+		case card.OwnerDelegatedFileArgumentCopiedCount < card.OwnerDelegatedFileArgumentCount:
+			return errors.New("KDE controlled launch action GUI card file-open evidence requires copied delegated file arguments")
+		case !card.OwnerDelegatedFileArgumentsPassed:
+			return errors.New("KDE controlled launch action GUI card file-open evidence requires delegated file argument handoff")
+		case !card.OwnerDelegatedFileArgumentWinepathTranslated:
+			return errors.New("KDE controlled launch action GUI card file-open evidence requires Wine path translation")
+		case card.OwnerDelegatedFileArgumentWinepathTranslatedCount < card.OwnerDelegatedFileArgumentCount:
+			return errors.New("KDE controlled launch action GUI card file-open evidence requires translated delegated file arguments")
+		case windowMatch == "" || !singleLine(windowMatch):
+			return errors.New("KDE controlled launch action GUI card file-open evidence requires a safe window match")
+		case !card.OwnerDelegatedWindowMatchObserved:
+			return errors.New("KDE controlled launch action GUI card file-open evidence requires observed window match")
+		}
 	}
 	for _, value := range []string{
 		card.AppID,
@@ -247,6 +289,7 @@ func validateKDEControlledLaunchActionGUICard(card KDECenterPageKnownAppMatrixCa
 		card.DesktopDBusMethod,
 		card.KDEForwardedArgumentKind,
 		card.OwnerEvidenceRelativePath,
+		card.OwnerDelegatedWindowMatch,
 	} {
 		if value != "" && !singleLine(value) {
 			return errors.New("KDE controlled launch action GUI card requires single-line fields")
@@ -287,6 +330,27 @@ func validateKDEControlledLaunchActionPreview(preview KDEControlledLaunchActionP
 	case preview.DesktopLaunchEnabled || preview.BackendLaunchEnabled || preview.ExecutionStarted || preview.BackendProcessStarted || preview.RequestObjectCreatedByKDE:
 		return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action stub must not start execution")
 	}
+	if preview.OwnerFileOpenVerified {
+		windowMatch := strings.TrimSpace(preview.OwnerDelegatedWindowMatch)
+		switch {
+		case preview.OwnerDelegatedFileArgumentCount <= 0:
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open evidence requires delegated file arguments")
+		case preview.OwnerDelegatedFileArgumentCopiedCount < preview.OwnerDelegatedFileArgumentCount:
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open evidence requires copied delegated file arguments")
+		case !preview.OwnerDelegatedFileArgumentsPassed:
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open evidence requires delegated file argument handoff")
+		case !preview.OwnerDelegatedFileArgumentWinepathTranslated:
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open evidence requires Wine path translation")
+		case preview.OwnerDelegatedFileArgumentWinepathTranslatedCount < preview.OwnerDelegatedFileArgumentCount:
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open evidence requires translated delegated file arguments")
+		case preview.OwnerDelegatedRawFileArgumentPathExposed:
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open evidence must not expose raw file argument paths")
+		case windowMatch == "" || !singleLine(windowMatch):
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open evidence requires a safe window match")
+		case !preview.OwnerDelegatedWindowMatchObserved:
+			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open evidence requires observed window match")
+		}
+	}
 	for _, value := range []string{
 		preview.SchemaVersion,
 		preview.RequestType,
@@ -312,6 +376,7 @@ func validateKDEControlledLaunchActionPreview(preview KDEControlledLaunchActionP
 		preview.DesktopCallableRoute,
 		preview.DesktopCallableRuntimeMethod,
 		preview.DesktopCallableExecutionType,
+		preview.OwnerDelegatedWindowMatch,
 		preview.DesktopSafeSummary,
 	} {
 		if value != "" && !singleLine(value) {

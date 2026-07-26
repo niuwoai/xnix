@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc162`.
+The project is currently at `v0.2.640-rc163`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc162`.
 
 ## Current Checkpoint
 
-v0.2.640-rc162 promotes owner-controlled file-open evidence into the Runtime and KDE read models. `gui-smoke-evidence-preview` now validates owner delegated file argument counts, copied argument evidence, Wine path translation, raw-path redaction, and matched window evidence before setting `owner_file_open_verified`; `kde-center-page-preview` and the Ruby KDE model expose `known_app_owner_file_open_verified_count` plus per-card file-open fields. Compile-heavy and real GUI validation remain on q4 so the local macOS host stays limited to lightweight checks.
+v0.2.640-rc163 carries owner-controlled file-open evidence through the KDE controlled-launch action preview. When the KDE page provides a verified owner file-open GUI card, `kde-controlled-launch-action-preview` now exposes `owner_file_open_verified`, safe delegated file-argument counts, Wine path translation status, and safe window-match evidence while still forwarding only the Runtime evidence handle to D-Bus. The action preview fail-closes raw file argument paths, owner service arguments, state roots, backend details, and direct launch authority; q4 remains the default compile-heavy validation path.
+
+The previous v0.2.640-rc162 checkpoint promoted owner-controlled file-open evidence into the Runtime and KDE read models. `gui-smoke-evidence-preview` now validates owner delegated file argument counts, copied argument evidence, Wine path translation, raw-path redaction, and matched window evidence before setting `owner_file_open_verified`; `kde-center-page-preview` and the Ruby KDE model expose `known_app_owner_file_open_verified_count` plus per-card file-open fields. Compile-heavy and real GUI validation remain on q4 so the local macOS host stays limited to lightweight checks.
 
 The previous v0.2.640-rc161 checkpoint made the q4 real GUI execute-result summary self-contained for owner-controlled file-open runs. `scripts/remote_wine_guest_gui_smoke.rb --execute --launch-mode owner-controlled-launch` now lifts owner delegated launcher invocation, file-copy count, argument handoff, Wine path translation, raw-path redaction, and window-match evidence into the top-level summary. Downstream review can verify that Sample Notepad file-open intent passed through the desktop action, Runtime owner, managed launcher, and q4/QEMU guest GUI boundary without opening nested report files.
 
