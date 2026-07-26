@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc140] - 2026-07-26
+
+### Changed
+
+- Changed the formal full smoke gate to require the staged imported external Windows GUI app desktop smoke, so twentieth-version full validation now covers the KDE `.desktop` handle path that imports a real Windows executable, launches it through `xnix-compat-launch`, observes a Wine/Xvfb window, and persists Runtime/KDE evidence.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc140`.
+
+### Fixed
+
+- Fixed KDE Runtime-status delegated evidence projection to redact backend-specific skip and failure reasons before persisting evidence for Compatibility Center and KDE Center consumption.
+
 ## [0.2.640-rc139] - 2026-07-26
 
 ### Changed

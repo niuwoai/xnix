@@ -344,6 +344,56 @@ func TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidenceBuildsCenterPaylo
 	}
 }
 
+func TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidenceRedactsBackendFailureReasons(t *testing.T) {
+	sessionID := KnownAppControlledExecutionSessionID("7zr", "26.02")
+	launchReceiptID := KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	projection, err := ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
+		AppID:                                  "7zr",
+		DisplayName:                            "7-Zip standalone console executable",
+		AppVersion:                             "26.02",
+		RequestType:                            "windows-known-app-dispatch-smoke",
+		Status:                                 "failed",
+		FailureReason:                          "guest wine runner returned a non-zero exit status",
+		GuestBoundary:                          "managed-known-app-guest-smoke",
+		RuntimeOwnedDispatch:                   true,
+		ArtifactVerified:                       true,
+		MarkerObserved:                         false,
+		SessionGatedControlledDispatchConsumed: true,
+		SessionGatedControlledDispatchState:    "created-after-session-gated-review",
+		SessionGatedReviewReceiptID:            reviewReceiptID,
+		LaunchAuthorizationReceiptID:           launchReceiptID,
+		LaunchAuthorizationReceiptState:        "recorded",
+		LaunchGateState:                        "controlled-dispatch-ready",
+		LaunchGateConsumed:                     true,
+		LaunchGateReceiptAccepted:              true,
+		LaunchGateGuestBoundaryAccepted:        true,
+		ControlledDispatchReady:                true,
+		ControlledExecutionSessionConsumed:     true,
+		ControlledExecutionSessionID:           sessionID,
+		ControlledSessionDigestVerified:        true,
+		ControlledSessionRelativePath:          "execution-ledger/sessions/" + sessionID + ".json",
+		RuntimeOwnerConsumableSession:          true,
+		KDEReadModelConsumableSession:          true,
+	})
+	if err != nil {
+		t.Fatalf("ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence returned error: %v", err)
+	}
+	if projection.FailureReason != "managed dispatch failed" {
+		t.Fatalf("projection did not redact backend failure reason: %#v", projection)
+	}
+	encoded, err := json.Marshal(projection)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{".exe", "wine ", "wine/", ".wine", "qemu-system", "program files"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("projection exposed backend term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestRecordKnownAppKDERuntimeStatusLaunchEvidencePersistsSafeHandoff(t *testing.T) {
 	stateRoot := t.TempDir()
 	sessionID := KnownAppControlledExecutionSessionID("7zr", "26.02")

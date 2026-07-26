@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc139
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc140
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc140 checkpoint candidate promotes the staged imported-app desktop smoke into the formal full smoke gate. Full validation now requires the handle-only KDE `.desktop` launch path for an imported external Windows GUI app to import a real Notepad PE, stage `Exec=xnix-compat-launch --external-app-handle APPID %U`, run it through the Runtime-managed Wine/Xvfb path, observe an X window, and persist Runtime/KDE evidence while keeping network mode `none`, zero host mounts, no Docker socket mount, no broad host mount, and no host-root mutation.
 
 The v0.2.640-rc139 checkpoint candidate hardens the staged imported-app desktop smoke as an operator-usable evidence path. The smoke now writes JSON and Markdown reports even for skipped runs, and the `scripts/container.rb staged-external-winapp-desktop-smoke` convenience entry intentionally runs host-side after Colima context checks so it can control the real isolated Wine/Xvfb Docker test container without mounting `/var/run/docker.sock` into an inner tools container. This keeps the evidence path honest: the desktop entry under test still contains only the external app handle, while the host-side test harness owns Docker orchestration.
 

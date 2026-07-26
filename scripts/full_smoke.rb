@@ -109,6 +109,7 @@ fail_full_smoke(
 
 real_app_steps = [
   [["staged-launcher-dispatch-smoke"], "PASS: staged managed launcher dispatch smoke"],
+  [["staged-external-winapp-desktop-smoke"], "PASS: staged desktop external Windows app smoke"],
   [["winapp-guest-wine-smoke"], "PASS: QEMU guest real Windows app Wine smoke"],
   [["kde-controlled-launch-action-dbus-fixture-smoke"], "PASS: KDE controlled launch action smoke"]
 ]

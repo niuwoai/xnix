@@ -27,6 +27,7 @@ script = project_root.join("scripts/full_smoke.rb").read
   fetch-known-winapp
   boot-system
   staged-launcher-dispatch-smoke
+  staged-external-winapp-desktop-smoke
   winapp-guest-wine-smoke
   kde-controlled-launch-action-dbus-fixture-smoke
 ].each do |step|
@@ -46,6 +47,7 @@ build_wine_index = script.index("\"build-ssh-wine-guest\"")
 fetch_known_app_index = script.index("\"fetch-known-winapp\"")
 boot_index = script.index("\"boot-system\"")
 known_app_smoke_index = script.index("\"staged-launcher-dispatch-smoke\"")
+external_app_smoke_index = script.index("\"staged-external-winapp-desktop-smoke\"")
 fixture_app_smoke_index = script.index("\"winapp-guest-wine-smoke\"")
 kde_action_smoke_index = script.index("\"kde-controlled-launch-action-dbus-fixture-smoke\"")
 
@@ -62,10 +64,12 @@ assert(build_wine_index < fetch_known_app_index, "full smoke must build the SSH 
 assert(fetch_known_app_index < boot_index, "full smoke must fetch known Windows apps before the final base boot smoke")
 assert(build_system_index < boot_index, "full smoke must build the system before booting QEMU")
 assert(boot_index < known_app_smoke_index, "full smoke must prove the base QEMU boot before the known Windows app smoke")
-assert(known_app_smoke_index < fixture_app_smoke_index, "full smoke must prove known app smoke before fixture regression smoke")
+assert(known_app_smoke_index < external_app_smoke_index, "full smoke must prove known app smoke before imported external Windows app desktop smoke")
+assert(external_app_smoke_index < fixture_app_smoke_index, "full smoke must prove imported external Windows app desktop smoke before fixture regression smoke")
 assert(fixture_app_smoke_index < kde_action_smoke_index, "full smoke must prove fixture regression smoke before KDE action smoke")
 assert(script.include?("require_pass_step"), "full smoke must reject skipped real-app smoke lanes")
 assert(script.include?("PASS: staged managed launcher dispatch smoke"), "full smoke must require staged launcher known Windows app PASS evidence")
+assert(script.include?("PASS: staged desktop external Windows app smoke"), "full smoke must require staged external Windows app desktop PASS evidence")
 assert(script.include?("PASS: QEMU guest real Windows app Wine smoke"), "full smoke must require fixture Windows app PASS evidence")
 assert(script.include?("PASS: KDE controlled launch action smoke"), "full smoke must require KDE action smoke PASS evidence")
 assert(script.include?("Xnix::Milestone.full_build_required?"), "full smoke must remain gated to twentieth versions")

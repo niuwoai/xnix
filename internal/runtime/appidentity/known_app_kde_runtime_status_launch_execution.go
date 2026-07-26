@@ -384,8 +384,8 @@ func ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(request KnownAppKDER
 		RuntimeMethod:                          "ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence",
 		RequestType:                            strings.TrimSpace(request.RequestType),
 		Status:                                 strings.TrimSpace(request.Status),
-		SkipReason:                             strings.TrimSpace(request.SkipReason),
-		FailureReason:                          strings.TrimSpace(request.FailureReason),
+		SkipReason:                             desktopSafeKnownAppKDERuntimeStatusLaunchReason(request.SkipReason, "managed dispatch skipped"),
+		FailureReason:                          desktopSafeKnownAppKDERuntimeStatusLaunchReason(request.FailureReason, "managed dispatch failed"),
 		AppID:                                  strings.TrimSpace(request.AppID),
 		DisplayName:                            strings.TrimSpace(request.DisplayName),
 		AppVersion:                             strings.TrimSpace(request.AppVersion),
@@ -428,6 +428,27 @@ func ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(request KnownAppKDER
 		DesktopSafeSummary:                     strings.TrimSpace(request.DisplayName) + " delegated Runtime launcher evidence is projected for Compatibility Center and KDE Center consumption without exposing launcher output or state-root paths.",
 	}
 	return validateKnownAppKDERuntimeStatusLaunchDelegatedEvidence(projection)
+}
+
+func desktopSafeKnownAppKDERuntimeStatusLaunchReason(reason string, fallback string) string {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return ""
+	}
+	fallback = strings.TrimSpace(fallback)
+	if fallback == "" {
+		fallback = "managed dispatch status unavailable"
+	}
+	if !singleLine(reason) {
+		return fallback
+	}
+	normalized := strings.ToLower(reason)
+	for _, term := range []string{"prefix", ".exe", "wine", "proton", "qemu", "program files", ".wine"} {
+		if strings.Contains(normalized, term) {
+			return fallback
+		}
+	}
+	return reason
 }
 
 func KnownAppKDERuntimeStatusLaunchExecutionArgv(plan KnownAppKDERuntimeStatusLaunchExecutionPlan, stateRoot string, cacheRoot string, extraArgs []string) ([]string, error) {

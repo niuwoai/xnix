@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc139`.
+The project is currently at `v0.2.640-rc140`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc139`.
 
 ## Current Checkpoint
 
-v0.2.640-rc139 makes the staged desktop external Windows app smoke a complete evidence-producing host-side entry. `scripts/staged_desktop_external_winapp_smoke.rb` now writes both JSON and Markdown reports for passed or skipped runs, while `ruby scripts/container.rb staged-external-winapp-desktop-smoke` deliberately dispatches the smoke from the host-side Colima Docker context so it can control the isolated Wine/Xvfb test container without mounting a Docker socket into a project tools container.
+v0.2.640-rc140 promotes the staged imported external Windows GUI app desktop smoke into the formal full smoke gate. `scripts/full_smoke.rb` now requires `ruby scripts/container.rb staged-external-winapp-desktop-smoke` to pass, so twentieth-version validation covers the KDE `.desktop` handle path that imports a real Windows executable, launches it through `xnix-compat-launch`, observes a Wine/Xvfb window, and persists Runtime/KDE evidence without enabling host networking, host mounts, Docker socket mounts, or host-root mutation.
+
+The previous v0.2.640-rc139 checkpoint made the staged desktop external Windows app smoke a complete evidence-producing host-side entry. `scripts/staged_desktop_external_winapp_smoke.rb` now writes both JSON and Markdown reports for passed or skipped runs, while `ruby scripts/container.rb staged-external-winapp-desktop-smoke` deliberately dispatches the smoke from the host-side Colima Docker context so it can control the isolated Wine/Xvfb test container without mounting a Docker socket into a project tools container.
 
 The previous v0.2.640-rc138 checkpoint added a maintained staged desktop smoke for imported external Windows GUI apps. `scripts/staged_desktop_external_winapp_smoke.rb` extracts a real Wine Notepad executable from the local smoke image when no executable is supplied, imports it into the Runtime state root, stages a KDE `.desktop` entry with `Exec=xnix-compat-launch --external-app-handle APPID %U`, runs that staged launcher through Wine/Xvfb, and writes Runtime packet plus KDE page evidence while preserving network isolation, zero host mounts, no Docker socket mount, and no host-root mutation.
 
