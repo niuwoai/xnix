@@ -53,6 +53,7 @@ type RealWinAppGUIEvidencePacket struct {
 	ContainerHostMountCount            int                          `json:"container_host_mount_count"`
 	ExecutableName                     string                       `json:"executable_name,omitempty"`
 	LocalExecutableCopied              bool                         `json:"local_executable_copied"`
+	ExternalAppRunRecordConsumed       bool                         `json:"external_app_run_record_consumed"`
 	ExternalAppImportRecordConsumed    bool                         `json:"external_app_import_record_consumed"`
 	ImportedArtifactDigestVerified     bool                         `json:"imported_artifact_digest_verified"`
 	ImportedArtifactSHA256             string                       `json:"imported_artifact_sha256,omitempty"`
@@ -82,6 +83,7 @@ type containerXGUIRuntimePayload struct {
 	RecipeBacked                             bool   `json:"recipe_backed"`
 	ExecutableName                           string `json:"executable_name"`
 	LocalExecutableCopied                    bool   `json:"local_executable_copied"`
+	ExternalAppRunRecordConsumed             bool   `json:"external_app_run_record_consumed"`
 	ExternalAppImportRecordConsumed          bool   `json:"external_app_import_record_consumed"`
 	ImportedArtifactDigestVerified           bool   `json:"imported_artifact_digest_verified"`
 	ImportedArtifactSHA256                   string `json:"imported_artifact_sha256"`
@@ -157,6 +159,18 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		if err != nil {
 			return RealWinAppGUIEvidencePacket{}, fmt.Errorf("encode wrapped container X GUI Runtime payload: %w", err)
 		}
+	} else if report.SchemaVersion == ExternalWinAppRunSchemaVersion {
+		payload, wrapped, err := wrapExternalWinAppRunPayload(content)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, err
+		}
+		rawRuntimePayload = true
+		runtimePayload = payload
+		report = wrapped
+		projectionContent, err = json.Marshal(wrapped)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, fmt.Errorf("encode wrapped external Windows app run payload: %w", err)
+		}
 	}
 	projectionRequest := GUISmokeEvidencePreviewRequest{
 		AppID:       request.AppID,
@@ -209,6 +223,7 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 	containerHostMountCount := 0
 	executableName := ""
 	localExecutableCopied := false
+	externalAppRunRecordConsumed := false
 	externalAppImportRecordConsumed := false
 	importedArtifactDigestVerified := false
 	importedArtifactSHA256 := ""
@@ -217,6 +232,7 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		containerHostMountCount = report.ContainerPayload.HostMountCount
 		executableName = runtimePayload.ExecutableName
 		localExecutableCopied = runtimePayload.LocalExecutableCopied
+		externalAppRunRecordConsumed = runtimePayload.ExternalAppRunRecordConsumed
 		externalAppImportRecordConsumed = runtimePayload.ExternalAppImportRecordConsumed
 		importedArtifactDigestVerified = runtimePayload.ImportedArtifactDigestVerified
 		importedArtifactSHA256 = strings.TrimSpace(runtimePayload.ImportedArtifactSHA256)
@@ -255,6 +271,7 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		ContainerHostMountCount:            containerHostMountCount,
 		ExecutableName:                     executableName,
 		LocalExecutableCopied:              localExecutableCopied,
+		ExternalAppRunRecordConsumed:       externalAppRunRecordConsumed,
 		ExternalAppImportRecordConsumed:    externalAppImportRecordConsumed,
 		ImportedArtifactDigestVerified:     importedArtifactDigestVerified,
 		ImportedArtifactSHA256:             importedArtifactSHA256,
@@ -315,6 +332,126 @@ func wrapContainerXGUIRuntimePayload(content []byte) (containerXGUIRuntimePayloa
 	report.ContainerPayload.DisplayName = payload.DisplayName
 	report.ContainerPayload.AppVersion = payload.AppVersion
 	report.ContainerPayload.RecipeBacked = payload.RecipeBacked
+	report.ContainerPayload.ExternalAppRunRecordConsumed = payload.ExternalAppRunRecordConsumed
+	report.ContainerPayload.ExternalAppImportRecordConsumed = payload.ExternalAppImportRecordConsumed
+	report.ContainerPayload.ImportedArtifactDigestVerified = payload.ImportedArtifactDigestVerified
+	report.ContainerPayload.ImportedArtifactSHA256 = payload.ImportedArtifactSHA256
+	report.ContainerPayload.NetworkMode = payload.NetworkMode
+	report.ContainerPayload.XServerStarted = payload.XServerStarted
+	report.ContainerPayload.WineBootstrapAttempted = payload.WineBootstrapAttempted
+	report.ContainerPayload.ImageAvailable = payload.ImageAvailable
+	report.ContainerPayload.XWindowObserved = payload.XWindowObserved
+	report.ContainerPayload.WindowEvidenceSummary = payload.WindowEvidenceSummary
+	report.ContainerPayload.HostRootModified = payload.HostRootModified
+	report.ContainerPayload.PrivilegedContainerRequired = payload.PrivilegedContainerRequired
+	report.ContainerPayload.HostNetworkingRequired = payload.HostNetworkingRequired
+	report.ContainerPayload.DockerSocketMounted = payload.DockerSocketMounted
+	report.ContainerPayload.BroadHostMountRequired = payload.BroadHostMountRequired
+	report.ContainerPayload.HostMountCount = payload.HostMountCount
+	return payload, report, nil
+}
+
+func wrapExternalWinAppRunPayload(content []byte) (containerXGUIRuntimePayload, guiSmokeReport, error) {
+	var run ExternalWinAppRunResult
+	if err := json.Unmarshal(content, &run); err != nil {
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, fmt.Errorf("parse external Windows app run payload: %w", err)
+	}
+	switch {
+	case run.SchemaVersion != ExternalWinAppRunSchemaVersion:
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, fmt.Errorf("external Windows app run payload has unsupported schema %q", run.SchemaVersion)
+	case run.RequestType != ExternalWinAppRunRequestType:
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload has invalid request type")
+	case run.RunType != "external-windows-app-container-gui-run":
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload has invalid run type")
+	case !run.RuntimeRunRequested || !run.RuntimeRunExecuted || !run.ExecutionStarted || !run.BackendProcessStarted:
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires an executed Runtime run")
+	case !run.ContainerRuntimeUsed || run.ContainerNetworkMode != "none" || run.ContainerHostMountCount != 0:
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires a network-isolated container without host mounts")
+	case !run.ExternalAppImportRecordConsumed || !run.ImportedArtifactDigestVerified || !validSHA256Hex(run.ImportedArtifactSHA256):
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires digest-verified import record evidence")
+	case run.KDEPolicyOwner || run.DesktopLaunchEnabled || run.ActionExecutionEnabled || run.BackendDetailsExposed:
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload exposes unsafe desktop or backend authority")
+	case run.RawImportRecordPathExposed || run.RawStateRootPathExposed || run.RawExecutablePathExposed || run.HostRootModified:
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload exposes unsafe paths or host mutation")
+	case run.PrivilegedContainerRequired || run.HostNetworkingRequired || run.DockerSocketMounted || run.BroadHostMountRequired:
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires unsafe container privileges")
+	}
+	payload := containerXGUIRuntimePayload{
+		SchemaVersion:                   run.RuntimePayload.SchemaVersion,
+		RequestType:                     run.RuntimePayload.RequestType,
+		Status:                          run.RuntimePayload.Status,
+		ApplicationID:                   run.ApplicationID,
+		DisplayName:                     run.DisplayName,
+		AppVersion:                      run.AppVersion,
+		RecipeBacked:                    run.RuntimePayload.RecipeBacked,
+		ExecutableName:                  run.ExecutableName,
+		LocalExecutableCopied:           run.RuntimePayload.LocalExecutableCopied,
+		ExternalAppRunRecordConsumed:    true,
+		ExternalAppImportRecordConsumed: run.ExternalAppImportRecordConsumed,
+		ImportedArtifactDigestVerified:  run.ImportedArtifactDigestVerified,
+		ImportedArtifactSHA256:          strings.TrimSpace(run.ImportedArtifactSHA256),
+		ApplicationName:                 run.RuntimePayload.ApplicationName,
+		WindowMatch:                     run.RuntimePayload.WindowMatch,
+		ContainerImage:                  run.RuntimePayload.ContainerImage,
+		ContainerPlatform:               run.RuntimePayload.ContainerPlatform,
+		NetworkMode:                     run.RuntimePayload.NetworkMode,
+		XServerStarted:                  run.RuntimePayload.XServerStarted,
+		WineBootstrapAttempted:          run.RuntimePayload.WineBootstrapAttempted,
+		ImageAvailable:                  run.RuntimePayload.ImageAvailable,
+		XWindowObserved:                 run.RuntimePayload.XWindowObserved,
+		WindowEvidenceSummary:           run.WindowEvidenceSummary,
+		HostRootModified:                run.RuntimePayload.HostRootModified,
+		PrivilegedContainerRequired:     run.RuntimePayload.PrivilegedContainerRequired,
+		HostNetworkingRequired:          run.RuntimePayload.HostNetworkingRequired,
+		DockerSocketMounted:             run.RuntimePayload.DockerSocketMounted,
+		BroadHostMountRequired:          run.RuntimePayload.BroadHostMountRequired,
+		HostMountCount:                  run.RuntimePayload.HostMountCount,
+	}
+	if strings.TrimSpace(payload.ApplicationName) == "" {
+		payload.ApplicationName = "/" + run.ExecutableName
+	}
+	if strings.TrimSpace(payload.WindowEvidenceSummary) == "" {
+		payload.WindowEvidenceSummary = run.RuntimePayload.WindowEvidenceSummary
+	}
+	if payload.SchemaVersion != "xnix.runtime.windows_app_container_x_gui_smoke.v1" ||
+		payload.RequestType != "windows-app-container-x-gui-smoke" ||
+		payload.Status != "passed" ||
+		!payload.LocalExecutableCopied ||
+		!payload.XWindowObserved {
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires a passed copied-executable container GUI runtime payload")
+	}
+	report := guiSmokeReport{
+		Version:                     run.Version,
+		SchemaVersion:               "xnix.runtime.winapp_smoke_report.v1",
+		ReportType:                  "winapp-smoke",
+		Status:                      payload.Status,
+		Backend:                     "container-x-gui",
+		ContainerGUIApp:             payload.ApplicationName,
+		ContainerSmokeInvoked:       true,
+		ContainerXGUISmokeInvoked:   true,
+		SmokeInvoked:                true,
+		XServerStarted:              payload.XServerStarted,
+		StartupWindowObserved:       payload.XWindowObserved,
+		ContainerImageAvailable:     payload.ImageAvailable,
+		ContainerRecipeBacked:       payload.RecipeBacked,
+		ContainerApplicationID:      payload.ApplicationID,
+		ContainerDisplayName:        payload.DisplayName,
+		ContainerAppVersion:         payload.AppVersion,
+		HostRootModified:            payload.HostRootModified,
+		PrivilegedContainerRequired: payload.PrivilegedContainerRequired,
+		HostNetworkingRequired:      payload.HostNetworkingRequired,
+		DockerSocketMounted:         payload.DockerSocketMounted,
+		BroadHostMountRequired:      payload.BroadHostMountRequired,
+		KDESafeOutputSummary:        payload.WindowEvidenceSummary,
+	}
+	report.ContainerPayload.SchemaVersion = payload.SchemaVersion
+	report.ContainerPayload.RequestType = payload.RequestType
+	report.ContainerPayload.Status = payload.Status
+	report.ContainerPayload.ApplicationID = payload.ApplicationID
+	report.ContainerPayload.DisplayName = payload.DisplayName
+	report.ContainerPayload.AppVersion = payload.AppVersion
+	report.ContainerPayload.RecipeBacked = payload.RecipeBacked
+	report.ContainerPayload.ExternalAppRunRecordConsumed = payload.ExternalAppRunRecordConsumed
 	report.ContainerPayload.ExternalAppImportRecordConsumed = payload.ExternalAppImportRecordConsumed
 	report.ContainerPayload.ImportedArtifactDigestVerified = payload.ImportedArtifactDigestVerified
 	report.ContainerPayload.ImportedArtifactSHA256 = payload.ImportedArtifactSHA256
@@ -426,6 +563,7 @@ func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (Known
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet summary does not match nested evidence")
 	}
 	if evidence.ExternalAppImportRecordConsumed != packet.ExternalAppImportRecordConsumed ||
+		evidence.ExternalAppRunRecordConsumed != packet.ExternalAppRunRecordConsumed ||
 		evidence.ImportedArtifactDigestVerified != packet.ImportedArtifactDigestVerified ||
 		strings.TrimSpace(evidence.ImportedArtifactSHA256) != strings.TrimSpace(packet.ImportedArtifactSHA256) {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet import record summary does not match nested evidence")

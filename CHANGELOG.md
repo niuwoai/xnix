@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc134] - 2026-07-26
+
+### Added
+
+- Added direct `windows-external-app-run` record consumption to `real-winapp-gui-evidence-packet-preview`.
+- Added Runtime, packet, CLI, and KDE card coverage proving formal imported app run records preserve `external_app_run_record_consumed`, import-record consumption, digest verification, and closed desktop/backend/host safety gates.
+
 ## [0.2.640-rc133] - 2026-07-26
 
 ### Added

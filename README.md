@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc133`.
+The project is currently at `v0.2.640-rc134`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc133`.
 
 ## Current Checkpoint
 
-v0.2.640-rc133 adds the Go Runtime `windows-external-app-run` product entrypoint for actually running an imported external Windows GUI app from its Runtime import record. The command reuses the restricted Wine/Xvfb container path, persists optional JSON output, returns a run record with import-record consumption and digest-verification evidence, and keeps KDE launch authority, raw import/state/executable paths, backend details, Docker socket mounts, host networking, broad host mounts, privileged containers, and host-root mutation closed.
+v0.2.640-rc134 lets `real-winapp-gui-evidence-packet-preview` consume the Go Runtime `windows-external-app-run` record directly. The packet and KDE GUI card now preserve `external_app_run_record_consumed=true` alongside import-record and digest-verification evidence, so the desktop chain can distinguish formal Runtime run records from lower-level smoke payloads while launch/write/backend authority and raw path exposure stay closed.
+
+The previous v0.2.640-rc133 checkpoint added the Go Runtime `windows-external-app-run` product entrypoint for actually running an imported external Windows GUI app from its Runtime import record. The command reuses the restricted Wine/Xvfb container path, persists optional JSON output, returns a run record with import-record consumption and digest-verification evidence, and keeps KDE launch authority, raw import/state/executable paths, backend details, Docker socket mounts, host networking, broad host mounts, privileged containers, and host-root mutation closed.
 
 The previous v0.2.640-rc132 checkpoint surfaced imported external Windows GUI run provenance across the raw smoke result, real GUI evidence packet, and KDE GUI evidence card. `windows-app-container-x-gui-smoke --external-app-import-record RECORD.json` now records that the Runtime import record was consumed, that the imported artifact digest was verified, and the artifact SHA256 without exposing the import record path, state root, original host executable path, Docker socket, host mounts, host networking, or host-root mutation.
 

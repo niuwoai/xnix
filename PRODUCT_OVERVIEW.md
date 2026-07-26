@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc133
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc134
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc134 checkpoint candidate connects the product-shaped imported app run record to the desktop evidence chain. `real-winapp-gui-evidence-packet-preview --gui-smoke-report RUN.json` can now consume the `windows-external-app-run` output directly, project it into a real Windows GUI evidence packet, and render it through KDE Compatibility Center GUI cards with `external_app_run_record_consumed=true`, import-record consumption, digest verification, and observed X window evidence. The run record path, state-root path, raw executable path, backend details, Docker socket, host networking, broad host mounts, privileged containers, launch authority, and host-root mutation remain hidden or disabled.
 
 The v0.2.640-rc133 checkpoint candidate introduces a product-shaped Runtime entrypoint for imported Windows GUI apps. `windows-external-app-run --external-app-import-record RECORD.json` resolves and revalidates the Runtime-managed artifact, runs it through the restricted local Wine/Xvfb container GUI path, optionally writes a JSON run record, and reports import-record consumption, digest verification, execution start, backend process start, and observed X window evidence. KDE launch authority, raw import record paths, state-root paths, original executable paths, backend details, Docker socket mounts, host networking, broad host mounts, privileged containers, and host-root mutation remain closed.
 
