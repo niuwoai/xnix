@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc152] - 2026-07-26
+
+### Changed
+
+- Allowed external Windows app desktop launcher runs to accept KDE `%U` file URI arguments as Runtime-owned open-with intent.
+- Added safe external file-open evidence fields while keeping raw file URI output and file bridge mounts disabled.
+- Updated the staged external Windows GUI desktop smoke to pass one KDE-style file URI through the exact handle launcher route.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc152`.
+
 ## [0.2.640-rc151] - 2026-07-26
 
 ### Changed

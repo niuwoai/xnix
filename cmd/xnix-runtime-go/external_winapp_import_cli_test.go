@@ -286,6 +286,7 @@ func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
 		"--platform", "linux/amd64",
 		"--docker", dockerPath,
 		"--timeout", "5s",
+		"file:///home/alice/Documents/report.docx",
 	}, &output); err != nil {
 		t.Fatalf("external app handle run returned error: %v", err)
 	}
@@ -300,6 +301,11 @@ func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
 		payload["external_app_import_record_consumed"] != true ||
 		payload["external_app_handle_consumed"] != true ||
 		payload["external_app_handle"] != "org.xnix.external.gui" ||
+		payload["external_desktop_argument_count"] != float64(1) ||
+		payload["external_file_uri_arguments_accepted"] != true ||
+		payload["external_file_open_requested"] != true ||
+		payload["external_file_bridge_mount_enabled"] != false ||
+		payload["raw_file_uri_arguments_exposed"] != false ||
 		payload["imported_artifact_digest_verified"] != true ||
 		payload["imported_artifact_sha256"] != importPayload["artifact_sha256"] ||
 		payload["raw_external_app_handle_path_exposed"] != false ||
@@ -315,6 +321,7 @@ func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
 	if strings.Contains(output.String(), stateRoot) ||
 		strings.Contains(output.String(), executablePath) ||
 		strings.Contains(output.String(), dockerPath) ||
+		strings.Contains(output.String(), "report.docx") ||
 		strings.Contains(output.String(), "docker run") ||
 		strings.Contains(output.String(), "/var/run/docker.sock") ||
 		strings.Contains(output.String(), "--network host") ||

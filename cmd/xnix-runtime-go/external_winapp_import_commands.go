@@ -70,22 +70,21 @@ func runExternalWinAppRun(args []string, stdout io.Writer) error {
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if flags.NArg() != 0 {
-		return fmt.Errorf("%s does not accept positional arguments", appidentity.ExternalWinAppRunRequestType)
-	}
+	desktopArguments := flags.Args()
 	timeout, err := time.ParseDuration(*timeoutText)
 	if err != nil {
 		return fmt.Errorf("parse timeout: %w", err)
 	}
 	result, err := appidentity.RunExternalWinApp(context.Background(), appidentity.ExternalWinAppRunRequest{
-		ImportRecordPath:  *importRecordPath,
-		StateRoot:         *stateRoot,
-		ExternalAppHandle: *externalAppHandle,
-		WindowMatch:       *windowMatch,
-		Image:             *image,
-		Platform:          *platform,
-		DockerPath:        *dockerPath,
-		Timeout:           timeout,
+		ImportRecordPath:         *importRecordPath,
+		StateRoot:                *stateRoot,
+		ExternalAppHandle:        *externalAppHandle,
+		ExternalDesktopArguments: desktopArguments,
+		WindowMatch:              *windowMatch,
+		Image:                    *image,
+		Platform:                 *platform,
+		DockerPath:               *dockerPath,
+		Timeout:                  timeout,
 	})
 	if err != nil {
 		return err

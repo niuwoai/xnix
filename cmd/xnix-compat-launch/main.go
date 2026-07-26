@@ -109,10 +109,11 @@ func run(args []string, stdout io.Writer) error {
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if flags.NArg() != 0 {
+	externalAppMode := strings.TrimSpace(externalAppImportRecord) != "" || strings.TrimSpace(externalAppHandle) != ""
+	if flags.NArg() != 0 && !externalAppMode {
 		return fmt.Errorf("%s does not accept positional arguments", launcherName)
 	}
-	if strings.TrimSpace(externalAppImportRecord) != "" || strings.TrimSpace(externalAppHandle) != "" {
+	if externalAppMode {
 		if strings.TrimSpace(appID) != "" {
 			return fmt.Errorf("--external-app-import-record or --external-app-handle cannot be combined with --app")
 		}
@@ -130,13 +131,14 @@ func run(args []string, stdout io.Writer) error {
 			return fmt.Errorf("parse timeout: %w", err)
 		}
 		result, err := appidentity.RunExternalWinApp(context.Background(), appidentity.ExternalWinAppRunRequest{
-			ImportRecordPath:  externalAppImportRecord,
-			StateRoot:         stateRoot,
-			ExternalAppHandle: externalAppHandle,
-			Image:             containerImage,
-			Platform:          containerPlatform,
-			DockerPath:        containerDockerPath,
-			Timeout:           timeout,
+			ImportRecordPath:         externalAppImportRecord,
+			StateRoot:                stateRoot,
+			ExternalAppHandle:        externalAppHandle,
+			ExternalDesktopArguments: flags.Args(),
+			Image:                    containerImage,
+			Platform:                 containerPlatform,
+			DockerPath:               containerDockerPath,
+			Timeout:                  timeout,
 		})
 		if err != nil {
 			return err

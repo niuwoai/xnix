@@ -193,6 +193,11 @@ def write_markdown_report(markdown_output, packet)
       "- Desktop Exec invocation exact: #{packet.fetch("desktop_exec_invocation_exact")}",
       "- Launcher context from environment: #{packet.fetch("launcher_context_from_environment")}",
       "- Launcher extra arguments appended: #{packet.fetch("launcher_extra_arguments_appended")}",
+      "- External desktop argument count: #{packet.fetch("external_desktop_argument_count")}",
+      "- External file URI arguments accepted: #{packet.fetch("external_file_uri_arguments_accepted")}",
+      "- External file-open requested: #{packet.fetch("external_file_open_requested")}",
+      "- External file bridge mount enabled: #{packet.fetch("external_file_bridge_mount_enabled")}",
+      "- Raw file URI arguments exposed: #{packet.fetch("raw_file_uri_arguments_exposed")}",
       "- Desktop launch packet ready: #{packet.fetch("desktop_launch_packet_ready")}",
       "- Desktop launch packet safe for KDE: #{packet.fetch("desktop_launch_packet_safe_for_kde")}",
       "- External import record consumed: #{packet.fetch("external_app_import_record_consumed")}",
@@ -231,6 +236,8 @@ kde_page_output = absolute_path(options.fetch(:kde_page_output))
 build_root = run_root.join("build")
 stage_root = run_root.join("stage")
 state_root = run_root.join("state")
+sample_document_path = run_root.join("sample-document.txt")
+sample_document_uri = "file://#{sample_document_path}"
 launcher_bin = build_root.join("xnix-compat-launch")
 staged_launcher = stage_root.join("usr/local/bin/xnix-compat-launch")
 executable_path = options.fetch(:executable).to_s.strip.empty? ? run_root.join("notepad.exe") : absolute_path(options.fetch(:executable))
@@ -248,6 +255,7 @@ FileUtils.mkdir_p(state_root)
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("tmp"))
+File.write(sample_document_path, "Xnix external Windows app file-open smoke document\n")
 FileUtils.mkdir_p(report_output.dirname)
 FileUtils.mkdir_p(markdown_output.dirname)
 FileUtils.mkdir_p(delegated_output.dirname)
@@ -363,9 +371,10 @@ launcher_env = {
 }
 launcher_argv = [
   staged_launcher.to_s,
-  *desktop_tokens.drop(1)
+  *desktop_tokens.drop(1),
+  sample_document_uri
 ]
-assert(launcher_argv == [staged_launcher.to_s, "--external-app-handle", APP_ID], "staged launcher invocation must match the desktop Exec handle route without extra arguments")
+assert(launcher_argv == [staged_launcher.to_s, "--external-app-handle", APP_ID, sample_document_uri], "staged launcher invocation must match the desktop Exec handle route plus one KDE file URI without extra launcher options")
 
 launcher_stdout, launcher_stderr, launcher_status = run_command(launcher_env, *launcher_argv)
 abort "staged external app launcher failed:\n#{launcher_stderr}\n#{launcher_stdout}" unless launcher_status.success?
@@ -377,6 +386,11 @@ assert(payload.fetch("status") == "passed", "launcher smoke must pass")
 assert(payload.fetch("application_id") == APP_ID, "launcher smoke must preserve imported app id")
 assert(payload.fetch("external_app_import_record_consumed") == true, "launcher smoke must consume the import record")
 assert(payload.fetch("external_app_handle_consumed") == true, "launcher smoke must consume the desktop handle")
+assert(payload.fetch("external_desktop_argument_count") == 1, "launcher smoke must accept one KDE file URI desktop argument")
+assert(payload.fetch("external_file_uri_arguments_accepted") == true, "launcher smoke must accept KDE file URI arguments")
+assert(payload.fetch("external_file_open_requested") == true, "launcher smoke must record the external file-open request")
+assert(payload.fetch("external_file_bridge_mount_enabled") == false, "launcher smoke must keep file bridge mounts disabled before policy")
+assert(payload.fetch("raw_file_uri_arguments_exposed") == false, "launcher smoke must not expose raw file URI arguments")
 assert(payload.fetch("imported_artifact_digest_verified") == true, "launcher smoke must verify the imported artifact digest")
 assert(payload.fetch("x_window_observed") == true, "launcher smoke must observe a Windows GUI X window")
 assert(payload.fetch("window_observed") == true, "launcher smoke must expose generic observed-window evidence")
@@ -386,7 +400,7 @@ assert(payload.fetch("docker_socket_mounted") == false, "launcher smoke must not
 assert(payload.fetch("host_networking_required") == false, "launcher smoke must not require host networking")
 assert(payload.fetch("broad_host_mount_required") == false, "launcher smoke must not require broad host mounts")
 assert(payload.fetch("host_root_modified") == false, "launcher smoke must not mutate the host root")
-assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, docker_bin], "staged launcher output")
+assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, sample_document_uri, docker_bin], "staged launcher output")
 
 assert(launch_packet_output.file?, "staged launcher must write the desktop launch packet sidecar")
 launch_packet_text = launch_packet_output.read
@@ -405,6 +419,11 @@ assert(launch_packet.fetch("run_record_consumed") == true, "desktop launch packe
 assert(launch_packet.fetch("external_app_run_record_consumed") == true, "desktop launch packet must mark the external run record consumed")
 assert(launch_packet.fetch("external_app_import_record_consumed") == true, "desktop launch packet must preserve import-record consumption")
 assert(launch_packet.fetch("external_app_handle_consumed") == true, "desktop launch packet must preserve handle consumption")
+assert(launch_packet.fetch("external_desktop_argument_count") == 1, "desktop launch packet must preserve KDE file URI argument count")
+assert(launch_packet.fetch("external_file_uri_arguments_accepted") == true, "desktop launch packet must preserve KDE file URI argument acceptance")
+assert(launch_packet.fetch("external_file_open_requested") == true, "desktop launch packet must preserve file-open request evidence")
+assert(launch_packet.fetch("external_file_bridge_mount_enabled") == false, "desktop launch packet must keep file bridge mounts disabled before policy")
+assert(launch_packet.fetch("raw_file_uri_arguments_exposed") == false, "desktop launch packet must not expose raw file URI arguments")
 assert(launch_packet.fetch("imported_artifact_digest_verified") == true, "desktop launch packet must preserve imported artifact digest verification")
 assert(launch_packet.fetch("runtime_launch_executed") == true, "desktop launch packet must prove Runtime launch execution")
 assert(launch_packet.fetch("window_observed") == true, "desktop launch packet must preserve generic observed-window evidence")
@@ -423,7 +442,7 @@ assert(launch_packet.fetch("raw_executable_path_exposed") == false, "desktop lau
 assert(launch_packet.fetch("host_root_modified") == false, "desktop launch packet must not mutate the host root")
 assert(launch_packet.fetch("docker_socket_mounted") == false, "desktop launch packet must not mount the Docker socket")
 assert(launch_packet.fetch("broad_host_mount_required") == false, "desktop launch packet must not require broad host mounts")
-assert_no_forbidden(launch_packet_text, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, delegated_output.to_s, executable_path.to_s, docker_bin, "notepad.exe", "wine ", "docker run", "/var/run/docker.sock"], "desktop launch packet output")
+assert_no_forbidden(launch_packet_text, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, delegated_output.to_s, executable_path.to_s, sample_document_uri, docker_bin, "notepad.exe", "wine ", "docker run", "/var/run/docker.sock"], "desktop launch packet output")
 
 runtime_packet, = run_json(
   go_env,
@@ -481,9 +500,14 @@ packet = {
   "external_app_desktop_handle_ready" => stage.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_external_app_desktop_handle_ready" => receipt_evidence.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_safe_for_kde" => receipt_evidence.fetch("safe_for_kde"),
-  "desktop_exec_invocation_exact" => launcher_argv == [staged_launcher.to_s, "--external-app-handle", APP_ID],
+  "desktop_exec_invocation_exact" => launcher_argv == [staged_launcher.to_s, "--external-app-handle", APP_ID, sample_document_uri],
   "launcher_context_from_environment" => true,
   "launcher_extra_arguments_appended" => false,
+  "external_desktop_argument_count" => payload.fetch("external_desktop_argument_count"),
+  "external_file_uri_arguments_accepted" => payload.fetch("external_file_uri_arguments_accepted"),
+  "external_file_open_requested" => payload.fetch("external_file_open_requested"),
+  "external_file_bridge_mount_enabled" => payload.fetch("external_file_bridge_mount_enabled"),
+  "raw_file_uri_arguments_exposed" => payload.fetch("raw_file_uri_arguments_exposed"),
   "desktop_launch_packet_output_written" => launch_packet_output.file?,
   "desktop_launch_packet_ready" => launch_packet.fetch("desktop_launch_packet_ready"),
   "desktop_launch_packet_safe_for_kde" => launch_packet.fetch("safe_for_kde"),

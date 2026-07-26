@@ -212,6 +212,7 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 	var output bytes.Buffer
 	err = run([]string{
 		"--external-app-handle", "org.xnix.external.gui",
+		"file:///home/alice/Documents/report.docx",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -227,6 +228,11 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		payload["external_app_import_record_consumed"] != true ||
 		payload["external_app_handle_consumed"] != true ||
 		payload["external_app_handle"] != "org.xnix.external.gui" ||
+		payload["external_desktop_argument_count"] != float64(1) ||
+		payload["external_file_uri_arguments_accepted"] != true ||
+		payload["external_file_open_requested"] != true ||
+		payload["external_file_bridge_mount_enabled"] != false ||
+		payload["raw_file_uri_arguments_exposed"] != false ||
 		payload["imported_artifact_digest_verified"] != true ||
 		payload["imported_artifact_sha256"] != record.ArtifactSHA256 ||
 		payload["raw_external_app_handle_path_exposed"] != false ||
@@ -260,6 +266,11 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		launchPacket["status"] != "passed" ||
 		launchPacket["application_id"] != "org.xnix.external.gui" ||
 		launchPacket["external_app_handle"] != "org.xnix.external.gui" ||
+		launchPacket["external_desktop_argument_count"] != float64(1) ||
+		launchPacket["external_file_uri_arguments_accepted"] != true ||
+		launchPacket["external_file_open_requested"] != true ||
+		launchPacket["external_file_bridge_mount_enabled"] != false ||
+		launchPacket["raw_file_uri_arguments_exposed"] != false ||
 		launchPacket["activation_receipt_backed"] != true ||
 		launchPacket["activation_receipt_safe_for_kde"] != true ||
 		launchPacket["desktop_exec_uses_external_app_handle"] != true ||
@@ -281,7 +292,39 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		t.Fatalf("unexpected launch packet sidecar: %#v", launchPacket)
 	}
 	assertCompatLaunchContainerGUIDispatchSafe(t, string(packetBytes), stageRoot, stateRoot, executablePath, dockerPath)
+	if strings.Contains(output.String(), "report.docx") || strings.Contains(string(packetBytes), "report.docx") {
+		t.Fatalf("external launcher exposed raw file URI argument\nstdout=%s\npacket=%s", output.String(), string(packetBytes))
+	}
 	assertCompatLaunchContainerGUIDispatchSafe(t, output.String(), stateRoot, executablePath, dockerPath)
+}
+
+func TestCompatLaunchExternalImportedAppRejectsUnsafeDesktopArgument(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "ExternalGui.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	stateRoot := filepath.Join(tempDir, "state")
+	if _, err := appidentity.RecordExternalWinAppImport(appidentity.ExternalWinAppImportRequest{
+		Version:        "0.2.640-test",
+		StateRoot:      stateRoot,
+		ExecutablePath: executablePath,
+		AppID:          "org.xnix.external.gui",
+		DisplayName:    "External GUI",
+		AppVersion:     "0.2.640-test",
+	}); err != nil {
+		t.Fatalf("RecordExternalWinAppImport returned error: %v", err)
+	}
+	t.Setenv(appidentity.ExternalWinAppStateRootEnv, stateRoot)
+
+	var output bytes.Buffer
+	err := run([]string{
+		"--external-app-handle", "org.xnix.external.gui",
+		"http://example.test/report.docx",
+	}, &output)
+	if err == nil || !strings.Contains(err.Error(), "file URI") {
+		t.Fatalf("expected unsafe desktop argument rejection, got err=%v output=%s", err, output.String())
+	}
 }
 
 func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeDefaultStateRoot(t *testing.T) {

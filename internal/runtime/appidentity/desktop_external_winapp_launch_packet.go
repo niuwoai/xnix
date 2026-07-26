@@ -41,6 +41,11 @@ type DesktopExternalWinAppLaunchPacket struct {
 	ExternalAppRunRecordConsumed     bool     `json:"external_app_run_record_consumed"`
 	ExternalAppImportRecordConsumed  bool     `json:"external_app_import_record_consumed"`
 	ExternalAppHandleConsumed        bool     `json:"external_app_handle_consumed"`
+	ExternalDesktopArgumentCount     int      `json:"external_desktop_argument_count"`
+	ExternalFileURIArgumentsAccepted bool     `json:"external_file_uri_arguments_accepted"`
+	ExternalFileOpenRequested        bool     `json:"external_file_open_requested"`
+	ExternalFileBridgeMountEnabled   bool     `json:"external_file_bridge_mount_enabled"`
+	RawFileURIArgumentsExposed       bool     `json:"raw_file_uri_arguments_exposed"`
 	ImportedArtifactDigestVerified   bool     `json:"imported_artifact_digest_verified"`
 	RuntimeRunRequested              bool     `json:"runtime_run_requested"`
 	RuntimeLaunchExecuted            bool     `json:"runtime_launch_executed"`
@@ -140,6 +145,11 @@ func (plan Plan) DesktopExternalWinAppLaunchPacketPreviewFromRunResult(activatio
 		ExternalAppRunRecordConsumed:     true,
 		ExternalAppImportRecordConsumed:  runRecord.ExternalAppImportRecordConsumed,
 		ExternalAppHandleConsumed:        runRecord.ExternalAppHandleConsumed,
+		ExternalDesktopArgumentCount:     runRecord.ExternalDesktopArgumentCount,
+		ExternalFileURIArgumentsAccepted: runRecord.ExternalFileURIArgumentsAccepted,
+		ExternalFileOpenRequested:        runRecord.ExternalFileOpenRequested,
+		ExternalFileBridgeMountEnabled:   runRecord.ExternalFileBridgeMountEnabled,
+		RawFileURIArgumentsExposed:       runRecord.RawFileURIArgumentsExposed,
 		ImportedArtifactDigestVerified:   runRecord.ImportedArtifactDigestVerified,
 		RuntimeRunRequested:              runRecord.RuntimeRunRequested,
 		RuntimeLaunchExecuted:            runRecord.RuntimeRunExecuted,
@@ -230,6 +240,12 @@ func desktopExternalWinAppLaunchUnsafeReasons(receipt DesktopActivationStatusRec
 	}
 	if !runRecord.ExternalAppHandleConsumed {
 		reasons = append(reasons, "external-app-handle-not-consumed")
+	}
+	if runRecord.RawFileURIArgumentsExposed {
+		reasons = append(reasons, "raw-file-uri-arguments-exposed")
+	}
+	if runRecord.ExternalFileBridgeMountEnabled {
+		reasons = append(reasons, "external-file-bridge-mount-enabled-before-policy")
 	}
 	if !runRecord.ImportedArtifactDigestVerified {
 		reasons = append(reasons, "imported-artifact-digest-not-verified")
