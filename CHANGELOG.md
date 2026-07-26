@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc122] - 2026-07-26
+
+### Changed
+
+- Changed `scripts/container_gui_evidence_packet.rb` to call the Go Runtime `real-winapp-gui-evidence-packet-preview` command, persist the Go-owned packet, and require it to verify recipe-backed Notepad GUI evidence before rendering the KDE page.
+- Extended the container GUI evidence packet smoke test to prove the Ruby harness delegates real Windows GUI packet semantics to Go while keeping report paths, backend details, Docker socket mounts, host networking, host mounts, launch gates, and host-root mutation closed.
+
 ## [0.2.640-rc121] - 2026-07-26
 
 ### Added

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc121`.
+The project is currently at `v0.2.640-rc122`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc121`.
 
 ## Current Checkpoint
 
-v0.2.640-rc121 adds the Go Runtime `real-winapp-gui-evidence-packet-preview` command. It consumes a passed real Windows GUI smoke report and emits a KDE-safe desktop evidence packet for recipe-backed Notepad container X GUI runs, preserving the observed X window, recipe identity, network-isolated container state, zero host mounts, closed launch gates, and closed host-root mutation boundaries.
+v0.2.640-rc122 changes the container GUI evidence packet smoke harness to call the Go Runtime `real-winapp-gui-evidence-packet-preview` command and persist its packet before rendering the KDE page. Ruby still orchestrates the test, while Runtime packet semantics now stay in Go.
+
+The previous v0.2.640-rc121 checkpoint added the Go Runtime `real-winapp-gui-evidence-packet-preview` command. It consumes a passed real Windows GUI smoke report and emits a KDE-safe desktop evidence packet for recipe-backed Notepad container X GUI runs, preserving the observed X window, recipe identity, network-isolated container state, zero host mounts, closed launch gates, and closed host-root mutation boundaries.
 
 The previous v0.2.640-rc120 checkpoint fixed the formal staged launcher dispatch smoke for recipe-backed desktop activation. The Ruby smoke scripts now expect the Notepad desktop stage to include both the managed launcher executable and the packaged recipe registry/application recipe materials before running the controlled launcher path.
 

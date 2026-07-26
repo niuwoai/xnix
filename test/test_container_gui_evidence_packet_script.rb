@@ -140,6 +140,66 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
       exit 0
     end
 
+    if args[0] == "run" && args.include?("real-winapp-gui-evidence-packet-preview")
+      report_path = args[args.index("--gui-smoke-report") + 1]
+      report = JSON.parse(File.read(report_path))
+      app_id = args[args.index("--app-id") + 1]
+      display_name = args[args.index("--display-name") + 1]
+      app_version = args[args.index("--app-version") + 1]
+      payload = {
+        "version" => app_version,
+        "schema_version" => "xnix.runtime.real_winapp_gui_evidence_packet.v1",
+        "request_type" => "real-winapp-gui-evidence-packet-preview",
+        "packet_type" => "real-windows-app-gui-evidence",
+        "source" => "winapp-smoke-container-x-gui+runtime-evidence-consumer+real-winapp-desktop-packet",
+        "runtime_method" => "PreviewRealWinAppGUIEvidencePacket",
+        "read_method" => "GetRealWinAppGUIEvidencePacket",
+        "report_status" => "passed",
+        "report_consumed" => true,
+        "report_path_exposed" => false,
+        "app_id" => app_id,
+        "display_name" => display_name,
+        "app_version" => app_version,
+        "gui_app_name" => report.fetch("container_gui_app"),
+        "evidence_source" => "winapp-smoke-container-x-gui",
+        "recipe_backed" => report.fetch("container_recipe_backed"),
+        "recipe_app_id" => report.fetch("container_application_id"),
+        "compatibility_state" => "real-gui-container-wine-verified",
+        "center_card_state" => "validated-real-gui-container-run",
+        "known_app_gui_evidence_count" => 1,
+        "known_app_gui_evidence_verified_count" => 1,
+        "wineboot_invoked" => true,
+        "x_window_observed" => true,
+        "x_window_child_count" => 1,
+        "compatibility_center_projection_ready" => true,
+        "kde_center_projection_ready" => true,
+        "container_runtime_used" => true,
+        "container_network_mode" => "none",
+        "container_host_mount_count" => 0,
+        "runtime_owned" => true,
+        "go_runtime_backed" => true,
+        "kde_policy_owner" => false,
+        "desktop_launch_enabled" => false,
+        "backend_launch_enabled" => false,
+        "action_execution_enabled" => false,
+        "backend_details_exposed" => false,
+        "raw_output_exposed" => false,
+        "host_root_modified" => false,
+        "privileged_container_required" => false,
+        "host_networking_required" => false,
+        "docker_socket_mounted" => false,
+        "broad_host_mount_required" => false,
+        "desktop_safe_summary" => "Sample Notepad container X GUI smoke evidence observed a real isolated GUI window with 1 window evidence item."
+      }
+      if args.include?("--output")
+        output_path = args[args.index("--output") + 1]
+        FileUtils.mkdir_p(File.dirname(output_path))
+        File.write(output_path, JSON.pretty_generate(payload) + "\n")
+      end
+      puts JSON.pretty_generate(payload)
+      exit 0
+    end
+
     warn "unexpected fake go invocation: #{args.join(" ")}"
     exit 2
   RUBY
@@ -147,6 +207,7 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
 
   report_output = temp_root.join("outputs/report.json")
   evidence_output = temp_root.join("outputs/evidence.json")
+  runtime_packet_output = temp_root.join("outputs/runtime-packet.json")
   kde_page_output = temp_root.join("outputs/kde-page.json")
   fake_go_log = temp_root.join("fake-go.log")
   env = {
@@ -159,6 +220,7 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
     "ruby", script.to_s,
     "--report-output", report_output.to_s,
     "--evidence-output", evidence_output.to_s,
+    "--runtime-packet-output", runtime_packet_output.to_s,
     "--kde-page-output", kde_page_output.to_s,
     "--registry", temp_root.join("registry.json").to_s,
     "--recipe-app", "org.xnix.sample.notepad",
@@ -178,6 +240,7 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
   assert(packet.fetch("status") == "passed", "packet must pass")
   assert(packet.fetch("report_output_written"), "packet must write the smoke report")
   assert(packet.fetch("evidence_output_written"), "packet must write projected evidence")
+  assert(packet.fetch("runtime_packet_output_written"), "packet must write the Go Runtime GUI evidence packet")
   assert(packet.fetch("kde_page_output_written"), "packet must write the KDE page")
   assert(packet.fetch("x_window_observed"), "packet must carry observed X window evidence")
   assert(packet.fetch("recipe_app") == "org.xnix.sample.notepad", "packet must preserve recipe app id")
@@ -186,6 +249,12 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
   assert(packet.fetch("kde_card_recipe_backed"), "packet must carry recipe-backed KDE card evidence")
   assert(packet.fetch("kde_card_recipe_app_id") == "org.xnix.sample.notepad", "packet must preserve KDE card recipe app id")
   assert(packet.fetch("evidence_source") == "winapp-smoke-container-x-gui", "packet must preserve container X GUI source")
+  assert(packet.fetch("runtime_packet_schema_version") == "xnix.runtime.real_winapp_gui_evidence_packet.v1", "packet must expose Go Runtime packet schema")
+  assert(packet.fetch("runtime_packet_request_type") == "real-winapp-gui-evidence-packet-preview", "packet must expose Go Runtime packet request type")
+  assert(packet.fetch("runtime_packet_consumed_report"), "packet must consume the report through the Go Runtime packet")
+  assert(packet.fetch("runtime_packet_compatibility_state") == "real-gui-container-wine-verified", "packet must preserve Runtime packet compatibility state")
+  assert(packet.fetch("runtime_packet_known_app_gui_evidence_count") == 1, "packet must expose Go Runtime packet GUI evidence count")
+  assert(packet.fetch("runtime_packet_known_app_gui_evidence_verified_count") == 1, "packet must expose Go Runtime packet verified GUI evidence count")
   assert(packet.fetch("compatibility_state") == "real-gui-container-wine-verified", "packet must preserve compatibility state")
   assert(packet.fetch("known_app_gui_evidence_count") == 1, "packet must expose one GUI evidence card")
   assert(!packet.fetch("desktop_launch_enabled"), "packet must not enable desktop launch")
@@ -200,9 +269,11 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
   assert(packet.fetch("container_host_mount_count").zero?, "packet must not mount host paths")
   assert(report_output.file?, "smoke report file must exist")
   assert(evidence_output.file?, "evidence file must exist")
+  assert(runtime_packet_output.file?, "Go Runtime packet file must exist")
   assert(kde_page_output.file?, "KDE page file must exist")
   assert(!stdout.include?(report_output.to_s), "packet stdout must not expose report output path")
   assert(!stdout.include?(evidence_output.to_s), "packet stdout must not expose evidence output path")
+  assert(!stdout.include?(runtime_packet_output.to_s), "packet stdout must not expose Runtime packet output path")
   assert(!stdout.include?(kde_page_output.to_s), "packet stdout must not expose KDE page output path")
 
   report = JSON.parse(report_output.read)
@@ -210,6 +281,9 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
   assert(report.fetch("report_output_written"), "persisted report must record output writing")
   evidence = JSON.parse(evidence_output.read)
   assert(evidence.fetch("report_consumed"), "persisted evidence must consume the report")
+  runtime_packet = JSON.parse(runtime_packet_output.read)
+  assert(runtime_packet.fetch("request_type") == "real-winapp-gui-evidence-packet-preview", "persisted Runtime packet must use the Go packet request type")
+  assert(runtime_packet.fetch("known_app_gui_evidence_verified_count") == 1, "persisted Runtime packet must verify one GUI evidence item")
   kde_page = JSON.parse(kde_page_output.read)
   assert(kde_page.fetch("known_app_gui_evidence_cards").first.fetch("app_id") == "org.xnix.sample.notepad", "KDE page must bind the app id")
   assert(kde_page.fetch("known_app_gui_evidence_cards").first.fetch("recipe_backed"), "KDE page must carry recipe-backed GUI evidence")
@@ -217,5 +291,6 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
   invocations = fake_go_log.read.lines.map { |line| line.split("\u0001").map(&:chomp) }
   assert(invocations.any? { |argv| argv.include?("windows-app-container-x-gui-smoke") && argv.include?("--recipe-app") }, "packet must run the recipe-backed container X GUI smoke")
   assert(invocations.any? { |argv| argv.include?("gui-smoke-evidence-preview") && argv.include?("--output") }, "packet must persist the evidence projection")
+  assert(invocations.any? { |argv| argv.include?("real-winapp-gui-evidence-packet-preview") && argv.include?("--output") }, "packet must persist the Go Runtime real GUI packet")
   assert(invocations.any? { |argv| argv.include?("kde-center-page-preview") && argv.include?("--known-app-evidence-file") }, "packet must render the KDE page from evidence")
 end
