@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc151] - 2026-07-26
+
+### Changed
+
+- Let `xnix-compat-launch` read external Windows app desktop launch context from controlled environment variables.
+- Updated the staged external Windows GUI desktop smoke to invoke exactly the `.desktop` handle route without appending launch-packet, Docker, image, timeout, or activation-root arguments.
+- Kept desktop entries handle-only while preserving Runtime launch packet sidecar generation after the real external Windows GUI app run.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc151`.
+
 ## [0.2.640-rc150] - 2026-07-26
 
 ### Changed

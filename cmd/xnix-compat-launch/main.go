@@ -20,6 +20,17 @@ const launcherName = "xnix-compat-launch"
 const stagingRootEnv = "XNIX_STAGING_ROOT"
 const packagedRecipeRegistryDir = "/usr/share/xnix/compatibility/recipes"
 
+const (
+	compatLaunchDockerEnv                       = "XNIX_DOCKER_BIN"
+	compatLaunchContainerImageEnv               = "XNIX_WINE_IMAGE"
+	compatLaunchContainerPlatformEnv            = "XNIX_CONTAINER_PLATFORM"
+	compatLaunchTimeoutEnv                      = "XNIX_COMPAT_LAUNCH_TIMEOUT"
+	externalDesktopActivationRootEnv            = "XNIX_EXTERNAL_APP_DESKTOP_ACTIVATION_ROOT"
+	externalDesktopLaunchPacketOutputEnv        = "XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_OUTPUT"
+	externalDesktopLaunchPacketModeEnv          = "XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_MODE"
+	defaultExternalDesktopLaunchPacketModeValue = "development"
+)
+
 func main() {
 	if err := run(os.Args[1:], os.Stdout); err != nil {
 		fmt.Fprintf(os.Stderr, "%s: %v\n", launcherName, err)
@@ -83,13 +94,13 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&registryPath, "registry", "", "digest-verified recipe registry path for recipe-backed container GUI dispatch")
 	flags.StringVar(&externalAppImportRecord, "external-app-import-record", "", "Runtime import record for an imported external Windows GUI app")
 	flags.StringVar(&externalAppHandle, "external-app-handle", "", "opaque external Windows GUI app handle; currently the imported reverse-DNS app id")
-	flags.StringVar(&externalDesktopActivationRoot, "activation-root", "", "staged desktop activation root used only when writing an external Windows app desktop launch packet sidecar")
-	flags.StringVar(&externalDesktopLaunchPacketOutput, "desktop-launch-packet-output", "", "optional JSON sidecar path for a KDE-safe external Windows app desktop launch packet")
-	flags.StringVar(&externalDesktopLaunchPacketMode, "desktop-launch-packet-mode", "development", "desktop launch packet activation mode: production or development")
-	flags.StringVar(&containerImage, "image", winapp.DefaultContainerImage, "local Wine X GUI container image for recipe-backed container GUI dispatch")
-	flags.StringVar(&containerPlatform, "platform", "", "container platform for recipe-backed container GUI dispatch; empty uses the local image platform")
-	flags.StringVar(&containerDockerPath, "docker", "", "explicit docker runner path for recipe-backed container GUI dispatch")
-	flags.StringVar(&timeoutText, "timeout", winapp.DefaultKnownAppGuestTimeout.String(), "guest execution timeout")
+	flags.StringVar(&externalDesktopActivationRoot, "activation-root", envOrDefault(externalDesktopActivationRootEnv, ""), "staged desktop activation root used only when writing an external Windows app desktop launch packet sidecar")
+	flags.StringVar(&externalDesktopLaunchPacketOutput, "desktop-launch-packet-output", envOrDefault(externalDesktopLaunchPacketOutputEnv, ""), "optional JSON sidecar path for a KDE-safe external Windows app desktop launch packet")
+	flags.StringVar(&externalDesktopLaunchPacketMode, "desktop-launch-packet-mode", envOrDefault(externalDesktopLaunchPacketModeEnv, defaultExternalDesktopLaunchPacketModeValue), "desktop launch packet activation mode: production or development")
+	flags.StringVar(&containerImage, "image", envOrDefault(compatLaunchContainerImageEnv, winapp.DefaultContainerImage), "local Wine X GUI container image for recipe-backed container GUI dispatch")
+	flags.StringVar(&containerPlatform, "platform", envOrDefault(compatLaunchContainerPlatformEnv, ""), "container platform for recipe-backed container GUI dispatch; empty uses the local image platform")
+	flags.StringVar(&containerDockerPath, "docker", envOrDefault(compatLaunchDockerEnv, ""), "explicit docker runner path for recipe-backed container GUI dispatch")
+	flags.StringVar(&timeoutText, "timeout", envOrDefault(compatLaunchTimeoutEnv, winapp.DefaultKnownAppGuestTimeout.String()), "guest execution timeout")
 	flags.StringVar(&guiWaitText, "gui-wait", "10s", "guest GUI observation wait")
 
 	var appArgs repeatedStringFlag
@@ -355,6 +366,13 @@ func writeExternalDesktopLaunchPacketSidecar(result appidentity.ExternalWinAppRu
 		return fmt.Errorf("write external desktop launch packet: %w", err)
 	}
 	return nil
+}
+
+func envOrDefault(name string, fallback string) string {
+	if value := strings.TrimSpace(os.Getenv(name)); value != "" {
+		return value
+	}
+	return fallback
 }
 
 func consumeControlledExecutionSessionForLaunch(appID string, stateRoot string, sessionID string) (appidentity.KnownAppControlledExecutionSessionConsumePreview, error) {

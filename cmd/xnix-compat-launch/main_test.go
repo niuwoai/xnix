@@ -200,18 +200,18 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 	}
 	dockerPath, dockerLog := writeExternalImportedFakeDocker(t, tempDir)
 	launchPacketOutput := filepath.Join(tempDir, "sidecars", "external-launch-packet.json")
+	t.Setenv(appidentity.ExternalWinAppStateRootEnv, stateRoot)
+	t.Setenv(compatLaunchContainerImageEnv, "local/wine-x-gui:test")
+	t.Setenv(compatLaunchContainerPlatformEnv, "linux/amd64")
+	t.Setenv(compatLaunchDockerEnv, dockerPath)
+	t.Setenv(compatLaunchTimeoutEnv, "5s")
+	t.Setenv(externalDesktopActivationRootEnv, stageRoot)
+	t.Setenv(externalDesktopLaunchPacketOutputEnv, launchPacketOutput)
+	t.Setenv(externalDesktopLaunchPacketModeEnv, "development")
 
 	var output bytes.Buffer
 	err = run([]string{
-		"--state-root", stateRoot,
 		"--external-app-handle", "org.xnix.external.gui",
-		"--activation-root", stageRoot,
-		"--desktop-launch-packet-output", launchPacketOutput,
-		"--desktop-launch-packet-mode", "development",
-		"--image", "local/wine-x-gui:test",
-		"--platform", "linux/amd64",
-		"--docker", dockerPath,
-		"--timeout", "5s",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc150`.
+The project is currently at `v0.2.640-rc151`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc150`.
 
 ## Current Checkpoint
 
-v0.2.640-rc150 lets the real `xnix-compat-launch --external-app-handle APPID` path write a KDE-safe desktop launch packet sidecar through `--activation-root ROOT --desktop-launch-packet-output FILE`. The launcher still returns the actual external app run record on stdout, but it can now persist the Go Runtime packet from the same in-memory run result after the Windows GUI app runs, proving handle routing, receipt safety, digest verification, observed-window evidence, network isolation, zero host mounts, and closed raw path/backend exposure without requiring Ruby to reconstruct the packet.
+v0.2.640-rc151 lets the real external Windows app launcher take Runtime-owned desktop context from controlled environment variables. The staged desktop smoke now invokes the managed launcher with exactly the `.desktop` handle tokens, `xnix-compat-launch --external-app-handle APPID`, while `XNIX_EXTERNAL_APP_STATE_ROOT`, `XNIX_EXTERNAL_APP_DESKTOP_ACTIVATION_ROOT`, `XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_OUTPUT`, `XNIX_DOCKER_BIN`, `XNIX_WINE_IMAGE`, and `XNIX_COMPAT_LAUNCH_TIMEOUT` supply the test/runtime context outside the desktop entry. This keeps KDE's Exec line handle-only while the launcher still runs the real Windows GUI app and writes the Go Runtime launch packet sidecar.
+
+The previous v0.2.640-rc150 checkpoint let the real `xnix-compat-launch --external-app-handle APPID` path write a KDE-safe desktop launch packet sidecar through `--activation-root ROOT --desktop-launch-packet-output FILE`. The launcher still returns the actual external app run record on stdout, but it can now persist the Go Runtime packet from the same in-memory run result after the Windows GUI app runs, proving handle routing, receipt safety, digest verification, observed-window evidence, network isolation, zero host mounts, and closed raw path/backend exposure without requiring Ruby to reconstruct the packet.
 
 The previous v0.2.640-rc149 checkpoint added the Go Runtime `desktop-external-winapp-launch-packet-preview` read model for the actual imported Windows app desktop path. It consumes a staged activation receipt plus the real `windows-external-app-run` record from the handle-only launcher path, verifies receipt safety, handle consumption, digest verification, observed-window evidence, network isolation, zero host mounts, and closed raw path/backend exposure, then emits a KDE-safe launch packet for desktop surfaces.
 

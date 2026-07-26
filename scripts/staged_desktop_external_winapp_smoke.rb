@@ -190,6 +190,9 @@ def write_markdown_report(markdown_output, packet)
       "- Desktop Exec uses external app handle: #{packet.fetch("desktop_exec_uses_external_app_handle")}",
       "- External app desktop handle ready: #{packet.fetch("external_app_desktop_handle_ready")}",
       "- Activation receipt desktop handle ready: #{packet.fetch("activation_receipt_external_app_desktop_handle_ready")}",
+      "- Desktop Exec invocation exact: #{packet.fetch("desktop_exec_invocation_exact")}",
+      "- Launcher context from environment: #{packet.fetch("launcher_context_from_environment")}",
+      "- Launcher extra arguments appended: #{packet.fetch("launcher_extra_arguments_appended")}",
       "- Desktop launch packet ready: #{packet.fetch("desktop_launch_packet_ready")}",
       "- Desktop launch packet safe for KDE: #{packet.fetch("desktop_launch_packet_safe_for_kde")}",
       "- External import record consumed: #{packet.fetch("external_app_import_record_consumed")}",
@@ -351,18 +354,18 @@ assert_no_forbidden(desktop_exec, [state_root.to_s, import_record_path.to_s, exe
 
 launcher_env = {
   "XNIX_EXTERNAL_APP_STATE_ROOT" => state_root.to_s,
-  "XNIX_DOCKER_BIN" => docker_bin
+  "XNIX_DOCKER_BIN" => docker_bin,
+  "XNIX_WINE_IMAGE" => options.fetch(:image),
+  "XNIX_COMPAT_LAUNCH_TIMEOUT" => options.fetch(:timeout),
+  "XNIX_EXTERNAL_APP_DESKTOP_ACTIVATION_ROOT" => stage_root.to_s,
+  "XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_OUTPUT" => launch_packet_output.to_s,
+  "XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_MODE" => "development"
 }
 launcher_argv = [
   staged_launcher.to_s,
-  *desktop_tokens.drop(1),
-  "--activation-root", stage_root.to_s,
-  "--desktop-launch-packet-output", launch_packet_output.to_s,
-  "--desktop-launch-packet-mode", "development",
-  "--image", options.fetch(:image),
-  "--docker", docker_bin,
-  "--timeout", options.fetch(:timeout)
+  *desktop_tokens.drop(1)
 ]
+assert(launcher_argv == [staged_launcher.to_s, "--external-app-handle", APP_ID], "staged launcher invocation must match the desktop Exec handle route without extra arguments")
 
 launcher_stdout, launcher_stderr, launcher_status = run_command(launcher_env, *launcher_argv)
 abort "staged external app launcher failed:\n#{launcher_stderr}\n#{launcher_stdout}" unless launcher_status.success?
@@ -478,6 +481,9 @@ packet = {
   "external_app_desktop_handle_ready" => stage.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_external_app_desktop_handle_ready" => receipt_evidence.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_safe_for_kde" => receipt_evidence.fetch("safe_for_kde"),
+  "desktop_exec_invocation_exact" => launcher_argv == [staged_launcher.to_s, "--external-app-handle", APP_ID],
+  "launcher_context_from_environment" => true,
+  "launcher_extra_arguments_appended" => false,
   "desktop_launch_packet_output_written" => launch_packet_output.file?,
   "desktop_launch_packet_ready" => launch_packet.fetch("desktop_launch_packet_ready"),
   "desktop_launch_packet_safe_for_kde" => launch_packet.fetch("safe_for_kde"),
