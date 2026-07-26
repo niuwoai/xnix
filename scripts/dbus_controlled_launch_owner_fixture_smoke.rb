@@ -82,6 +82,7 @@ def load_desktop_action_metadata(path)
   end
   {
     "action_id" => fields.fetch("X-Xnix-KDE-Action-ID"),
+    "path" => clean.to_s,
     "bus_name" => fields.fetch("X-Xnix-DBus-Service"),
     "object_path" => fields.fetch("X-Xnix-DBus-Object-Path"),
     "interface" => fields.fetch("X-Xnix-DBus-Method").split(".")[0...-1].join("."),
@@ -93,6 +94,7 @@ end
 APP_ID = options.fetch(:app_id).to_s.strip
 GUEST_BOUNDARY = options.fetch(:guest_boundary).to_s.strip
 DESKTOP_ACTION = load_desktop_action_metadata(options.fetch(:desktop_entry_file))
+DESKTOP_ENTRY_FILE = DESKTOP_ACTION.fetch("path")
 BUS_NAME = DESKTOP_ACTION.fetch("bus_name")
 OBJECT_PATH = DESKTOP_ACTION.fetch("object_path")
 INTERFACE = DESKTOP_ACTION.fetch("interface")
@@ -319,6 +321,64 @@ def service_call_materialization_from_runtime(runtime_command, fixture)
   }
 end
 
+def desktop_trigger_preflight_from_runtime(runtime_command, fixture)
+  base_args = [
+    *runtime_command,
+    "desktop-trigger-request-preflight-preview",
+    "--state-root", STATE_ROOT.to_s,
+    "--desktop-entry-file", DESKTOP_ENTRY_FILE,
+    "--evidence-relative-path", fixture.fetch("evidence_relative_path"),
+    "--expected-evidence-sha256", fixture.fetch("evidence_sha256")
+  ]
+  blocked, blocked_stdout = run_json({}, *base_args)
+  assert(blocked["schema_version"] == "xnix.runtime.desktop_trigger_request_preflight.v1", "Desktop-trigger preflight must expose the Go-owned schema")
+  assert(blocked["request_type"] == "desktop-trigger-request-preflight-preview", "Desktop-trigger preflight must expose the request type")
+  assert(blocked["preflight_state"] == "blocked-missing-promotion", "Desktop-trigger preflight must fail closed before formal promotion")
+  assert(blocked["materialization_state"] == "blocked-missing-full-checkpoint", "Desktop-trigger preflight must preserve missing full-checkpoint state")
+  assert(blocked["operator_request_ready"] == false, "Desktop-trigger preflight must not be operator-ready before promotion")
+  assert(blocked["owner_service_call_ready"] == false, "Desktop-trigger preflight must not expose owner service readiness before promotion")
+  assert(blocked["service_call_dispatched"] == false, "Desktop-trigger preflight must not dispatch service calls")
+  assert(blocked["dbus_called"] == false, "Desktop-trigger preflight must not call D-Bus")
+  assert(blocked["host_root_modified"] == false, "Desktop-trigger preflight must not mutate the host root")
+  assert_no_forbidden(blocked_stdout, [STATE_ROOT.to_s, DESKTOP_ENTRY_FILE, "owner_service_call_args", "owner_service_cli_args", "--service-call", ".exe", "wine ", "qemu-system"], "Blocked desktop-trigger preflight output")
+
+  ready, ready_stdout = run_json({}, *base_args, "--full-checkpoint-promoted")
+  assert(ready["preflight_state"] == "ready-for-operator-request", "Desktop-trigger preflight must become operator-ready only after explicit promotion")
+  assert(ready["materialization_state"] == "ready-for-human-authorized-service-call", "Desktop-trigger preflight must materialize a human-authorized service-call request")
+  assert(ready["dry_run_review_state"] == "accepted-review", "Desktop-trigger preflight must preserve the accepted dry-run review")
+  assert(ready["owner_trigger_state"] == "ready", "Desktop-trigger preflight must preserve owner trigger readiness")
+  assert(ready["full_checkpoint_state"] == "ready", "Desktop-trigger preflight must observe explicit promotion")
+  assert(ready["evidence_digest_verified"] == true, "Desktop-trigger preflight must verify Runtime evidence digest")
+  assert(ready["expected_digest_matched"] == true, "Desktop-trigger preflight must match the expected evidence digest")
+  assert(ready["desktop_dbus_method"] == PUBLIC_METHOD, "Desktop-trigger preflight must preserve the KDE D-Bus method")
+  assert(ready["owner_service_boundary"] == "go-runtime-owner-in-process-service", "Desktop-trigger preflight must route through the Go owner service")
+  assert(ready["owner_service_method"] == "ShowRuntimeControlledLaunch", "Desktop-trigger preflight must preserve the owner service method")
+  assert(ready["owner_service_call_shape_verified"] == true, "Desktop-trigger preflight must verify the owner service call shape")
+  assert(ready["owner_service_call_ready"] == true, "Desktop-trigger preflight must report owner service call readiness")
+  assert(ready["operator_request_ready"] == true, "Desktop-trigger preflight must report operator request readiness")
+  assert(ready["runtime_owner_service_supplies_inputs"] == true, "Desktop-trigger preflight must keep owner inputs supplied by Runtime")
+  assert(ready["kde_forwards_only_evidence_handle"] == true, "Desktop-trigger preflight must keep KDE evidence-only")
+  assert(ready["kde_receives_materialized_owner_args"] == false, "Desktop-trigger preflight must not hand materialized owner args to KDE")
+  assert(ready["state_root_path_exposed"] == false, "Desktop-trigger preflight must not expose the state root")
+  assert(ready["raw_launcher_output_exposed"] == false, "Desktop-trigger preflight must not expose launcher output")
+  assert(ready["backend_details_exposed"] == false, "Desktop-trigger preflight must not expose backend details")
+  assert(ready["request_object_written"] == false, "Desktop-trigger preflight must not write request objects")
+  assert(ready["permission_grant_created"] == false, "Desktop-trigger preflight must not create permission grants")
+  assert(ready["service_call_dispatched"] == false, "Desktop-trigger preflight must not dispatch service calls")
+  assert(ready["dbus_called"] == false, "Desktop-trigger preflight must not call D-Bus")
+  assert(ready["desktop_launch_enabled"] == false, "Desktop-trigger preflight must not enable desktop launch")
+  assert(ready["backend_launch_enabled"] == false, "Desktop-trigger preflight must not enable backend launch")
+  assert(ready["execution_started"] == false, "Desktop-trigger preflight must not start execution")
+  assert(ready["host_root_modified"] == false, "Desktop-trigger preflight must not mutate the host root")
+  assert_no_forbidden(ready_stdout, [STATE_ROOT.to_s, DESKTOP_ENTRY_FILE, "owner_service_call_args", "owner_service_cli_args", "--service-call", ".exe", "wine ", "qemu-system"], "Ready desktop-trigger preflight output")
+
+  {
+    "blocked_preflight_state" => blocked.fetch("preflight_state"),
+    "ready_preflight_state" => ready.fetch("preflight_state"),
+    "owner_service_call_shape_verified" => ready.fetch("owner_service_call_shape_verified")
+  }
+end
+
 def assert_service_call_materialization_response(stdout, evidence_record, desktop_trigger)
   payload = variant_string_field(stdout, "go_service_call_materialization_json")
   materialization = JSON.parse(payload)
@@ -458,6 +518,7 @@ FileUtils.mkdir_p(RUN_ROOT)
 FileUtils.mkdir_p(STATE_ROOT)
 evidence_record = prepare_fixture(runtime_command)
 write_fake_launcher(delegated_payload(evidence_record))
+desktop_preflight = desktop_trigger_preflight_from_runtime(runtime_command, evidence_record)
 desktop_trigger = service_call_materialization_from_runtime(runtime_command, evidence_record)
 
 server_log = RUN_ROOT.join("xnix-dbus-smoke.log")
@@ -485,6 +546,9 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer ShowRuntimeControlledLaunch: #{stderr}")
   assert(stdout.include?("runtime-controlled-launch-dbus-action"), "D-Bus response must expose controlled launch action evidence")
+  assert(desktop_preflight.fetch("blocked_preflight_state") == "blocked-missing-promotion", "Desktop-trigger preflight must prove fail-closed state before D-Bus")
+  assert(desktop_preflight.fetch("ready_preflight_state") == "ready-for-operator-request", "Desktop-trigger preflight must prove operator request readiness before D-Bus")
+  assert(desktop_preflight.fetch("owner_service_call_shape_verified") == true, "Desktop-trigger preflight must verify owner service call shape before D-Bus")
   assert(stdout.include?("desktop-action-dispatch"), "D-Bus response must classify the call as a desktop action dispatch")
   assert(stdout.include?("kde-dbus-runtime-status-action"), "D-Bus response must preserve the KDE Runtime-status route")
   assert(DESKTOP_ACTION.fetch("action_id") == "xnix.runtime-status.controlled-launch", "D-Bus invocation must be sourced from the KDE controlled-launch action metadata")

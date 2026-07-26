@@ -1,7 +1,7 @@
 {
   "id": "org.xnix.apps.mines",
   "name": "Mines",
-  "version": "0.2.640-rc218",
+  "version": "0.2.640-rc219",
   "icon": "applications-games",
   "mode": "automatic",
   "supported_extensions": []

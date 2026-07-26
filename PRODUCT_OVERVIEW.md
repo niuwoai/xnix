@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc218
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc219
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc219 checkpoint adds a Go-owned desktop-trigger request preflight gate to the real q4 D-Bus controlled-launch smoke. Before the fixture calls the KDE action's D-Bus method, it now asks the q4-built `xnix-runtime-go desktop-trigger-request-preflight-preview` to consume the same Runtime-status evidence and desktop action metadata. The smoke requires the preflight to fail closed as `blocked-missing-promotion` by default, become `ready-for-operator-request` only when explicit promotion is supplied, verify the owner service-call shape, and still avoid service dispatch, direct D-Bus calls, desktop launch enablement, backend launch, raw owner arguments, path leaks, and host-root mutation. This keeps the desktop-trigger business gate in Go while Ruby remains the q4 orchestration harness.
 
 The v0.2.640-rc218 checkpoint makes the restricted D-Bus controlled-launch owner fixture use KDE desktop action metadata as the actual D-Bus invocation source. `scripts/dbus_controlled_launch_owner_fixture_smoke.rb` now reads `kde/actions/xnix-runtime-status-controlled-launch.desktop`, validates the Xnix action id, Runtime preview, restricted smoke plan, D-Bus service/object/method, evidence-only forwarded argument, and closed desktop safety gates, then uses that metadata to call `ShowRuntimeControlledLaunch` through `gdbus`. The q4 fixture and main q4 Runtime smoke now report that desktop action metadata was consumed while still hiding desktop paths, owner inputs, q4 paths, raw output, Docker sockets, broad host mounts, host networking, privileged containers, and host-root mutation.
 

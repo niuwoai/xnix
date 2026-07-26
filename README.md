@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc218`.
+The project is currently at `v0.2.640-rc219`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc218`.
 
 ## Current Checkpoint
 
-v0.2.640-rc218 makes the restricted D-Bus controlled-launch owner fixture use KDE desktop action metadata as the actual D-Bus invocation source. `scripts/dbus_controlled_launch_owner_fixture_smoke.rb` now reads `kde/actions/xnix-runtime-status-controlled-launch.desktop`, validates the Xnix action id, Runtime preview, restricted smoke plan, D-Bus service/object/method, evidence-only forwarded argument, and closed desktop safety gates, then uses that metadata to call `ShowRuntimeControlledLaunch` through `gdbus`. The q4 fixture and main q4 Runtime smoke now report that desktop action metadata was consumed while still hiding desktop paths, owner inputs, q4 paths, raw output, Docker sockets, broad host mounts, host networking, privileged containers, and host-root mutation.
+v0.2.640-rc219 adds a Go-owned desktop-trigger request preflight gate to the real q4 D-Bus controlled-launch smoke. Before the fixture calls the KDE action's D-Bus method, it now asks the q4-built `xnix-runtime-go desktop-trigger-request-preflight-preview` to consume the same Runtime-status evidence and desktop action metadata. The smoke requires the preflight to fail closed as `blocked-missing-promotion` by default, become `ready-for-operator-request` only when explicit promotion is supplied, verify the owner service-call shape, and still avoid service dispatch, direct D-Bus calls, desktop launch enablement, backend launch, raw owner arguments, path leaks, and host-root mutation. This keeps the desktop-trigger business gate in Go while Ruby remains the q4 orchestration harness.
+
+The previous v0.2.640-rc218 checkpoint makes the restricted D-Bus controlled-launch owner fixture use KDE desktop action metadata as the actual D-Bus invocation source. `scripts/dbus_controlled_launch_owner_fixture_smoke.rb` now reads `kde/actions/xnix-runtime-status-controlled-launch.desktop`, validates the Xnix action id, Runtime preview, restricted smoke plan, D-Bus service/object/method, evidence-only forwarded argument, and closed desktop safety gates, then uses that metadata to call `ShowRuntimeControlledLaunch` through `gdbus`. The q4 fixture and main q4 Runtime smoke now report that desktop action metadata was consumed while still hiding desktop paths, owner inputs, q4 paths, raw output, Docker sockets, broad host mounts, host networking, privileged containers, and host-root mutation.
 
 The previous v0.2.640-rc217 checkpoint makes the main q4 Runtime run-plan execution smoke prove the restricted D-Bus controlled-launch owner fixture with real MessageBox app-execution evidence. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` now calls the q4 D-Bus fixture after the Runtime-generated MessageBox execution, and the fixture builds Linux Runtime binaries on q4, prepares a restricted q4 Docker image, compiles the D-Bus C adapter inside that image, and runs the owner fixture with a read-only root, no networking, dropped capabilities, and no Docker socket or host directory mounts. The q4 remote sync now includes the minimal Docker/KDE inputs needed for that path, and the Dockerfile exposes a lightweight `dbus-tools` target that can be built from a q4-local base image without falling back to macOS compilation.
 

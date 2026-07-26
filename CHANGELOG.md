@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc219] - 2026-07-27
+
+### Added
+
+- Added Go-owned desktop-trigger request preflight checks to the real q4 D-Bus controlled-launch fixture before the actual KDE action D-Bus invocation.
+- Added q4 smoke summary fields proving fail-closed missing-promotion preflight, explicit promoted operator-request readiness, owner service-call shape verification, and closed preflight path exposure.
+
+### Changed
+
+- Updated the q4 D-Bus owner fixture to require `xnix-runtime-go desktop-trigger-request-preflight-preview` before calling `ShowRuntimeControlledLaunch`, keeping the desktop-trigger business gate in Go while Ruby remains the harness.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc219`.
+
 ## [0.2.640-rc218] - 2026-07-27
 
 ### Added
