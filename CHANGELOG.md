@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc172] - 2026-07-26
+
+### Added
+
+- Added `scripts/remote_go_test.rb`, an execute-gated q4 targeted Go test runner for small-version validation without compiling or testing Go packages on the macOS host.
+- Added plan tests and layout guards proving remote Go tests default to q4, sync only constrained Runtime sources by default, exclude the protected Claude implementation-package document, use q4 Go caches, and expose `host_compilation_avoided=true`.
+
+### Changed
+
+- Documented `remote_go_test.rb` as the default targeted Go test path alongside q4 remote builds, keeping local checks lightweight while real Windows app compatibility work continues through Go-owned Runtime binaries.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc172`.
+
 ## [0.2.640-rc171] - 2026-07-26
 
 ### Added
