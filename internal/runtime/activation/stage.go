@@ -37,46 +37,51 @@ type StageRequest struct {
 }
 
 type StageResult struct {
-	SchemaVersion               string       `json:"schema_version"`
-	RequestType                 string       `json:"request_type"`
-	StageType                   string       `json:"stage_type"`
-	Desktop                     string       `json:"desktop"`
-	Source                      string       `json:"source"`
-	ApplicationID               string       `json:"application_id"`
-	DisplayName                 string       `json:"display_name"`
-	DesktopFile                 string       `json:"desktop_file"`
-	InstallMode                 string       `json:"install_mode"`
-	PreflightDecision           string       `json:"preflight_decision"`
-	WrittenFiles                []StagedFile `json:"written_files"`
-	WrittenFileIDs              []string     `json:"written_file_ids"`
-	WrittenFileCount            int          `json:"written_file_count"`
-	ReceiptFileID               string       `json:"receipt_file_id"`
-	RuntimeOwned                bool         `json:"runtime_owned"`
-	GoRuntimeBacked             bool         `json:"go_runtime_backed"`
-	KDEPolicyOwner              bool         `json:"kde_policy_owner"`
-	StagingRootRequired         bool         `json:"staging_root_required"`
-	StagingRootPathExposed      bool         `json:"staging_root_path_exposed"`
-	HostRootAllowed             bool         `json:"host_root_allowed"`
-	FileWritesPerformed         bool         `json:"file_writes_performed"`
-	DesktopFilesWritten         bool         `json:"desktop_files_written"`
-	MIMEAppsWritten             bool         `json:"mimeapps_written"`
-	ManifestWritten             bool         `json:"manifest_written"`
-	ReceiptWritten              bool         `json:"receipt_written"`
-	RollbackReceiptWritten      bool         `json:"rollback_receipt_written"`
-	SettingsPersisted           bool         `json:"settings_persisted"`
-	NotificationsSent           bool         `json:"notifications_sent"`
-	TaskManagerEntryActive      bool         `json:"task_manager_entry_active"`
-	KWinRuleApplied             bool         `json:"kwin_rule_applied"`
-	LiveTrayBridgeEnabled       bool         `json:"live_tray_bridge_enabled"`
-	LaunchEnabled               bool         `json:"launch_enabled"`
-	BackendLaunchEnabled        bool         `json:"backend_launch_enabled"`
-	ExecutionStarted            bool         `json:"execution_started"`
-	HostRootModified            bool         `json:"host_root_modified"`
-	NetworkRequired             bool         `json:"network_required"`
-	PrivilegedContainerRequired bool         `json:"privileged_container_required"`
-	BackendDetailsExposed       bool         `json:"backend_details_exposed"`
-	BlockedActions              []string     `json:"blocked_actions"`
-	DesktopSafeSummary          string       `json:"desktop_safe_summary"`
+	SchemaVersion                    string       `json:"schema_version"`
+	RequestType                      string       `json:"request_type"`
+	StageType                        string       `json:"stage_type"`
+	Desktop                          string       `json:"desktop"`
+	Source                           string       `json:"source"`
+	ApplicationID                    string       `json:"application_id"`
+	DisplayName                      string       `json:"display_name"`
+	DesktopFile                      string       `json:"desktop_file"`
+	ExternalAppHandle                string       `json:"external_app_handle,omitempty"`
+	InstallMode                      string       `json:"install_mode"`
+	PreflightDecision                string       `json:"preflight_decision"`
+	WrittenFiles                     []StagedFile `json:"written_files"`
+	WrittenFileIDs                   []string     `json:"written_file_ids"`
+	WrittenFileCount                 int          `json:"written_file_count"`
+	ReceiptFileID                    string       `json:"receipt_file_id"`
+	RuntimeOwned                     bool         `json:"runtime_owned"`
+	GoRuntimeBacked                  bool         `json:"go_runtime_backed"`
+	KDEPolicyOwner                   bool         `json:"kde_policy_owner"`
+	StagingRootRequired              bool         `json:"staging_root_required"`
+	StagingRootPathExposed           bool         `json:"staging_root_path_exposed"`
+	HostRootAllowed                  bool         `json:"host_root_allowed"`
+	FileWritesPerformed              bool         `json:"file_writes_performed"`
+	DesktopFilesWritten              bool         `json:"desktop_files_written"`
+	DesktopExecUsesExternalAppHandle bool         `json:"desktop_exec_uses_external_app_handle"`
+	ExternalAppDesktopHandleReady    bool         `json:"external_app_desktop_handle_ready"`
+	DesktopExecUsesRawImportRecord   bool         `json:"desktop_exec_uses_raw_import_record"`
+	DesktopExecUsesStateRoot         bool         `json:"desktop_exec_uses_state_root"`
+	MIMEAppsWritten                  bool         `json:"mimeapps_written"`
+	ManifestWritten                  bool         `json:"manifest_written"`
+	ReceiptWritten                   bool         `json:"receipt_written"`
+	RollbackReceiptWritten           bool         `json:"rollback_receipt_written"`
+	SettingsPersisted                bool         `json:"settings_persisted"`
+	NotificationsSent                bool         `json:"notifications_sent"`
+	TaskManagerEntryActive           bool         `json:"task_manager_entry_active"`
+	KWinRuleApplied                  bool         `json:"kwin_rule_applied"`
+	LiveTrayBridgeEnabled            bool         `json:"live_tray_bridge_enabled"`
+	LaunchEnabled                    bool         `json:"launch_enabled"`
+	BackendLaunchEnabled             bool         `json:"backend_launch_enabled"`
+	ExecutionStarted                 bool         `json:"execution_started"`
+	HostRootModified                 bool         `json:"host_root_modified"`
+	NetworkRequired                  bool         `json:"network_required"`
+	PrivilegedContainerRequired      bool         `json:"privileged_container_required"`
+	BackendDetailsExposed            bool         `json:"backend_details_exposed"`
+	BlockedActions                   []string     `json:"blocked_actions"`
+	DesktopSafeSummary               string       `json:"desktop_safe_summary"`
 }
 
 type StagedFile struct {
@@ -193,46 +198,52 @@ func Stage(req StageRequest) (StageResult, error) {
 	sort.Slice(files, func(i int, j int) bool {
 		return files[i].RelativePath < files[j].RelativePath
 	})
+	externalAppHandleReady := desktopExecUsesExternalAppHandle(req.Plan)
 
 	return StageResult{
-		SchemaVersion:               stageSchemaVersion,
-		RequestType:                 "desktop-activation-stage",
-		StageType:                   "kde-desktop-activation-test-root-stage",
-		Desktop:                     "KDE Plasma",
-		Source:                      "go-runtime-controlled-staging-writer",
-		ApplicationID:               req.Plan.ApplicationID,
-		DisplayName:                 req.Plan.DisplayName,
-		DesktopFile:                 req.Plan.DesktopFile,
-		InstallMode:                 staging.InstallMode,
-		PreflightDecision:           staging.PreflightDecision,
-		WrittenFiles:                files,
-		WrittenFileIDs:              stagedFileIDs(files),
-		WrittenFileCount:            len(files),
-		ReceiptFileID:               "desktop-activation-receipt",
-		RuntimeOwned:                true,
-		GoRuntimeBacked:             true,
-		KDEPolicyOwner:              false,
-		StagingRootRequired:         true,
-		StagingRootPathExposed:      false,
-		HostRootAllowed:             false,
-		FileWritesPerformed:         true,
-		DesktopFilesWritten:         true,
-		MIMEAppsWritten:             containsStagedFileID(files, "mimeapps-list"),
-		ManifestWritten:             true,
-		ReceiptWritten:              true,
-		RollbackReceiptWritten:      true,
-		SettingsPersisted:           false,
-		NotificationsSent:           false,
-		TaskManagerEntryActive:      false,
-		KWinRuleApplied:             false,
-		LiveTrayBridgeEnabled:       false,
-		LaunchEnabled:               false,
-		BackendLaunchEnabled:        false,
-		ExecutionStarted:            false,
-		HostRootModified:            false,
-		NetworkRequired:             false,
-		PrivilegedContainerRequired: false,
-		BackendDetailsExposed:       false,
+		SchemaVersion:                    stageSchemaVersion,
+		RequestType:                      "desktop-activation-stage",
+		StageType:                        "kde-desktop-activation-test-root-stage",
+		Desktop:                          "KDE Plasma",
+		Source:                           "go-runtime-controlled-staging-writer",
+		ApplicationID:                    req.Plan.ApplicationID,
+		DisplayName:                      req.Plan.DisplayName,
+		DesktopFile:                      req.Plan.DesktopFile,
+		ExternalAppHandle:                desktopActivationExternalAppHandle(req.Plan, externalAppHandleReady),
+		InstallMode:                      staging.InstallMode,
+		PreflightDecision:                staging.PreflightDecision,
+		WrittenFiles:                     files,
+		WrittenFileIDs:                   stagedFileIDs(files),
+		WrittenFileCount:                 len(files),
+		ReceiptFileID:                    "desktop-activation-receipt",
+		RuntimeOwned:                     true,
+		GoRuntimeBacked:                  true,
+		KDEPolicyOwner:                   false,
+		StagingRootRequired:              true,
+		StagingRootPathExposed:           false,
+		HostRootAllowed:                  false,
+		FileWritesPerformed:              true,
+		DesktopFilesWritten:              true,
+		DesktopExecUsesExternalAppHandle: externalAppHandleReady,
+		ExternalAppDesktopHandleReady:    externalAppHandleReady,
+		DesktopExecUsesRawImportRecord:   false,
+		DesktopExecUsesStateRoot:         false,
+		MIMEAppsWritten:                  containsStagedFileID(files, "mimeapps-list"),
+		ManifestWritten:                  true,
+		ReceiptWritten:                   true,
+		RollbackReceiptWritten:           true,
+		SettingsPersisted:                false,
+		NotificationsSent:                false,
+		TaskManagerEntryActive:           false,
+		KWinRuleApplied:                  false,
+		LiveTrayBridgeEnabled:            false,
+		LaunchEnabled:                    false,
+		BackendLaunchEnabled:             false,
+		ExecutionStarted:                 false,
+		HostRootModified:                 false,
+		NetworkRequired:                  false,
+		PrivilegedContainerRequired:      false,
+		BackendDetailsExposed:            false,
 		BlockedActions: []string{
 			"write outside the provided staging root",
 			"overwrite existing desktop activation files",
@@ -243,6 +254,23 @@ func Stage(req StageRequest) (StageResult, error) {
 		},
 		DesktopSafeSummary: "Runtime staged KDE desktop activation artifacts inside the provided test root without exposing the root path, mutating the host root, or enabling launch.",
 	}, nil
+}
+
+func desktopExecUsesExternalAppHandle(plan appidentity.Plan) bool {
+	if len(plan.LaunchCommand) != 4 {
+		return false
+	}
+	return plan.LaunchCommand[0] == managedLauncherName &&
+		plan.LaunchCommand[1] == "--external-app-handle" &&
+		plan.LaunchCommand[2] == plan.ApplicationID &&
+		plan.LaunchCommand[3] == "%U"
+}
+
+func desktopActivationExternalAppHandle(plan appidentity.Plan, ready bool) string {
+	if !ready {
+		return ""
+	}
+	return plan.ApplicationID
 }
 
 func stageArtifacts(plan appidentity.Plan, managedLauncherBinary string) ([]stageArtifact, error) {

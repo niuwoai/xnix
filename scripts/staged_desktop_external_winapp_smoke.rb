@@ -184,6 +184,7 @@ def write_markdown_report(markdown_output, packet)
       "- App: #{packet.fetch("display_name")} (`#{packet.fetch("app_id")}`)",
       "- Version: #{packet.fetch("version")}",
       "- Desktop Exec uses external app handle: #{packet.fetch("desktop_exec_uses_external_app_handle")}",
+      "- External app desktop handle ready: #{packet.fetch("external_app_desktop_handle_ready")}",
       "- External import record consumed: #{packet.fetch("external_app_import_record_consumed")}",
       "- External app handle consumed: #{packet.fetch("external_app_handle_consumed")}",
       "- Runtime packet external app handle consumed: #{packet.fetch("runtime_packet_external_app_handle_consumed")}",
@@ -296,6 +297,11 @@ written_ids = stage.fetch("written_file_ids")
   assert(written_ids.include?(id), "desktop activation stage must write #{id}")
 end
 assert(stage.fetch("application_id") == APP_ID, "desktop activation stage must target the imported app")
+assert(stage.fetch("external_app_handle") == APP_ID, "desktop activation stage must expose the opaque external app handle")
+assert(stage.fetch("desktop_exec_uses_external_app_handle") == true, "desktop activation stage must prove the desktop Exec uses the external app handle")
+assert(stage.fetch("external_app_desktop_handle_ready") == true, "desktop activation stage must mark external app desktop handle readiness")
+assert(stage.fetch("desktop_exec_uses_raw_import_record") == false, "desktop activation stage must not expose raw import-record Exec routing")
+assert(stage.fetch("desktop_exec_uses_state_root") == false, "desktop activation stage must not expose state-root Exec routing")
 assert(stage.fetch("launch_enabled") == false, "desktop activation stage must keep launch gated")
 assert(stage.fetch("execution_started") == false, "desktop activation stage must not start execution")
 assert(stage.fetch("host_root_modified") == false, "desktop activation stage must not mutate the host root")
@@ -396,7 +402,8 @@ packet = {
   "app_id" => APP_ID,
   "display_name" => APP_NAME,
   "version" => VERSION,
-  "desktop_exec_uses_external_app_handle" => desktop_tokens == ["xnix-compat-launch", "--external-app-handle", APP_ID],
+  "desktop_exec_uses_external_app_handle" => stage.fetch("desktop_exec_uses_external_app_handle"),
+  "external_app_desktop_handle_ready" => stage.fetch("external_app_desktop_handle_ready"),
   "external_app_import_record_consumed" => payload.fetch("external_app_import_record_consumed"),
   "external_app_handle_consumed" => payload.fetch("external_app_handle_consumed"),
   "imported_artifact_digest_verified" => payload.fetch("imported_artifact_digest_verified"),

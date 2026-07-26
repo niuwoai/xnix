@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc146
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc147
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc147 checkpoint candidate moves imported external Windows app desktop-handle staging evidence into the Go Runtime activation writer. `desktop-activation-stage --external-app-import-record RECORD.json` now emits the opaque `external_app_handle`, confirms the generated desktop Exec uses that handle, marks the external desktop handle ready, and explicitly reports that raw import-record and state-root Exec routing stay closed. The staged desktop smoke consumes these Go-owned fields before launching the real Wine/Xvfb path, keeping Ruby as orchestration and test code while Runtime product logic owns the desktop activation evidence.
 
 The v0.2.640-rc146 checkpoint candidate aligns the KDE Compatibility Center plasmoid with the real imported Windows app desktop evidence path. The QML card contract now declares the Runtime/KDE fields that prove a staged desktop entry launched through an opaque external app handle, consumed the Runtime run record and import record, verified the imported artifact digest, and observed a real Wine/Xvfb window. `scripts/verify_layout.rb` now checks those field names directly so KDE shell packaging cannot drift away from the Go Runtime read model while still keeping launch authority, backend details, raw paths, Docker socket mounts, host mounts, host networking, and host-root mutation outside the desktop shell.
 

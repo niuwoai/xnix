@@ -140,6 +140,11 @@ func TestDesktopActivationStageCommandStagesExternalImportedAppHandleLauncher(t 
 	if payload["application_id"] != "org.xnix.external.gui" ||
 		payload["display_name"] != "External GUI" ||
 		payload["desktop_file"] != "xnix-org.xnix.external.gui.desktop" ||
+		payload["external_app_handle"] != "org.xnix.external.gui" ||
+		payload["desktop_exec_uses_external_app_handle"] != true ||
+		payload["external_app_desktop_handle_ready"] != true ||
+		payload["desktop_exec_uses_raw_import_record"] != false ||
+		payload["desktop_exec_uses_state_root"] != false ||
 		payload["written_file_count"] != float64(5) ||
 		payload["mimeapps_written"] != false ||
 		payload["launch_enabled"] != false ||

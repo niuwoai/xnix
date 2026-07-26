@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc146`.
+The project is currently at `v0.2.640-rc147`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc146`.
 
 ## Current Checkpoint
 
-v0.2.640-rc146 makes the KDE Compatibility Center plasmoid explicitly consume the real imported Windows GUI app evidence fields. The QML card contract now names `external_app_run_record_consumed`, `external_app_handle_consumed`, `external_app_import_record_consumed`, `imported_artifact_digest_verified`, `window_observed`, and `x_window_observed`, and the layout verifier locks those fields so the desktop shell stays aligned with the Go Runtime read model.
+v0.2.640-rc147 moves the imported external Windows app desktop-handle staging proof into the Go Runtime activation result. `desktop-activation-stage --external-app-import-record RECORD.json` now reports `external_app_handle`, `desktop_exec_uses_external_app_handle`, `external_app_desktop_handle_ready`, and closed raw import-record/state-root Exec routing, so the staged desktop smoke can rely on Runtime-owned activation evidence instead of parsing the `.desktop` file by itself.
+
+The previous v0.2.640-rc146 checkpoint made the KDE Compatibility Center plasmoid explicitly consume the real imported Windows GUI app evidence fields. The QML card contract now names `external_app_run_record_consumed`, `external_app_handle_consumed`, `external_app_import_record_consumed`, `imported_artifact_digest_verified`, `window_observed`, and `x_window_observed`, and the layout verifier locks those fields so the desktop shell stays aligned with the Go Runtime read model.
 
 The previous v0.2.640-rc145 checkpoint carried the imported external Windows app handle evidence through the Runtime packet and KDE read model. Real GUI evidence packets, known app smoke evidence summaries, KDE Compatibility Center GUI cards, and the staged external desktop smoke now expose and require `external_app_handle_consumed` when the `.desktop` path invokes `xnix-compat-launch --external-app-handle APPID`, proving the observed window came through the handle-only desktop route instead of a raw import-record path.
 

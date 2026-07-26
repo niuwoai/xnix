@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc147] - 2026-07-26
+
+### Changed
+
+- Added Go Runtime desktop activation stage evidence for imported external Windows app handle routing, including `external_app_handle`, `desktop_exec_uses_external_app_handle`, and `external_app_desktop_handle_ready`.
+- Made desktop activation stage output explicitly keep raw import-record and state-root Exec routing closed for imported external Windows apps.
+- Updated the staged external Windows GUI desktop smoke to consume the Go-owned activation handle evidence before running the real desktop launcher path.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc147`.
+
 ## [0.2.640-rc146] - 2026-07-26
 
 ### Changed
