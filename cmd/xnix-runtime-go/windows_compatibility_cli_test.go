@@ -1494,6 +1494,9 @@ func TestWindowsAppContainerXGUISmokeCommandRunsImportedExternalExecutable(t *te
 		payload["recipe_backed"] != false ||
 		payload["executable_name"] != "ImportedTool.exe" ||
 		payload["local_executable_copied"] != true ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["imported_artifact_digest_verified"] != true ||
+		payload["imported_artifact_sha256"] != importPayload["artifact_sha256"] ||
 		payload["application_name"] != "/ImportedTool.exe" ||
 		payload["window_match"] != "Imported Tool" ||
 		payload["x_window_observed"] != true ||

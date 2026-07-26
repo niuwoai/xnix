@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc132] - 2026-07-26
+
+### Added
+
+- Added imported external Windows GUI run provenance to container X GUI smoke output, real GUI evidence packets, and KDE GUI evidence cards.
+- Added digest-verification checks requiring imported app evidence to prove the Runtime import record was consumed and the imported artifact SHA256 was verified before desktop projection.
+
 ## [0.2.640-rc131] - 2026-07-26
 
 ### Added

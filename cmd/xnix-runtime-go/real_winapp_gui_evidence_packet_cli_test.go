@@ -245,6 +245,9 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesRawExternalExecutableR
 		payload["recipe_backed"] != false ||
 		payload["executable_name"] != "notepad.exe" ||
 		payload["local_executable_copied"] != true ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["imported_artifact_digest_verified"] != true ||
+		payload["imported_artifact_sha256"] != "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208" ||
 		payload["known_app_gui_evidence_verified_count"] != float64(1) ||
 		payload["container_runtime_used"] != true ||
 		payload["container_network_mode"] != "none" ||
@@ -399,6 +402,9 @@ func rawExternalExecutableContainerXGUIRuntimePayloadCLIFixture() string {
   "recipe_backed": false,
   "executable_name": "notepad.exe",
   "local_executable_copied": true,
+  "external_app_import_record_consumed": true,
+  "imported_artifact_digest_verified": true,
+  "imported_artifact_sha256": "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208",
   "application_name": "/notepad.exe",
   "window_match": "notepad.exe",
   "container_image": "xnix-wine-smoke:local",

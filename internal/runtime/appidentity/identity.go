@@ -849,6 +849,9 @@ type KnownAppSmokeEvidenceSummary struct {
 	EvidenceSource                        string `json:"evidence_source"`
 	RecipeBacked                          bool   `json:"recipe_backed"`
 	RecipeAppID                           string `json:"recipe_app_id,omitempty"`
+	ExternalAppImportRecordConsumed       bool   `json:"external_app_import_record_consumed"`
+	ImportedArtifactDigestVerified        bool   `json:"imported_artifact_digest_verified"`
+	ImportedArtifactSHA256                string `json:"imported_artifact_sha256,omitempty"`
 	SmokeStatus                           string `json:"smoke_status"`
 	CompatibilityState                    string `json:"compatibility_state"`
 	CenterCardState                       string `json:"center_card_state"`
@@ -2757,6 +2760,20 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	} else if recipeAppID != "" {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("recipe app id requires recipe-backed known app smoke evidence")
 	}
+	importedArtifactSHA256 := strings.TrimSpace(item.ImportedArtifactSHA256)
+	if item.ExternalAppImportRecordConsumed {
+		if item.RecipeBacked {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("external app import record evidence requires non-recipe evidence")
+		}
+		if evidenceSource != GUISmokeEvidenceSourceContainerXGUI {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("external app import record evidence requires container GUI evidence")
+		}
+		if !item.ImportedArtifactDigestVerified || !validSHA256Hex(importedArtifactSHA256) {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("external app import record evidence requires a verified artifact digest")
+		}
+	} else if item.ImportedArtifactDigestVerified || importedArtifactSHA256 != "" {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("imported artifact digest evidence requires a consumed external app import record")
+	}
 
 	compatibilityState := "review-required"
 	centerCardState := "smoke-evidence-review-required"
@@ -2962,6 +2979,9 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		EvidenceSource:                        evidenceSource,
 		RecipeBacked:                          item.RecipeBacked,
 		RecipeAppID:                           recipeAppID,
+		ExternalAppImportRecordConsumed:       item.ExternalAppImportRecordConsumed,
+		ImportedArtifactDigestVerified:        item.ImportedArtifactDigestVerified,
+		ImportedArtifactSHA256:                importedArtifactSHA256,
 		SmokeStatus:                           status,
 		CompatibilityState:                    compatibilityState,
 		CenterCardState:                       centerCardState,

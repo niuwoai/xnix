@@ -388,6 +388,9 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	var dockerPath string
 	var timeoutText string
 	var outputPath string
+	importRecordConsumed := false
+	importedArtifactDigestVerified := false
+	importedArtifactSHA256 := ""
 	flags.StringVar(&appName, "app", winapp.DefaultContainerGUIApp, "Windows GUI application name available in the Wine image")
 	flags.StringVar(&windowMatch, "window-match", winapp.DefaultContainerWindowMatch, "case-insensitive X window match text")
 	flags.StringVar(&executablePath, "executable", "", "optional local Windows GUI .exe to copy into the isolated container")
@@ -431,6 +434,9 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 		appID = record.ApplicationID
 		displayName = record.DisplayName
 		appVersion = record.AppVersion
+		importRecordConsumed = true
+		importedArtifactDigestVerified = true
+		importedArtifactSHA256 = record.ArtifactSHA256
 		if !appFlagProvided {
 			appName = "/" + record.ExecutableName
 		}
@@ -444,16 +450,19 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 		return fmt.Errorf("parse timeout: %w", err)
 	}
 	request := winapp.ContainerXGUIRequest{
-		ExecutablePath:  strings.TrimSpace(executablePath),
-		ApplicationName: appName,
-		WindowMatch:     windowMatch,
-		ApplicationID:   strings.TrimSpace(appID),
-		DisplayName:     strings.TrimSpace(displayName),
-		AppVersion:      strings.TrimSpace(appVersion),
-		Image:           image,
-		Platform:        platform,
-		DockerPath:      dockerPath,
-		Timeout:         timeout,
+		ExecutablePath:                  strings.TrimSpace(executablePath),
+		ApplicationName:                 appName,
+		WindowMatch:                     windowMatch,
+		ApplicationID:                   strings.TrimSpace(appID),
+		DisplayName:                     strings.TrimSpace(displayName),
+		AppVersion:                      strings.TrimSpace(appVersion),
+		ExternalAppImportRecordConsumed: importRecordConsumed,
+		ImportedArtifactDigestVerified:  importedArtifactDigestVerified,
+		ImportedArtifactSHA256:          importedArtifactSHA256,
+		Image:                           image,
+		Platform:                        platform,
+		DockerPath:                      dockerPath,
+		Timeout:                         timeout,
 	}
 	for _, value := range []string{request.ApplicationID, request.DisplayName, request.AppVersion} {
 		if strings.ContainsAny(value, "\r\n") {

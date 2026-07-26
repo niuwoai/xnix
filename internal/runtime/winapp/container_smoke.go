@@ -40,17 +40,20 @@ type ContainerRequest struct {
 }
 
 type ContainerXGUIRequest struct {
-	ExecutablePath  string
-	ApplicationName string
-	WindowMatch     string
-	ApplicationID   string
-	DisplayName     string
-	AppVersion      string
-	RecipeBacked    bool
-	Image           string
-	Platform        string
-	DockerPath      string
-	Timeout         time.Duration
+	ExecutablePath                  string
+	ApplicationName                 string
+	WindowMatch                     string
+	ApplicationID                   string
+	DisplayName                     string
+	AppVersion                      string
+	RecipeBacked                    bool
+	ExternalAppImportRecordConsumed bool
+	ImportedArtifactDigestVerified  bool
+	ImportedArtifactSHA256          string
+	Image                           string
+	Platform                        string
+	DockerPath                      string
+	Timeout                         time.Duration
 }
 
 type ContainerResult struct {
@@ -87,39 +90,42 @@ type ContainerResult struct {
 }
 
 type ContainerXGUIResult struct {
-	SchemaVersion               string `json:"schema_version"`
-	RequestType                 string `json:"request_type"`
-	Status                      string `json:"status"`
-	ApplicationID               string `json:"application_id,omitempty"`
-	DisplayName                 string `json:"display_name,omitempty"`
-	AppVersion                  string `json:"app_version,omitempty"`
-	RecipeBacked                bool   `json:"recipe_backed"`
-	ExecutableName              string `json:"executable_name,omitempty"`
-	LocalExecutableCopied       bool   `json:"local_executable_copied"`
-	ApplicationName             string `json:"application_name"`
-	WindowMatch                 string `json:"window_match"`
-	ContainerImage              string `json:"container_image"`
-	ContainerPlatform           string `json:"container_platform"`
-	ContainerStateMode          string `json:"container_state_mode"`
-	PullPolicy                  string `json:"pull_policy"`
-	NetworkMode                 string `json:"network_mode"`
-	DesktopDisplay              string `json:"desktop_display"`
-	XServerStarted              bool   `json:"x_server_started"`
-	WineBootstrapAttempted      bool   `json:"wine_bootstrap_attempted"`
-	RunnerAvailable             bool   `json:"runner_available"`
-	ImageAvailable              bool   `json:"image_available"`
-	XWindowObserved             bool   `json:"x_window_observed"`
-	WindowEvidenceSummary       string `json:"window_evidence_summary"`
-	ExitCode                    int    `json:"exit_code"`
-	DurationMillis              int64  `json:"duration_millis"`
-	SkipReason                  string `json:"skip_reason,omitempty"`
-	FailureReason               string `json:"failure_reason,omitempty"`
-	HostRootModified            bool   `json:"host_root_modified"`
-	PrivilegedContainerRequired bool   `json:"privileged_container_required"`
-	HostNetworkingRequired      bool   `json:"host_networking_required"`
-	DockerSocketMounted         bool   `json:"docker_socket_mounted"`
-	BroadHostMountRequired      bool   `json:"broad_host_mount_required"`
-	HostMountCount              int    `json:"host_mount_count"`
+	SchemaVersion                   string `json:"schema_version"`
+	RequestType                     string `json:"request_type"`
+	Status                          string `json:"status"`
+	ApplicationID                   string `json:"application_id,omitempty"`
+	DisplayName                     string `json:"display_name,omitempty"`
+	AppVersion                      string `json:"app_version,omitempty"`
+	RecipeBacked                    bool   `json:"recipe_backed"`
+	ExecutableName                  string `json:"executable_name,omitempty"`
+	LocalExecutableCopied           bool   `json:"local_executable_copied"`
+	ExternalAppImportRecordConsumed bool   `json:"external_app_import_record_consumed"`
+	ImportedArtifactDigestVerified  bool   `json:"imported_artifact_digest_verified"`
+	ImportedArtifactSHA256          string `json:"imported_artifact_sha256,omitempty"`
+	ApplicationName                 string `json:"application_name"`
+	WindowMatch                     string `json:"window_match"`
+	ContainerImage                  string `json:"container_image"`
+	ContainerPlatform               string `json:"container_platform"`
+	ContainerStateMode              string `json:"container_state_mode"`
+	PullPolicy                      string `json:"pull_policy"`
+	NetworkMode                     string `json:"network_mode"`
+	DesktopDisplay                  string `json:"desktop_display"`
+	XServerStarted                  bool   `json:"x_server_started"`
+	WineBootstrapAttempted          bool   `json:"wine_bootstrap_attempted"`
+	RunnerAvailable                 bool   `json:"runner_available"`
+	ImageAvailable                  bool   `json:"image_available"`
+	XWindowObserved                 bool   `json:"x_window_observed"`
+	WindowEvidenceSummary           string `json:"window_evidence_summary"`
+	ExitCode                        int    `json:"exit_code"`
+	DurationMillis                  int64  `json:"duration_millis"`
+	SkipReason                      string `json:"skip_reason,omitempty"`
+	FailureReason                   string `json:"failure_reason,omitempty"`
+	HostRootModified                bool   `json:"host_root_modified"`
+	PrivilegedContainerRequired     bool   `json:"privileged_container_required"`
+	HostNetworkingRequired          bool   `json:"host_networking_required"`
+	DockerSocketMounted             bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired          bool   `json:"broad_host_mount_required"`
+	HostMountCount                  int    `json:"host_mount_count"`
 }
 
 func RunContainerSmoke(ctx context.Context, request ContainerRequest) (ContainerResult, error) {
@@ -362,28 +368,31 @@ func baseContainerXGUIResult(request ContainerXGUIRequest) ContainerXGUIResult {
 		platform = AutoContainerPlatform
 	}
 	return ContainerXGUIResult{
-		SchemaVersion:               ContainerXGUISchemaVersion,
-		RequestType:                 ContainerXGUIRequestType,
-		Status:                      FailedStatus,
-		ApplicationID:               strings.TrimSpace(request.ApplicationID),
-		DisplayName:                 strings.TrimSpace(request.DisplayName),
-		AppVersion:                  strings.TrimSpace(request.AppVersion),
-		RecipeBacked:                request.RecipeBacked,
-		ApplicationName:             appName,
-		WindowMatch:                 windowMatch,
-		ContainerImage:              image,
-		ContainerPlatform:           platform,
-		ContainerStateMode:          "tmpfs",
-		PullPolicy:                  "never",
-		NetworkMode:                 "none",
-		DesktopDisplay:              "Xvfb",
-		ExitCode:                    -1,
-		HostRootModified:            false,
-		PrivilegedContainerRequired: false,
-		HostNetworkingRequired:      false,
-		DockerSocketMounted:         false,
-		BroadHostMountRequired:      false,
-		HostMountCount:              0,
+		SchemaVersion:                   ContainerXGUISchemaVersion,
+		RequestType:                     ContainerXGUIRequestType,
+		Status:                          FailedStatus,
+		ApplicationID:                   strings.TrimSpace(request.ApplicationID),
+		DisplayName:                     strings.TrimSpace(request.DisplayName),
+		AppVersion:                      strings.TrimSpace(request.AppVersion),
+		RecipeBacked:                    request.RecipeBacked,
+		ExternalAppImportRecordConsumed: request.ExternalAppImportRecordConsumed,
+		ImportedArtifactDigestVerified:  request.ImportedArtifactDigestVerified,
+		ImportedArtifactSHA256:          strings.TrimSpace(request.ImportedArtifactSHA256),
+		ApplicationName:                 appName,
+		WindowMatch:                     windowMatch,
+		ContainerImage:                  image,
+		ContainerPlatform:               platform,
+		ContainerStateMode:              "tmpfs",
+		PullPolicy:                      "never",
+		NetworkMode:                     "none",
+		DesktopDisplay:                  "Xvfb",
+		ExitCode:                        -1,
+		HostRootModified:                false,
+		PrivilegedContainerRequired:     false,
+		HostNetworkingRequired:          false,
+		DockerSocketMounted:             false,
+		BroadHostMountRequired:          false,
+		HostMountCount:                  0,
 	}
 }
 

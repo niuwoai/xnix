@@ -184,6 +184,9 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesRawExternalExecutableRuntimeP
 		packet.RecipeAppID != "" ||
 		packet.ExecutableName != "notepad.exe" ||
 		!packet.LocalExecutableCopied ||
+		!packet.ExternalAppImportRecordConsumed ||
+		!packet.ImportedArtifactDigestVerified ||
+		packet.ImportedArtifactSHA256 != "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208" ||
 		packet.KnownAppGUIEvidenceVerifiedCount != 1 ||
 		!packet.ContainerRuntimeUsed ||
 		packet.ContainerNetworkMode != "none" ||
@@ -204,6 +207,9 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesRawExternalExecutableRuntimeP
 		evidence.RecipeBacked ||
 		evidence.RecipeAppID != "" ||
 		evidence.EvidenceSource != GUISmokeEvidenceSourceContainerXGUI ||
+		!evidence.ExternalAppImportRecordConsumed ||
+		!evidence.ImportedArtifactDigestVerified ||
+		evidence.ImportedArtifactSHA256 != packet.ImportedArtifactSHA256 ||
 		evidence.CompatibilityState != "real-gui-container-wine-verified" ||
 		evidence.CenterCardState != "validated-real-gui-container-run" ||
 		!evidence.ExecutionEvidenceRecorded ||
@@ -238,8 +244,8 @@ func TestExternalAppRecipeFromRealWinAppGUIEvidencePacket(t *testing.T) {
 		len(recipe.SupportedExtensions) != 0 ||
 		provenance.Source != "real-gui-evidence-packet" ||
 		provenance.RegistryName != "runtime-observed-external-app" ||
-		provenance.DigestVerified ||
-		provenance.SignatureStatus != "observed-runtime-evidence" ||
+		!provenance.DigestVerified ||
+		provenance.SignatureStatus != "runtime-import-record-digest-verified" ||
 		evidence.AppID != recipe.ID ||
 		evidence.DisplayName != recipe.Name ||
 		evidence.AppVersion != recipe.Version ||
@@ -266,6 +272,9 @@ func TestExternalAppRecipeFromRealWinAppGUIEvidencePacket(t *testing.T) {
 		len(page.KnownAppGUIEvidenceCards) != 1 ||
 		page.KnownAppGUIEvidenceCards[0].AppID != page.ApplicationID ||
 		page.KnownAppGUIEvidenceCards[0].RecipeBacked ||
+		!page.KnownAppGUIEvidenceCards[0].ExternalAppImportRecordConsumed ||
+		!page.KnownAppGUIEvidenceCards[0].ImportedArtifactDigestVerified ||
+		page.KnownAppGUIEvidenceCards[0].ImportedArtifactSHA256 != evidence.ImportedArtifactSHA256 ||
 		page.LaunchEnabled ||
 		page.BackendProcessStarted ||
 		page.BackendDetailsExposed ||
@@ -335,6 +344,9 @@ func rawExternalExecutableContainerXGUIRuntimePayloadFixture() string {
   "recipe_backed": false,
   "executable_name": "notepad.exe",
   "local_executable_copied": true,
+  "external_app_import_record_consumed": true,
+  "imported_artifact_digest_verified": true,
+  "imported_artifact_sha256": "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208",
   "application_name": "/notepad.exe",
   "window_match": "notepad.exe",
   "container_image": "xnix-wine-smoke:local",

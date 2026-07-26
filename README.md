@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc131`.
+The project is currently at `v0.2.640-rc132`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc131`.
 
 ## Current Checkpoint
 
-v0.2.640-rc131 lets `windows-app-container-x-gui-smoke --external-app-import-record RECORD.json` run the Runtime-managed copy of an imported external Windows GUI app. The command resolves the imported artifact from the record, revalidates its digest and MZ executable shape, copies that managed artifact into the isolated Wine/Xvfb container, and preserves the imported app identity without exposing the original host path, state root, Docker socket, host mounts, host networking, or host-root mutation.
+v0.2.640-rc132 surfaces imported external Windows GUI run provenance across the raw smoke result, real GUI evidence packet, and KDE GUI evidence card. `windows-app-container-x-gui-smoke --external-app-import-record RECORD.json` now records that the Runtime import record was consumed, that the imported artifact digest was verified, and the artifact SHA256 without exposing the import record path, state root, original host executable path, Docker socket, host mounts, host networking, or host-root mutation.
+
+The previous v0.2.640-rc131 checkpoint let `windows-app-container-x-gui-smoke --external-app-import-record RECORD.json` run the Runtime-managed copy of an imported external Windows GUI app. The command resolves the imported artifact from the record, revalidates its digest and MZ executable shape, copies that managed artifact into the isolated Wine/Xvfb container, and preserves the imported app identity without exposing the original host path, state root, Docker socket, host mounts, host networking, or host-root mutation.
 
 The previous v0.2.640-rc130 checkpoint added a Go-owned external Windows app import record. `external-winapp-import-record --state-root ROOT --executable FILE.exe --app-id APP --display-name NAME` validates an MZ executable, copies it into a Runtime-managed state root, records the artifact digest and relative paths, and lets `kde-center-page-preview --external-app-import-record RECORD.json` render the imported app as its own Compatibility Center page while keeping launch/write/backend actions blocked and hiding the original host path.
 

@@ -53,6 +53,9 @@ type RealWinAppGUIEvidencePacket struct {
 	ContainerHostMountCount            int                          `json:"container_host_mount_count"`
 	ExecutableName                     string                       `json:"executable_name,omitempty"`
 	LocalExecutableCopied              bool                         `json:"local_executable_copied"`
+	ExternalAppImportRecordConsumed    bool                         `json:"external_app_import_record_consumed"`
+	ImportedArtifactDigestVerified     bool                         `json:"imported_artifact_digest_verified"`
+	ImportedArtifactSHA256             string                       `json:"imported_artifact_sha256,omitempty"`
 	RuntimeOwned                       bool                         `json:"runtime_owned"`
 	GoRuntimeBacked                    bool                         `json:"go_runtime_backed"`
 	KDEPolicyOwner                     bool                         `json:"kde_policy_owner"`
@@ -79,6 +82,9 @@ type containerXGUIRuntimePayload struct {
 	RecipeBacked                             bool   `json:"recipe_backed"`
 	ExecutableName                           string `json:"executable_name"`
 	LocalExecutableCopied                    bool   `json:"local_executable_copied"`
+	ExternalAppImportRecordConsumed          bool   `json:"external_app_import_record_consumed"`
+	ImportedArtifactDigestVerified           bool   `json:"imported_artifact_digest_verified"`
+	ImportedArtifactSHA256                   string `json:"imported_artifact_sha256"`
 	ApplicationName                          string `json:"application_name"`
 	WindowMatch                              string `json:"window_match"`
 	ContainerImage                           string `json:"container_image"`
@@ -203,11 +209,17 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 	containerHostMountCount := 0
 	executableName := ""
 	localExecutableCopied := false
+	externalAppImportRecordConsumed := false
+	importedArtifactDigestVerified := false
+	importedArtifactSHA256 := ""
 	if containerRuntimeUsed {
 		containerNetworkMode = report.ContainerPayload.NetworkMode
 		containerHostMountCount = report.ContainerPayload.HostMountCount
 		executableName = runtimePayload.ExecutableName
 		localExecutableCopied = runtimePayload.LocalExecutableCopied
+		externalAppImportRecordConsumed = runtimePayload.ExternalAppImportRecordConsumed
+		importedArtifactDigestVerified = runtimePayload.ImportedArtifactDigestVerified
+		importedArtifactSHA256 = strings.TrimSpace(runtimePayload.ImportedArtifactSHA256)
 	}
 
 	return RealWinAppGUIEvidencePacket{
@@ -243,6 +255,9 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		ContainerHostMountCount:            containerHostMountCount,
 		ExecutableName:                     executableName,
 		LocalExecutableCopied:              localExecutableCopied,
+		ExternalAppImportRecordConsumed:    externalAppImportRecordConsumed,
+		ImportedArtifactDigestVerified:     importedArtifactDigestVerified,
+		ImportedArtifactSHA256:             importedArtifactSHA256,
 		RuntimeOwned:                       projection.RuntimeOwned,
 		GoRuntimeBacked:                    projection.GoRuntimeBacked,
 		KDEPolicyOwner:                     projection.KDEPolicyOwner,
@@ -300,6 +315,9 @@ func wrapContainerXGUIRuntimePayload(content []byte) (containerXGUIRuntimePayloa
 	report.ContainerPayload.DisplayName = payload.DisplayName
 	report.ContainerPayload.AppVersion = payload.AppVersion
 	report.ContainerPayload.RecipeBacked = payload.RecipeBacked
+	report.ContainerPayload.ExternalAppImportRecordConsumed = payload.ExternalAppImportRecordConsumed
+	report.ContainerPayload.ImportedArtifactDigestVerified = payload.ImportedArtifactDigestVerified
+	report.ContainerPayload.ImportedArtifactSHA256 = payload.ImportedArtifactSHA256
 	report.ContainerPayload.NetworkMode = payload.NetworkMode
 	report.ContainerPayload.XServerStarted = payload.XServerStarted
 	report.ContainerPayload.WineBootstrapAttempted = payload.WineBootstrapAttempted
@@ -390,6 +408,10 @@ func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (Known
 			return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet requires a network-isolated container")
 		case packet.ContainerHostMountCount != 0:
 			return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet must not mount host paths")
+		case packet.ExternalAppImportRecordConsumed && !packet.ImportedArtifactDigestVerified:
+			return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet import record evidence requires digest verification")
+		case packet.ExternalAppImportRecordConsumed && !validSHA256Hex(packet.ImportedArtifactSHA256):
+			return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet import record evidence requires an artifact digest")
 		}
 	}
 	evidence := packet.KnownAppSmokeEvidence
@@ -402,6 +424,11 @@ func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (Known
 		evidence.CompatibilityState != packet.CompatibilityState ||
 		evidence.CenterCardState != packet.CenterCardState {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet summary does not match nested evidence")
+	}
+	if evidence.ExternalAppImportRecordConsumed != packet.ExternalAppImportRecordConsumed ||
+		evidence.ImportedArtifactDigestVerified != packet.ImportedArtifactDigestVerified ||
+		strings.TrimSpace(evidence.ImportedArtifactSHA256) != strings.TrimSpace(packet.ImportedArtifactSHA256) {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet import record summary does not match nested evidence")
 	}
 	if !knownAppGUIEvidenceSource(evidence.EvidenceSource) || !evidence.ExecutionEvidenceRecorded || !evidence.RuntimeDispatchVerified {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet requires recorded Runtime dispatch evidence")
@@ -429,6 +456,8 @@ func ExternalAppRecipeFromRealWinAppGUIEvidencePacket(payload []byte) (Recipe, P
 		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, errors.New("external Windows app page requires container GUI Runtime evidence")
 	case !packet.LocalExecutableCopied:
 		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, errors.New("external Windows app page requires copied external executable evidence")
+	case packet.ExternalAppImportRecordConsumed && !packet.ImportedArtifactDigestVerified:
+		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, errors.New("external Windows app page import record evidence requires digest verification")
 	case strings.TrimSpace(packet.ExecutableName) == "" || strings.ContainsAny(packet.ExecutableName, `/\`):
 		return Recipe{}, Provenance{}, KnownAppSmokeEvidenceSummary{}, errors.New("external Windows app page requires a safe executable name")
 	case !strings.HasSuffix(strings.ToLower(packet.ExecutableName), ".exe"):
@@ -449,8 +478,24 @@ func ExternalAppRecipeFromRealWinAppGUIEvidencePacket(payload []byte) (Recipe, P
 	provenance := Provenance{
 		Source:          "real-gui-evidence-packet",
 		RegistryName:    "runtime-observed-external-app",
-		DigestVerified:  false,
+		DigestVerified:  packet.ImportedArtifactDigestVerified,
 		SignatureStatus: "observed-runtime-evidence",
 	}
+	if packet.ExternalAppImportRecordConsumed {
+		provenance.SignatureStatus = "runtime-import-record-digest-verified"
+	}
 	return recipe, provenance, evidence, nil
+}
+
+func validSHA256Hex(value string) bool {
+	value = strings.TrimSpace(value)
+	if len(value) != 64 {
+		return false
+	}
+	for _, char := range value {
+		if (char < '0' || char > '9') && (char < 'a' || char > 'f') {
+			return false
+		}
+	}
+	return true
 }

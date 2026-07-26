@@ -168,6 +168,9 @@ type KDECenterPageKnownAppMatrixCard struct {
 	EvidenceSource                       string   `json:"evidence_source"`
 	RecipeBacked                         bool     `json:"recipe_backed"`
 	RecipeAppID                          string   `json:"recipe_app_id,omitempty"`
+	ExternalAppImportRecordConsumed      bool     `json:"external_app_import_record_consumed"`
+	ImportedArtifactDigestVerified       bool     `json:"imported_artifact_digest_verified"`
+	ImportedArtifactSHA256               string   `json:"imported_artifact_sha256,omitempty"`
 	SmokeStatus                          string   `json:"smoke_status"`
 	CompatibilityState                   string   `json:"compatibility_state"`
 	CenterCardState                      string   `json:"center_card_state"`
@@ -1252,6 +1255,9 @@ func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) [
 			EvidenceSource:                       item.EvidenceSource,
 			RecipeBacked:                         item.RecipeBacked,
 			RecipeAppID:                          item.RecipeAppID,
+			ExternalAppImportRecordConsumed:      item.ExternalAppImportRecordConsumed,
+			ImportedArtifactDigestVerified:       item.ImportedArtifactDigestVerified,
+			ImportedArtifactSHA256:               item.ImportedArtifactSHA256,
 			SmokeStatus:                          item.SmokeStatus,
 			CompatibilityState:                   item.CompatibilityState,
 			CenterCardState:                      item.CenterCardState,
@@ -1299,6 +1305,9 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 			EvidenceSource:                       item.EvidenceSource,
 			RecipeBacked:                         item.RecipeBacked,
 			RecipeAppID:                          item.RecipeAppID,
+			ExternalAppImportRecordConsumed:      item.ExternalAppImportRecordConsumed,
+			ImportedArtifactDigestVerified:       item.ImportedArtifactDigestVerified,
+			ImportedArtifactSHA256:               item.ImportedArtifactSHA256,
 			SmokeStatus:                          item.SmokeStatus,
 			CompatibilityState:                   item.CompatibilityState,
 			CenterCardState:                      item.CenterCardState,

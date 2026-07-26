@@ -101,25 +101,28 @@ type guiSmokeReport struct {
 	ContainerDisplayName      string `json:"container_display_name"`
 	ContainerAppVersion       string `json:"container_app_version"`
 	ContainerPayload          struct {
-		SchemaVersion               string `json:"schema_version"`
-		RequestType                 string `json:"request_type"`
-		Status                      string `json:"status"`
-		ApplicationID               string `json:"application_id"`
-		DisplayName                 string `json:"display_name"`
-		AppVersion                  string `json:"app_version"`
-		RecipeBacked                bool   `json:"recipe_backed"`
-		NetworkMode                 string `json:"network_mode"`
-		XServerStarted              bool   `json:"x_server_started"`
-		WineBootstrapAttempted      bool   `json:"wine_bootstrap_attempted"`
-		ImageAvailable              bool   `json:"image_available"`
-		XWindowObserved             bool   `json:"x_window_observed"`
-		WindowEvidenceSummary       string `json:"window_evidence_summary"`
-		HostRootModified            bool   `json:"host_root_modified"`
-		PrivilegedContainerRequired bool   `json:"privileged_container_required"`
-		HostNetworkingRequired      bool   `json:"host_networking_required"`
-		DockerSocketMounted         bool   `json:"docker_socket_mounted"`
-		BroadHostMountRequired      bool   `json:"broad_host_mount_required"`
-		HostMountCount              int    `json:"host_mount_count"`
+		SchemaVersion                   string `json:"schema_version"`
+		RequestType                     string `json:"request_type"`
+		Status                          string `json:"status"`
+		ApplicationID                   string `json:"application_id"`
+		DisplayName                     string `json:"display_name"`
+		AppVersion                      string `json:"app_version"`
+		RecipeBacked                    bool   `json:"recipe_backed"`
+		ExternalAppImportRecordConsumed bool   `json:"external_app_import_record_consumed"`
+		ImportedArtifactDigestVerified  bool   `json:"imported_artifact_digest_verified"`
+		ImportedArtifactSHA256          string `json:"imported_artifact_sha256"`
+		NetworkMode                     string `json:"network_mode"`
+		XServerStarted                  bool   `json:"x_server_started"`
+		WineBootstrapAttempted          bool   `json:"wine_bootstrap_attempted"`
+		ImageAvailable                  bool   `json:"image_available"`
+		XWindowObserved                 bool   `json:"x_window_observed"`
+		WindowEvidenceSummary           string `json:"window_evidence_summary"`
+		HostRootModified                bool   `json:"host_root_modified"`
+		PrivilegedContainerRequired     bool   `json:"privileged_container_required"`
+		HostNetworkingRequired          bool   `json:"host_networking_required"`
+		DockerSocketMounted             bool   `json:"docker_socket_mounted"`
+		BroadHostMountRequired          bool   `json:"broad_host_mount_required"`
+		HostMountCount                  int    `json:"host_mount_count"`
 	} `json:"container_payload"`
 	LocalGUIExecutableConfigured         bool   `json:"local_gui_executable_configured"`
 	ExecutableCopied                     bool   `json:"executable_copied"`
@@ -499,6 +502,9 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		EvidenceSource:                       evidenceSource,
 		RecipeBacked:                         recipeBacked,
 		RecipeAppID:                          recipeAppID,
+		ExternalAppImportRecordConsumed:      report.ContainerPayload.ExternalAppImportRecordConsumed,
+		ImportedArtifactDigestVerified:       report.ContainerPayload.ImportedArtifactDigestVerified,
+		ImportedArtifactSHA256:               strings.TrimSpace(report.ContainerPayload.ImportedArtifactSHA256),
 		SmokeStatus:                          status,
 		CompatibilityState:                   compatibilityState,
 		CenterCardState:                      centerCardState,
