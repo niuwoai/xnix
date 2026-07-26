@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc193`.
+The project is currently at `v0.2.640-rc194`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc193`.
 
 ## Current Checkpoint
 
-v0.2.640-rc193 lets Compatibility Center consume the Go-owned known Windows app verified catalog directly. `xnix-runtime-go compatibility-center-preview --known-app-verified-catalog VERIFIED_CATALOG.json` now accepts the safe review-only `known-app-verified-catalog-preview` output, lists verified 7zr and busybox-w32 Runtime catalog entries, exposes their KDE-visible review metadata and `xnix-compat-launch --app <id>` request shape, and still keeps direct launch, desktop-file writes, backend launch, raw output, q4 paths, and host mutation disabled. The q4 remote Go targeted regex now includes the new Compatibility Center catalog-consumption and unsafe-catalog rejection tests so compile-heavy validation remains q4-first.
+v0.2.640-rc194 lets the KDE Center application page consume the same Go-owned known Windows app verified catalog as Compatibility Center. `xnix-runtime-go kde-center-page-preview --known-app-verified-catalog VERIFIED_CATALOG.json` now renders verified 7zr and busybox-w32 catalog cards with q4 matrix status, review-only launcher shape, and closed launch/backend/path/output gates, while rejecting unsafe catalog input. The q4 remote Go targeted regex now includes KDE page verified-catalog consumption and rejection tests so desktop-facing catalog validation remains q4-first.
+
+The previous v0.2.640-rc193 checkpoint lets Compatibility Center consume the Go-owned known Windows app verified catalog directly. `xnix-runtime-go compatibility-center-preview --known-app-verified-catalog VERIFIED_CATALOG.json` now accepts the safe review-only `known-app-verified-catalog-preview` output, lists verified 7zr and busybox-w32 Runtime catalog entries, exposes their KDE-visible review metadata and `xnix-compat-launch --app <id>` request shape, and still keeps direct launch, desktop-file writes, backend launch, raw output, q4 paths, and host mutation disabled. The q4 remote Go targeted regex now includes the new Compatibility Center catalog-consumption and unsafe-catalog rejection tests so compile-heavy validation remains q4-first.
 
 The previous v0.2.640-rc192 checkpoint adds a Go-owned verified catalog for known Windows applications that have real q4 matrix evidence. `xnix-runtime-go known-app-verified-catalog-preview --matrix-evidence MATRIX_EVIDENCE.json` consumes the safe `known-app-matrix-evidence-preview` output and exposes 7zr and busybox-w32 as review-only Runtime catalog entries with verified q4 matrix state, safe `xnix-compat-launch --app <id>` request shape, KDE-visible catalog metadata, and closed launch/write/backend/path/output gates. `scripts/remote_go_test.rb` now includes the matrix evidence and verified catalog tests in its default q4 targeted test regex so small-version Go validation stays q4-first rather than compiling on the macOS host.
 

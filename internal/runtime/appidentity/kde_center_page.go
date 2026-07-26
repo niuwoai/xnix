@@ -29,6 +29,10 @@ type KDECenterPagePreview struct {
 	KnownAppLauncherSessionGateConsumedCount int                                    `json:"known_app_launcher_session_gate_consumed_count"`
 	KnownAppPostReviewDispatchConsumedCount  int                                    `json:"known_app_post_review_dispatch_consumed_count"`
 	KnownAppSessionGateCards                 []KDECenterPageKnownAppSessionGateCard `json:"known_app_session_gate_cards"`
+	KnownAppVerifiedCatalogConsumed          bool                                   `json:"known_app_verified_catalog_consumed"`
+	KnownAppVerifiedCatalogApplicationCount  int                                    `json:"known_app_verified_catalog_application_count"`
+	KnownAppVerifiedCatalogReviewOnly        bool                                   `json:"known_app_verified_catalog_review_only"`
+	KnownAppVerifiedCatalogCards             []KnownAppVerifiedCatalogApplication   `json:"known_app_verified_catalog_cards"`
 	KnownAppMatrixEvidenceCount              int                                    `json:"known_app_matrix_evidence_count"`
 	KnownAppMatrixEvidenceCards              []KDECenterPageKnownAppMatrixCard      `json:"known_app_matrix_evidence_cards"`
 	KnownAppGUIEvidenceCount                 int                                    `json:"known_app_gui_evidence_count"`
@@ -277,6 +281,7 @@ type KDECenterPageOptions struct {
 	ApplicationReadinessPortalOperation string
 	ApplicationReadinessSnapshotReason  string
 	KnownAppSmokeEvidence               []KnownAppSmokeEvidenceSummary
+	KnownAppVerifiedCatalog             *KnownAppVerifiedCatalogPreview
 }
 
 type KDECenterPageExecution struct {
@@ -724,7 +729,8 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	}
 
 	center, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{recipe}, provenance, CompatibilityCenterOptions{
-		KnownAppSmokeEvidence: options.KnownAppSmokeEvidence,
+		KnownAppSmokeEvidence:   options.KnownAppSmokeEvidence,
+		KnownAppVerifiedCatalog: options.KnownAppVerifiedCatalog,
 	})
 	if err != nil {
 		return KDECenterPagePreview{}, err
@@ -832,6 +838,7 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	application := center.Applications[0]
 	navigation := kdeCenterPageNavigation()
 	knownAppSessionGateCards := kdeCenterPageKnownAppSessionGateCards(center.KnownAppSmokeEvidence)
+	knownAppVerifiedCatalogCards := kdeCenterPageKnownAppVerifiedCatalogCards(center.KnownAppVerifiedCatalogApplications)
 	knownAppMatrixCards := kdeCenterPageKnownAppMatrixCards(center.KnownAppSmokeEvidence)
 	knownAppGUICards := kdeCenterPageKnownAppGUICards(center.KnownAppSmokeEvidence)
 	knownAppOwnerControlledGUICount := countOwnerControlledKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
@@ -844,6 +851,9 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	}
 	if len(knownAppSessionGateCards) > 0 {
 		source += "+known-app-session-gate-evidence"
+	}
+	if len(knownAppVerifiedCatalogCards) > 0 {
+		source += "+known-app-verified-catalog"
 	}
 	if len(knownAppMatrixCards) > 0 {
 		source += "+known-app-matrix-evidence"
@@ -900,6 +910,10 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 		KnownAppLauncherSessionGateConsumedCount: center.KnownAppLauncherSessionGateConsumedCount,
 		KnownAppPostReviewDispatchConsumedCount:  center.KnownAppPostReviewDispatchConsumedCount,
 		KnownAppSessionGateCards:                 knownAppSessionGateCards,
+		KnownAppVerifiedCatalogConsumed:          center.KnownAppVerifiedCatalogConsumed,
+		KnownAppVerifiedCatalogApplicationCount:  len(knownAppVerifiedCatalogCards),
+		KnownAppVerifiedCatalogReviewOnly:        center.KnownAppVerifiedCatalogReviewOnly,
+		KnownAppVerifiedCatalogCards:             knownAppVerifiedCatalogCards,
 		KnownAppMatrixEvidenceCount:              len(knownAppMatrixCards),
 		KnownAppMatrixEvidenceCards:              knownAppMatrixCards,
 		KnownAppGUIEvidenceCount:                 len(knownAppGUICards),
@@ -1321,6 +1335,12 @@ func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) [
 			Summary:                                           item.Summary,
 		})
 	}
+	return cards
+}
+
+func kdeCenterPageKnownAppVerifiedCatalogCards(applications []KnownAppVerifiedCatalogApplication) []KnownAppVerifiedCatalogApplication {
+	cards := make([]KnownAppVerifiedCatalogApplication, len(applications))
+	copy(cards, applications)
 	return cards
 }
 

@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc194] - 2026-07-27
+
+### Added
+
+- Added KDE Center page consumption for Go-owned known Windows app verified catalogs through `--known-app-verified-catalog`.
+- Added KDE page verified catalog cards for review-only 7zr and busybox-w32 entries and CLI coverage for safe consumption plus unsafe catalog rejection.
+
+### Changed
+
+- Expanded the q4 remote Go test default regex to include KDE Center page verified catalog tests.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc194`.
+
 ## [0.2.640-rc193] - 2026-07-27
 
 ### Added

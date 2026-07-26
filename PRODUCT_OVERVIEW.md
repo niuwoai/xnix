@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc193
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc194
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc194 checkpoint carries the verified known Windows app catalog into the KDE Center page read model. `kde-center-page-preview --known-app-verified-catalog VERIFIED_CATALOG.json` consumes the same safe Go-owned catalog that Compatibility Center accepts, adds desktop-visible verified catalog cards for 7zr and busybox-w32, and preserves review-only `xnix-compat-launch --app <id>` request shapes without enabling direct launch, backend start, desktop-file writes, raw output, q4 paths, or host mutation. KDE Center now rejects unsafe catalog input at the same Runtime validation boundary, moving the real Windows app lane from isolated evidence toward discoverable desktop pages.
 
 The v0.2.640-rc193 checkpoint connects the verified known Windows app catalog to Compatibility Center. `compatibility-center-preview --known-app-verified-catalog VERIFIED_CATALOG.json` consumes the safe Go-owned `known-app-verified-catalog-preview` output, validates that the catalog remains review-only, and exposes verified 7zr and busybox-w32 entries to the desktop read model with their KDE-visible metadata and `xnix-compat-launch --app <id>` request shape. It rejects unsafe catalogs and keeps direct launch, backend start, desktop-file writes, raw output, q4 paths, and host mutation disabled. Targeted Go build/test validation stays on q4 by default so the macOS host remains limited to lightweight Ruby and layout checks.
 

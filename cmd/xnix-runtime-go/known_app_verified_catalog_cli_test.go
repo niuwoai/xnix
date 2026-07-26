@@ -227,6 +227,105 @@ func TestCompatibilityCenterPreviewCommandRejectsUnsafeKnownAppVerifiedCatalog(t
 	}
 }
 
+func TestKDECenterPagePreviewCommandConsumesKnownAppVerifiedCatalog(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+
+	var catalogOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-preview", "--matrix-evidence", matrixEvidencePath}, &catalogOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, catalogOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile verified catalog returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"kde-center-page-preview", "--registry", registryPath, "--app", app, "--decision", "approved", "--known-app-verified-catalog", catalogPath}, &output)
+	if err != nil {
+		t.Fatalf("kde-center-page-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if !strings.Contains(payload["source"].(string), "known-app-verified-catalog") ||
+		payload["known_app_verified_catalog_consumed"] != true ||
+		payload["known_app_verified_catalog_application_count"] != float64(2) ||
+		payload["known_app_verified_catalog_review_only"] != true ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE verified catalog summary: %#v", payload)
+	}
+	cards := payload["known_app_verified_catalog_cards"].([]any)
+	if len(cards) != 2 {
+		t.Fatalf("expected two KDE verified catalog cards, got %#v", cards)
+	}
+	busybox := cards[1].(map[string]any)
+	launchCommand := busybox["launch_request_command"].([]any)
+	if busybox["app_id"] != "busybox-w32" ||
+		busybox["verification_state"] != "verified-real-q4-matrix-run" ||
+		busybox["desktop_catalog_state"] != "visible-review-only" ||
+		busybox["launcher_surface"] != "xnix-compat-launch" ||
+		launchCommand[0] != "xnix-compat-launch" ||
+		launchCommand[1] != "--app" ||
+		launchCommand[2] != "busybox-w32" ||
+		busybox["operator_review_required"] != true ||
+		busybox["qemu_executed"] != true ||
+		busybox["wine_executed"] != true ||
+		busybox["direct_launch_enabled"] != false ||
+		busybox["backend_launch_enabled"] != false ||
+		busybox["backend_details_exposed"] != false ||
+		busybox["remote_path_exposed"] != false ||
+		busybox["host_root_modified"] != false {
+		t.Fatalf("unexpected BusyBox KDE catalog card: %#v", busybox)
+	}
+	if strings.Contains(output.String(), catalogPath) ||
+		strings.Contains(output.String(), matrixEvidencePath) ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") {
+		t.Fatalf("KDE Center page exposed verified catalog paths: %s", output.String())
+	}
+}
+
+func TestKDECenterPagePreviewCommandRejectsUnsafeKnownAppVerifiedCatalog(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+
+	var catalogOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-preview", "--matrix-evidence", matrixEvidencePath}, &catalogOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	var catalog appidentity.KnownAppVerifiedCatalogPreview
+	if err := json.Unmarshal(catalogOutput.Bytes(), &catalog); err != nil {
+		t.Fatalf("Unmarshal verified catalog returned error: %v", err)
+	}
+	catalog.Applications[0].DirectLaunchEnabled = true
+	content, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal verified catalog returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, content, 0o600); err != nil {
+		t.Fatalf("WriteFile verified catalog returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{"kde-center-page-preview", "--registry", registryPath, "--app", app, "--decision", "approved", "--known-app-verified-catalog", catalogPath}, &output)
+	if err == nil || !strings.Contains(err.Error(), "safe for review") {
+		t.Fatalf("expected unsafe KDE verified catalog error, got %v", err)
+	}
+}
+
 func knownAppVerifiedCatalogCLIFixture(t *testing.T) []byte {
 	t.Helper()
 	apps := []appidentity.KnownAppMatrixEvidenceApp{

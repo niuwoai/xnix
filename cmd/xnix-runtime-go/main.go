@@ -2822,6 +2822,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	knownAppEvidenceJSON := flags.String("known-app-evidence-json", "", "Runtime-projected known Windows app evidence JSON")
 	knownAppEvidenceFile := flags.String("known-app-evidence-file", "", "file containing Runtime-projected known Windows app evidence JSON")
 	knownAppMatrixReport := flags.String("known-app-matrix-report", "", "aggregate known Windows app matrix evidence report JSON")
+	knownAppVerifiedCatalog := flags.String("known-app-verified-catalog", "", "Go-owned verified known Windows app catalog JSON")
 	knownAppGUISmokeReport := flags.String("known-app-gui-smoke-report", "", "executed Wine guest GUI smoke evidence report JSON")
 	knownAppGUISmokeApp := flags.String("known-app-gui-smoke-app", "", "known Windows GUI app id for a GUI smoke report")
 	knownAppGUISmokeName := flags.String("known-app-gui-smoke-name", "", "known Windows GUI app display name for a GUI smoke report")
@@ -2931,6 +2932,10 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
 	}
 	knownAppSmokeEvidence := []appidentity.KnownAppSmokeEvidenceSummary(nil)
+	verifiedCatalog, err := loadKnownAppVerifiedCatalogForCenter("kde-center-page-preview", *knownAppVerifiedCatalog)
+	if err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+	}
 	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter("kde-center-page-preview", *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppGUISmokeReport, *knownAppGUISmokeApp, *knownAppGUISmokeName, *knownAppGUISmokeVersion)
 	if err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
@@ -2979,6 +2984,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 		ApplicationReadinessPortalOperation: *readinessPortalOperation,
 		ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
 		KnownAppSmokeEvidence:               knownAppSmokeEvidence,
+		KnownAppVerifiedCatalog:             verifiedCatalog,
 	}, nil
 }
 
