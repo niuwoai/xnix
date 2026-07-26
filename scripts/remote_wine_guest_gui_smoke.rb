@@ -63,6 +63,10 @@ options = {
   evidence_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-evidence-#{VERSION}.json"),
   kde_page_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_KDE_PAGE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-kde-page-#{VERSION}.json"),
   kde_action_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_KDE_ACTION", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-kde-action-#{VERSION}.json"),
+  execute_result_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_EXECUTE_RESULT", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-execute-result-#{VERSION}.json"),
+  real_run_receipt_summary_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REAL_RUN_RECEIPT_SUMMARY", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-real-run-receipt-summary-#{VERSION}.json"),
+  real_run_receipt_summary_center_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REAL_RUN_RECEIPT_CENTER", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-real-run-receipt-center-#{VERSION}.json"),
+  real_run_receipt_summary_kde_page_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REAL_RUN_RECEIPT_KDE_PAGE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-real-run-receipt-kde-page-#{VERSION}.json"),
   known_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_KNOWN_APP_ID", ""),
   file_open_entrypoint: ENV.fetch("XNIX_WINE_GUI_REMOTE_FILE_OPEN_ENTRYPOINT", "0") == "1",
   evidence_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_ID", "org.xnix.apps.mines"),
@@ -97,6 +101,10 @@ OptionParser.new do |parser|
   parser.on("--evidence-output PATH", "Remote Runtime GUI evidence output path under /home/xnix*.") { |value| options[:evidence_output] = value }
   parser.on("--kde-page-output PATH", "Remote KDE center page JSON output path under /home/xnix*.") { |value| options[:kde_page_output] = value }
   parser.on("--kde-action-output PATH", "Remote KDE controlled-launch action JSON output path under /home/xnix*.") { |value| options[:kde_action_output] = value }
+  parser.on("--execute-result-output PATH", "Remote execute-result JSON output path under /home/xnix*.") { |value| options[:execute_result_output] = value }
+  parser.on("--real-run-receipt-summary-output PATH", "Remote real Windows app run receipt summary JSON output path under /home/xnix*.") { |value| options[:real_run_receipt_summary_output] = value }
+  parser.on("--real-run-receipt-center-output PATH", "Remote Compatibility Center projection output for the real run receipt under /home/xnix*.") { |value| options[:real_run_receipt_summary_center_output] = value }
+  parser.on("--real-run-receipt-kde-page-output PATH", "Remote KDE Center projection output for the real run receipt under /home/xnix*.") { |value| options[:real_run_receipt_summary_kde_page_output] = value }
   parser.on("--known-app-id ID", "Known Windows GUI app id resolved by the remote Go Runtime.") { |value| options[:known_app_id] = value }
   parser.on("--file-open-entrypoint", "Route owner-controlled file-open runs through xnix-compat-open --execute before xnix-compat-launch.") { options[:file_open_entrypoint] = true }
   parser.on("--evidence-app-id ID", "Application id for the Runtime GUI evidence projection.") { |value| options[:evidence_app_id] = value }
@@ -213,6 +221,10 @@ report_output = ensure_remote_xnix_path!("report output", options.fetch(:report_
 evidence_output = ensure_remote_xnix_path!("evidence output", options.fetch(:evidence_output))
 kde_page_output = ensure_remote_xnix_path!("KDE page output", options.fetch(:kde_page_output))
 kde_action_output = ensure_remote_xnix_path!("KDE action output", options.fetch(:kde_action_output))
+execute_result_output = ensure_remote_xnix_path!("execute result output", options.fetch(:execute_result_output))
+real_run_receipt_summary_output = ensure_remote_xnix_path!("real run receipt summary output", options.fetch(:real_run_receipt_summary_output))
+real_run_receipt_summary_center_output = ensure_remote_xnix_path!("real run receipt center output", options.fetch(:real_run_receipt_summary_center_output))
+real_run_receipt_summary_kde_page_output = ensure_remote_xnix_path!("real run receipt KDE page output", options.fetch(:real_run_receipt_summary_kde_page_output))
 state_root = ensure_remote_xnix_path!("state root", options.fetch(:state_root))
 sample_file_argument_value = options.fetch(:sample_file_argument).strip
 abort "use either --remote-file-argument or --sample-file-argument, not both" if !options.fetch(:remote_file_argument).strip.empty? && !sample_file_argument_value.empty?
@@ -229,6 +241,10 @@ remote_launcher_bin = "#{remote_build_root}/bin/xnix-compat-launch"
 remote_file_open_bin = "#{remote_build_root}/bin/xnix-compat-open"
 remote_known_app_cache_root = "#{remote_build_root}/known-winapps"
 remote_go_dir = Pathname.new(options.fetch(:remote_go)).dirname.to_s
+real_run_receipt_summary_planned = launch_mode == "owner-controlled-launch" &&
+                                   options.fetch(:file_open_entrypoint) &&
+                                   !remote_file_argument.empty? &&
+                                   !options.fetch(:window_match).strip.empty?
 
 plan = {
   "schema_version" => "xnix.scripts.remote_wine_guest_gui_smoke.v1",
@@ -266,8 +282,13 @@ plan = {
   "evidence_preview_planned" => true,
   "kde_page_output" => kde_page_output,
   "kde_action_output" => kde_action_output,
+  "execute_result_output" => execute_result_output,
   "kde_center_page_preview_planned" => true,
   "kde_controlled_launch_action_preview_planned" => launch_mode == "owner-controlled-launch",
+  "real_run_receipt_summary_preview_planned" => real_run_receipt_summary_planned,
+  "real_run_receipt_summary_output" => real_run_receipt_summary_output,
+  "real_run_receipt_summary_center_output" => real_run_receipt_summary_center_output,
+  "real_run_receipt_summary_kde_page_output" => real_run_receipt_summary_kde_page_output,
   "kde_action_state_root" => "#{state_root}/owner-controlled-launch-state",
   "known_app_id" => options.fetch(:known_app_id),
   "known_app_selection_planned" => !options.fetch(:known_app_id).strip.empty?,
@@ -509,6 +530,21 @@ summary_reader = <<~RUBY
     "remote_owner_bin" => ARGV.fetch(7),
     "remote_launcher_bin" => ARGV.fetch(8),
     "remote_file_open_bin" => ARGV.fetch(9),
+    "execute_result_output" => ARGV.fetch(10),
+    "execute_result_output_written" => true,
+    "real_run_receipt_summary_preview_planned" => ARGV.fetch(11) == "true",
+    "real_run_receipt_summary_output" => ARGV.fetch(12),
+    "real_run_receipt_summary_output_written" => false,
+    "real_run_receipt_summary_ready" => false,
+    "real_run_receipt_summary_file_open_verified" => false,
+    "real_run_receipt_summary_center_output" => ARGV.fetch(13),
+    "real_run_receipt_summary_center_output_written" => false,
+    "real_run_receipt_summary_center_known_app_smoke_evidence_count" => 0,
+    "real_run_receipt_summary_kde_page_output" => ARGV.fetch(14),
+    "real_run_receipt_summary_kde_page_output_written" => false,
+    "real_run_receipt_summary_kde_page_known_app_gui_evidence_count" => 0,
+    "real_run_receipt_summary_kde_page_owner_file_open_verified_count" => 0,
+    "real_run_receipt_summary_kde_page_owner_file_open_entrypoint_count" => 0,
     "report_output" => ARGV.fetch(0),
     "evidence_output" => ARGV.fetch(1),
     "kde_page_output" => ARGV.fetch(2),
@@ -585,6 +621,7 @@ summary_reader = <<~RUBY
     "docker_socket_mounted" => smoke.fetch("docker_socket_mounted"),
     "broad_host_mount_required" => smoke.fetch("broad_host_mount_required")
   }
+  File.write(ARGV.fetch(10), JSON.pretty_generate(summary) + "\\n")
   puts JSON.pretty_generate(summary)
 RUBY
 summary_args = [
@@ -601,7 +638,12 @@ summary_args = [
   remote_runtime_bin,
   remote_owner_bin,
   remote_launcher_bin,
-  remote_file_open_bin
+  remote_file_open_bin,
+  execute_result_output,
+  real_run_receipt_summary_planned.to_s,
+  real_run_receipt_summary_output,
+  real_run_receipt_summary_center_output,
+  real_run_receipt_summary_kde_page_output
 ]
 summary_stdout, summary_stderr, summary_status = run_shell(
   options.fetch(:local_shell),
@@ -611,4 +653,91 @@ summary_stdout, summary_stderr, summary_status = run_shell(
 warn summary_stderr unless summary_stderr.empty?
 exit 1 unless summary_status.zero?
 
-puts summary_stdout
+final_summary_stdout = summary_stdout
+
+if real_run_receipt_summary_planned
+  receipt_summary_args = [
+    remote_runtime_bin,
+    "real-winapp-run-receipt-summary-preview",
+    "--remote-smoke-report", execute_result_output
+  ]
+  receipt_summary_stdout, receipt_summary_stderr, receipt_summary_status = run_shell(
+    options.fetch(:local_shell),
+    shell_join(ssh_command(remote_host, remote_json_command(remote_source_root, real_run_receipt_summary_output, receipt_summary_args))),
+    timeout_seconds: options.fetch(:remote_timeout_seconds)
+  )
+  warn receipt_summary_stdout unless receipt_summary_stdout.empty?
+  warn receipt_summary_stderr unless receipt_summary_stderr.empty?
+  exit 1 unless receipt_summary_status.zero?
+
+  receipt_center_args = [
+    remote_runtime_bin,
+    "compatibility-center-preview",
+    "--registry", "#{remote_source_root}/runtime/recipes/registry.json",
+    "--known-app-evidence-file", real_run_receipt_summary_output
+  ]
+  receipt_center_stdout, receipt_center_stderr, receipt_center_status = run_shell(
+    options.fetch(:local_shell),
+    shell_join(ssh_command(remote_host, remote_json_command(remote_source_root, real_run_receipt_summary_center_output, receipt_center_args))),
+    timeout_seconds: options.fetch(:remote_timeout_seconds)
+  )
+  warn receipt_center_stdout unless receipt_center_stdout.empty?
+  warn receipt_center_stderr unless receipt_center_stderr.empty?
+  exit 1 unless receipt_center_status.zero?
+
+  receipt_kde_page_args = [
+    remote_runtime_bin,
+    "kde-center-page-preview",
+    "--registry", "#{remote_source_root}/runtime/recipes/registry.json",
+    "--app", options.fetch(:evidence_app_id),
+    "--decision", "approved",
+    "--known-app-evidence-file", real_run_receipt_summary_output
+  ]
+  receipt_kde_page_stdout, receipt_kde_page_stderr, receipt_kde_page_status = run_shell(
+    options.fetch(:local_shell),
+    shell_join(ssh_command(remote_host, remote_json_command(remote_source_root, real_run_receipt_summary_kde_page_output, receipt_kde_page_args))),
+    timeout_seconds: options.fetch(:remote_timeout_seconds)
+  )
+  warn receipt_kde_page_stdout unless receipt_kde_page_stdout.empty?
+  warn receipt_kde_page_stderr unless receipt_kde_page_stderr.empty?
+  exit 1 unless receipt_kde_page_status.zero?
+
+  final_summary_reader = <<~RUBY
+    summary = JSON.parse(File.read(ARGV.fetch(0)))
+    receipt = JSON.parse(File.read(ARGV.fetch(1)))
+    center = JSON.parse(File.read(ARGV.fetch(2)))
+    kde_page = JSON.parse(File.read(ARGV.fetch(3)))
+    summary.merge!(
+      "real_run_receipt_summary_output_written" => File.exist?(ARGV.fetch(1)),
+      "real_run_receipt_summary_ready" => receipt.fetch("receipt_ready"),
+      "real_run_receipt_summary_file_open_verified" => receipt.fetch("file_open_verified"),
+      "real_run_receipt_summary_center_output_written" => File.exist?(ARGV.fetch(2)),
+      "real_run_receipt_summary_center_known_app_smoke_evidence_count" => center.fetch("known_app_smoke_evidence_count"),
+      "real_run_receipt_summary_kde_page_output_written" => File.exist?(ARGV.fetch(3)),
+      "real_run_receipt_summary_kde_page_known_app_gui_evidence_count" => kde_page.fetch("known_app_gui_evidence_count"),
+      "real_run_receipt_summary_kde_page_owner_file_open_verified_count" => kde_page.fetch("known_app_owner_file_open_verified_count"),
+      "real_run_receipt_summary_kde_page_owner_file_open_entrypoint_count" => kde_page.fetch("known_app_owner_file_open_entrypoint_count")
+    )
+    File.write(ARGV.fetch(0), JSON.pretty_generate(summary) + "\\n")
+    puts JSON.pretty_generate(summary)
+  RUBY
+  final_summary_args = [
+    "ruby",
+    "-rjson",
+    "-e",
+    final_summary_reader,
+    execute_result_output,
+    real_run_receipt_summary_output,
+    real_run_receipt_summary_center_output,
+    real_run_receipt_summary_kde_page_output
+  ]
+  final_summary_stdout, final_summary_stderr, final_summary_status = run_shell(
+    options.fetch(:local_shell),
+    shell_join(ssh_command(remote_host, ["set -eu", shell_join(final_summary_args)].join("\n"))),
+    timeout_seconds: options.fetch(:remote_timeout_seconds)
+  )
+  warn final_summary_stderr unless final_summary_stderr.empty?
+  exit 1 unless final_summary_status.zero?
+end
+
+puts final_summary_stdout

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc174
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc175
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc175 checkpoint makes the q4 real GUI smoke pipeline produce the desktop-ready real run receipt automatically for the owner-controlled file-open path. `scripts/remote_wine_guest_gui_smoke.rb --execute --launch-mode owner-controlled-launch --file-open-entrypoint --sample-file-argument ... --window-match ...` now persists the execute-result JSON, invokes the Go Runtime `real-winapp-run-receipt-summary-preview`, then feeds the resulting summary through `compatibility-center-preview` and `kde-center-page-preview`. The current q4 Sample Notepad file-open run passed with the Windows GUI window observed, one copied and translated file argument, `owner_file_open_entrypoint_invoked=true`, `real_run_receipt_summary_ready=true`, one Compatibility Center known-app evidence item, one KDE known-app GUI card, and one KDE owner file-open entrypoint card. Direct GUI smoke runs do not claim this receipt unless the owner-controlled file-open evidence required by the Go Runtime is present.
 
 The v0.2.640-rc174 checkpoint wires the q4 real Windows app run receipt summary into the desktop consumption path. `compatibility-center-preview --known-app-evidence-file SUMMARY.json` and `kde-center-page-preview --known-app-evidence-file SUMMARY.json` now accept the Go Runtime `real-winapp-run-receipt-summary-preview` output, validate its ready passed run, and normalize it into safe `known_app_smoke_evidence`. Compatibility Center and KDE Center pages can therefore show Sample Notepad as a real Runtime-owner controlled GUI file-open run with observed-window evidence, copied file arguments, guest path translation, and desktop file-open entrypoint evidence while keeping q4 hosts, report paths, raw launcher output, executable names, backend command details, direct launch, backend launch, and host-root mutation closed.
 

@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc175] - 2026-07-26
+
+### Added
+
+- Added q4 remote GUI smoke execute-result persistence plus automatic Go Runtime real run receipt summary generation for owner-controlled file-open entrypoint runs with file and window-match evidence.
+- Added automatic Compatibility Center and KDE Center page projections from the generated real run receipt summary, with execute-result counts proving desktop consumption.
+- Added Ruby script and layout coverage for the new receipt summary outputs while keeping direct GUI smokes from claiming file-open receipt readiness.
+- Added q4 validation evidence from a real Sample Notepad owner-controlled file-open GUI smoke proving the receipt summary, Compatibility Center projection, and KDE page projection all pass in one remote flow.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc175`.
+
 ## [0.2.640-rc174] - 2026-07-26
 
 ### Added

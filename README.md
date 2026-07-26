@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc174`.
+The project is currently at `v0.2.640-rc175`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc174`.
 
 ## Current Checkpoint
 
-v0.2.640-rc174 lets Compatibility Center and KDE Center page previews consume the Go Runtime real Windows app run receipt summary through the existing `--known-app-evidence-file` path. A q4-generated `real-winapp-run-receipt-summary-preview` payload now normalizes into safe `known_app_smoke_evidence`, preserving observed-window, Runtime-owner file-open, file argument copy, guest path translation, and desktop entrypoint evidence without exposing q4 paths, report locations, raw launcher output, executable names, or backend command details. This turns the real Sample Notepad file-open run from a standalone receipt into a desktop-visible compatibility card.
+v0.2.640-rc175 wires the real Windows app run receipt into the q4 GUI smoke pipeline itself. When `scripts/remote_wine_guest_gui_smoke.rb --execute` runs the owner-controlled file-open entrypoint path with a file argument and window match, it now persists the execute-result JSON, calls the Go Runtime `real-winapp-run-receipt-summary-preview`, and projects that summary back through `compatibility-center-preview` and `kde-center-page-preview`. The current q4 Sample Notepad file-open run passed with `real_run_receipt_summary_ready=true`, `real_run_receipt_summary_center_known_app_smoke_evidence_count=1`, `real_run_receipt_summary_kde_page_known_app_gui_evidence_count=1`, and `real_run_receipt_summary_kde_page_owner_file_open_entrypoint_count=1`, so the real run receipt and its KDE/Compatibility Center cards now come from one remote flow while ordinary direct GUI smokes remain unchanged.
+
+The previous v0.2.640-rc174 checkpoint let Compatibility Center and KDE Center page previews consume the Go Runtime real Windows app run receipt summary through the existing `--known-app-evidence-file` path. A q4-generated `real-winapp-run-receipt-summary-preview` payload now normalizes into safe `known_app_smoke_evidence`, preserving observed-window, Runtime-owner file-open, file argument copy, guest path translation, and desktop entrypoint evidence without exposing q4 paths, report locations, raw launcher output, executable names, or backend command details. This turns the real Sample Notepad file-open run from a standalone receipt into a desktop-visible compatibility card.
 
 The previous v0.2.640-rc173 checkpoint added the Go Runtime `real-winapp-run-receipt-summary-preview` command. It consumes a passed q4 remote Wine guest GUI smoke execute-result and emits a compact receipt summary proving that a known Windows GUI app really ran, an X window was observed, owner-controlled file-open evidence was verified, Runtime/KDE evidence was consumed, and unsafe host/container gates stayed closed. The summary hides report paths, q4 connection details, raw launcher output, raw window titles, executable names, and backend command details, giving future KDE and AI surfaces a safer "this app actually ran" signal.
 

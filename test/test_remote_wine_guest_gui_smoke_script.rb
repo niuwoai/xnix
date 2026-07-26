@@ -54,12 +54,24 @@ assert(payload["evidence_output"].start_with?("/home/xnix-"), "remote evidence o
 assert(payload["evidence_preview_planned"] == true, "remote GUI smoke must project Runtime GUI evidence after a pass")
 assert(payload["kde_page_output"].start_with?("/home/xnix-"), "remote KDE page output must stay under /home/xnix-*")
 assert(payload["kde_action_output"].start_with?("/home/xnix-"), "remote KDE action output must stay under /home/xnix-*")
+assert(payload["execute_result_output"].start_with?("/home/xnix-"), "remote execute-result output must stay under /home/xnix-*")
 assert(payload["kde_center_page_preview_planned"] == true, "remote GUI smoke must plan KDE center page evidence after a pass")
 assert(payload["kde_controlled_launch_action_preview_planned"] == false, "remote GUI smoke direct mode must not plan a controlled-launch action preview")
+assert(payload["real_run_receipt_summary_preview_planned"] == false, "remote GUI smoke direct mode must not plan a file-open receipt summary")
+assert(payload["real_run_receipt_summary_output"].start_with?("/home/xnix-"), "remote real run receipt summary output must stay under /home/xnix-*")
+assert(payload["real_run_receipt_summary_center_output"].start_with?("/home/xnix-"), "remote real run receipt Center output must stay under /home/xnix-*")
+assert(payload["real_run_receipt_summary_kde_page_output"].start_with?("/home/xnix-"), "remote real run receipt KDE page output must stay under /home/xnix-*")
 assert(script.read.include?("xnix.scripts.remote_wine_guest_gui_smoke.execute_result.v1"), "remote GUI smoke must expose an execute-result summary schema")
 assert(script.read.include?("remote_build_completed"), "remote GUI smoke execute result must expose remote build completion")
+assert(script.read.include?("execute_result_output_written"), "remote GUI smoke execute result must persist the execute-result summary")
 assert(script.read.include?("evidence_output_written"), "remote GUI smoke execute result must expose Runtime evidence output")
 assert(script.read.include?("kde_page_output_written"), "remote GUI smoke execute result must expose KDE page output")
+assert(script.read.include?("real-winapp-run-receipt-summary-preview"), "remote GUI smoke must call the Go real run receipt summary preview")
+assert(script.read.include?("real_run_receipt_summary_output_written"), "remote GUI smoke execute result must expose receipt summary output")
+assert(script.read.include?("real_run_receipt_summary_ready"), "remote GUI smoke execute result must expose receipt summary readiness")
+assert(script.read.include?("real_run_receipt_summary_center_known_app_smoke_evidence_count"), "remote GUI smoke execute result must expose receipt summary Compatibility Center consumption")
+assert(script.read.include?("real_run_receipt_summary_kde_page_known_app_gui_evidence_count"), "remote GUI smoke execute result must expose receipt summary KDE page GUI consumption")
+assert(script.read.include?("real_run_receipt_summary_kde_page_owner_file_open_entrypoint_count"), "remote GUI smoke execute result must expose receipt summary KDE file-open entrypoint consumption")
 assert(script.read.include?("kde_page_known_app_gui_evidence_count"), "remote GUI smoke execute result must expose KDE GUI evidence consumption")
 assert(script.read.include?("runtime_evidence_report_consumed"), "remote GUI smoke execute result must expose Runtime report consumption")
 assert(script.read.include?("runtime_evidence_owner_file_open_verified"), "remote GUI smoke execute result must expose Runtime owner file-open evidence")
@@ -129,6 +141,26 @@ end
 assert(file_open_owner_payload["owner_file_open_environment_values_exposed"] == false, "remote GUI smoke file-open owner plan must not expose owner file-open environment values")
 assert(file_open_owner_payload["remote_command"].include?("--file-open-bin"), "remote GUI smoke must forward the file-open entrypoint binary")
 assert(file_open_owner_payload["remote_command"].include?("--file-open-registry"), "remote GUI smoke must forward the file-open registry")
+assert(file_open_owner_payload["real_run_receipt_summary_preview_planned"] == false, "remote GUI smoke file-open owner plan must not plan a receipt summary without file and window evidence")
+
+file_open_receipt_stdout, file_open_receipt_stderr, file_open_receipt_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--launch-mode", "owner-controlled-launch",
+  "--file-open-entrypoint",
+  "--known-app-id", "org.xnix.sample.notepad",
+  "--sample-file-argument", "sample-document.txt",
+  "--window-match", "sample-document.txt",
+  "--evidence-app-id", "org.xnix.sample.notepad",
+  "--evidence-display-name", "Sample Notepad",
+  chdir: project_root.to_s
+)
+assert(file_open_receipt_status.success?, "remote GUI smoke file-open receipt plan must succeed: #{file_open_receipt_stderr}")
+file_open_receipt_payload = JSON.parse(file_open_receipt_stdout)
+assert(file_open_receipt_payload["real_run_receipt_summary_preview_planned"] == true, "remote GUI smoke file-open receipt plan must schedule the Go receipt summary")
+assert(file_open_receipt_payload["execute_result_output"].end_with?("/wine-gui-execute-result-#{file_open_receipt_payload.fetch("version")}.json"), "remote GUI smoke file-open receipt plan must expose execute-result output")
+assert(file_open_receipt_payload["real_run_receipt_summary_output"].end_with?("/wine-gui-real-run-receipt-summary-#{file_open_receipt_payload.fetch("version")}.json"), "remote GUI smoke file-open receipt plan must expose receipt summary output")
+assert(file_open_receipt_payload["real_run_receipt_summary_center_output"].end_with?("/wine-gui-real-run-receipt-center-#{file_open_receipt_payload.fetch("version")}.json"), "remote GUI smoke file-open receipt plan must expose receipt Center output")
+assert(file_open_receipt_payload["real_run_receipt_summary_kde_page_output"].end_with?("/wine-gui-real-run-receipt-kde-page-#{file_open_receipt_payload.fetch("version")}.json"), "remote GUI smoke file-open receipt plan must expose receipt KDE page output")
 
 bad_launch_mode_stdout, bad_launch_mode_stderr, bad_launch_mode_status = Open3.capture3(
   "ruby", script.to_s,
