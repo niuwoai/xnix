@@ -99,6 +99,81 @@ func TestPreviewKnownAppVerifiedCatalogRejectsIncompleteMatrixEvidence(t *testin
 	}
 }
 
+func TestPreviewKnownAppVerifiedCatalogRunPlanSelectsQ4RunnableApp(t *testing.T) {
+	catalog, err := PreviewKnownAppVerifiedCatalogJSON(knownAppVerifiedCatalogMatrixEvidenceFixture(t))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogJSON returned error: %v", err)
+	}
+	content, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal catalog returned error: %v", err)
+	}
+
+	preview, err := PreviewKnownAppVerifiedCatalogRunPlanJSON(content, "busybox-w32")
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogRunPlanJSON returned error: %v", err)
+	}
+	if preview.SchemaVersion != KnownAppVerifiedCatalogRunPlanSchemaVersion ||
+		preview.RequestType != KnownAppVerifiedCatalogRunPlanRequestType ||
+		preview.Source != "known-app-verified-catalog+q4-run-plan" ||
+		preview.RuntimeMethod != "PlanKnownVerifiedApplicationRun" ||
+		preview.ReadMethod != "GetKnownVerifiedApplicationRunPlan" ||
+		!preview.VerifiedCatalogConsumed ||
+		preview.RequestedAppID != "busybox-w32" ||
+		preview.AppID != "busybox-w32" ||
+		preview.VerificationState != "verified-real-q4-matrix-run" ||
+		preview.DesktopCatalogState != "visible-review-only" {
+		t.Fatalf("unexpected run plan schema: %#v", preview)
+	}
+	if strings.Join(preview.LaunchRequestCommand, " ") != "xnix-compat-launch --app busybox-w32" ||
+		strings.Join(preview.RemoteSmokeCommand, " ") != "ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app busybox-w32" ||
+		preview.RemoteSmokeRequestType != "remote-known-winapp-guest-wine-smoke" {
+		t.Fatalf("unexpected run commands: %#v", preview)
+	}
+	if !preview.Q4ExecutionRequired ||
+		!preview.Q4ExecutionPlanned ||
+		preview.Q4ExecutionStarted ||
+		!preview.ReviewOnly ||
+		!preview.OperatorReviewRequired ||
+		!preview.RuntimeOwned ||
+		!preview.GoRuntimeBacked ||
+		preview.KDEPolicyOwner ||
+		preview.DirectLaunchEnabled ||
+		preview.LaunchEnabled ||
+		preview.ExecutionStarted ||
+		preview.BackendLaunchEnabled ||
+		preview.DesktopFilesWritten ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed ||
+		preview.RawOutputExposed ||
+		preview.RemotePathExposed ||
+		preview.PrivilegedContainerRequired ||
+		preview.HostNetworkingRequired ||
+		preview.DockerSocketMounted ||
+		preview.BroadHostMountRequired ||
+		preview.HostCompilationRequired ||
+		!preview.HostCompilationAvoided ||
+		!preview.TargetedRemoteVerificationReady {
+		t.Fatalf("unexpected run plan safety flags: %#v", preview)
+	}
+}
+
+func TestPreviewKnownAppVerifiedCatalogRunPlanRejectsUnknownApp(t *testing.T) {
+	catalog, err := PreviewKnownAppVerifiedCatalogJSON(knownAppVerifiedCatalogMatrixEvidenceFixture(t))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogJSON returned error: %v", err)
+	}
+	content, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal catalog returned error: %v", err)
+	}
+
+	_, err = PreviewKnownAppVerifiedCatalogRunPlanJSON(content, "missing-app")
+	if err == nil || !strings.Contains(err.Error(), "missing-app") {
+		t.Fatalf("expected unknown app error, got %v", err)
+	}
+}
+
 func knownAppVerifiedCatalogMatrixEvidenceFixture(t *testing.T) []byte {
 	t.Helper()
 	apps := []KnownAppMatrixEvidenceApp{

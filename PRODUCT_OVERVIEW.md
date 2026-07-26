@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc194
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc195
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc195 checkpoint adds a Go-owned bridge from verified catalog discovery to real q4 execution. `known-app-verified-catalog-run-plan-preview --verified-catalog VERIFIED_CATALOG.json --app APP_ID` consumes the safe Runtime verified catalog, selects a verified app such as busybox-w32, exposes the review-only `xnix-compat-launch --app <id>` request shape, and produces the operator-facing q4 harness command for `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app <id>`. The preview itself does not execute, launch, write desktop files, expose q4 paths, expose raw output, or compile on the host; it gives the desktop and operator flow a Go-owned handoff from catalog card to actual q4 Windows app run. rc195 validation used that path to run busybox-w32 through the remote QEMU/Wine known-app smoke on q4.
 
 The v0.2.640-rc194 checkpoint carries the verified known Windows app catalog into the KDE Center page read model. `kde-center-page-preview --known-app-verified-catalog VERIFIED_CATALOG.json` consumes the same safe Go-owned catalog that Compatibility Center accepts, adds desktop-visible verified catalog cards for 7zr and busybox-w32, and preserves review-only `xnix-compat-launch --app <id>` request shapes without enabling direct launch, backend start, desktop-file writes, raw output, q4 paths, or host mutation. KDE Center now rejects unsafe catalog input at the same Runtime validation boundary, moving the real Windows app lane from isolated evidence toward discoverable desktop pages.
 

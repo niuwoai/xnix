@@ -11,12 +11,19 @@ import (
 const (
 	KnownAppVerifiedCatalogPreviewSchemaVersion = "xnix.runtime.known_app_verified_catalog.v1"
 	KnownAppVerifiedCatalogPreviewRequestType   = "known-app-verified-catalog-preview"
+	KnownAppVerifiedCatalogRunPlanSchemaVersion = "xnix.runtime.known_app_verified_catalog_run_plan.v1"
+	KnownAppVerifiedCatalogRunPlanRequestType   = "known-app-verified-catalog-run-plan-preview"
 )
 
 var knownAppVerifiedCatalogRequiredAppIDs = []string{"7zr", "busybox-w32"}
 
 type KnownAppVerifiedCatalogRequest struct {
 	MatrixEvidencePath string
+}
+
+type KnownAppVerifiedCatalogRunPlanRequest struct {
+	VerifiedCatalogPath string
+	AppID               string
 }
 
 type KnownAppVerifiedCatalogPreview struct {
@@ -88,6 +95,53 @@ type KnownAppVerifiedCatalogApplication struct {
 	RemotePathExposed      bool     `json:"remote_path_exposed"`
 	HostRootModified       bool     `json:"host_root_modified"`
 	DesktopSafeSummary     string   `json:"desktop_safe_summary"`
+}
+
+type KnownAppVerifiedCatalogRunPlanPreview struct {
+	SchemaVersion                   string   `json:"schema_version"`
+	RequestType                     string   `json:"request_type"`
+	Source                          string   `json:"source"`
+	Desktop                         string   `json:"desktop"`
+	RuntimeMethod                   string   `json:"runtime_method"`
+	ReadMethod                      string   `json:"read_method"`
+	VerifiedCatalogConsumed         bool     `json:"verified_catalog_consumed"`
+	RequestedAppID                  string   `json:"requested_app_id"`
+	AppID                           string   `json:"app_id"`
+	DisplayName                     string   `json:"display_name"`
+	AppVersion                      string   `json:"app_version"`
+	VerificationState               string   `json:"verification_state"`
+	CompatibilityState              string   `json:"compatibility_state"`
+	DesktopCatalogState             string   `json:"desktop_catalog_state"`
+	LauncherSurface                 string   `json:"launcher_surface"`
+	LaunchRequestCommand            []string `json:"launch_request_command"`
+	RemoteSmokeCommand              []string `json:"remote_smoke_command"`
+	RemoteSmokeRequestType          string   `json:"remote_smoke_request_type"`
+	Q4ExecutionRequired             bool     `json:"q4_execution_required"`
+	Q4ExecutionPlanned              bool     `json:"q4_execution_planned"`
+	Q4ExecutionStarted              bool     `json:"q4_execution_started"`
+	ReviewOnly                      bool     `json:"review_only"`
+	OperatorReviewRequired          bool     `json:"operator_review_required"`
+	RuntimeOwned                    bool     `json:"runtime_owned"`
+	GoRuntimeBacked                 bool     `json:"go_runtime_backed"`
+	KDEPolicyOwner                  bool     `json:"kde_policy_owner"`
+	DirectLaunchEnabled             bool     `json:"direct_launch_enabled"`
+	LaunchEnabled                   bool     `json:"launch_enabled"`
+	ExecutionStarted                bool     `json:"execution_started"`
+	BackendLaunchEnabled            bool     `json:"backend_launch_enabled"`
+	DesktopFilesWritten             bool     `json:"desktop_files_written"`
+	HostRootModified                bool     `json:"host_root_modified"`
+	BackendDetailsExposed           bool     `json:"backend_details_exposed"`
+	RawOutputExposed                bool     `json:"raw_output_exposed"`
+	RemotePathExposed               bool     `json:"remote_path_exposed"`
+	PrivilegedContainerRequired     bool     `json:"privileged_container_required"`
+	HostNetworkingRequired          bool     `json:"host_networking_required"`
+	DockerSocketMounted             bool     `json:"docker_socket_mounted"`
+	BroadHostMountRequired          bool     `json:"broad_host_mount_required"`
+	HostCompilationRequired         bool     `json:"host_compilation_required"`
+	HostCompilationAvoided          bool     `json:"host_compilation_avoided"`
+	TargetedRemoteVerificationReady bool     `json:"targeted_remote_verification_ready"`
+	BlockedActions                  []string `json:"blocked_actions"`
+	DesktopSafeSummary              string   `json:"desktop_safe_summary"`
 }
 
 func PreviewKnownAppVerifiedCatalog(request KnownAppVerifiedCatalogRequest) (KnownAppVerifiedCatalogPreview, error) {
@@ -164,6 +218,102 @@ func PreviewKnownAppVerifiedCatalogJSON(content []byte) (KnownAppVerifiedCatalog
 		},
 		DesktopSafeSummary: fmt.Sprintf("%d known Windows apps are verified by q4 matrix evidence and visible as review-only Runtime catalog entries.", len(applications)),
 	}, nil
+}
+
+func PreviewKnownAppVerifiedCatalogRunPlan(request KnownAppVerifiedCatalogRunPlanRequest) (KnownAppVerifiedCatalogRunPlanPreview, error) {
+	if request.VerifiedCatalogPath == "" {
+		return KnownAppVerifiedCatalogRunPlanPreview{}, errors.New("known app verified catalog run plan requires --verified-catalog")
+	}
+	content, err := os.ReadFile(request.VerifiedCatalogPath)
+	if err != nil {
+		return KnownAppVerifiedCatalogRunPlanPreview{}, fmt.Errorf("read known app verified catalog: %w", err)
+	}
+	return PreviewKnownAppVerifiedCatalogRunPlanJSON(content, request.AppID)
+}
+
+func PreviewKnownAppVerifiedCatalogRunPlanJSON(content []byte, appID string) (KnownAppVerifiedCatalogRunPlanPreview, error) {
+	if appID == "" {
+		return KnownAppVerifiedCatalogRunPlanPreview{}, errors.New("known app verified catalog run plan requires --app")
+	}
+	var catalog KnownAppVerifiedCatalogPreview
+	if err := json.Unmarshal(content, &catalog); err != nil {
+		return KnownAppVerifiedCatalogRunPlanPreview{}, fmt.Errorf("parse known app verified catalog: %w", err)
+	}
+	normalized, err := normalizeKnownAppVerifiedCatalog(&catalog)
+	if err != nil {
+		return KnownAppVerifiedCatalogRunPlanPreview{}, err
+	}
+	var selected KnownAppVerifiedCatalogApplication
+	found := false
+	for _, app := range normalized.Applications {
+		if app.AppID == appID {
+			selected = app
+			found = true
+			break
+		}
+	}
+	if !found {
+		return KnownAppVerifiedCatalogRunPlanPreview{}, fmt.Errorf("known app verified catalog run plan cannot find app %s", appID)
+	}
+
+	remoteSmokeCommand := []string{"ruby", "scripts/remote_known_winapp_guest_wine_smoke.rb", "--execute", "--app", selected.AppID}
+	preview := KnownAppVerifiedCatalogRunPlanPreview{
+		SchemaVersion:                   KnownAppVerifiedCatalogRunPlanSchemaVersion,
+		RequestType:                     KnownAppVerifiedCatalogRunPlanRequestType,
+		Source:                          "known-app-verified-catalog+q4-run-plan",
+		Desktop:                         "KDE Plasma",
+		RuntimeMethod:                   "PlanKnownVerifiedApplicationRun",
+		ReadMethod:                      "GetKnownVerifiedApplicationRunPlan",
+		VerifiedCatalogConsumed:         true,
+		RequestedAppID:                  appID,
+		AppID:                           selected.AppID,
+		DisplayName:                     selected.DisplayName,
+		AppVersion:                      selected.AppVersion,
+		VerificationState:               selected.VerificationState,
+		CompatibilityState:              selected.CompatibilityState,
+		DesktopCatalogState:             selected.DesktopCatalogState,
+		LauncherSurface:                 selected.LauncherSurface,
+		LaunchRequestCommand:            append([]string(nil), selected.LaunchRequestCommand...),
+		RemoteSmokeCommand:              remoteSmokeCommand,
+		RemoteSmokeRequestType:          "remote-known-winapp-guest-wine-smoke",
+		Q4ExecutionRequired:             true,
+		Q4ExecutionPlanned:              true,
+		Q4ExecutionStarted:              false,
+		ReviewOnly:                      true,
+		OperatorReviewRequired:          true,
+		RuntimeOwned:                    true,
+		GoRuntimeBacked:                 true,
+		KDEPolicyOwner:                  false,
+		DirectLaunchEnabled:             false,
+		LaunchEnabled:                   false,
+		ExecutionStarted:                false,
+		BackendLaunchEnabled:            false,
+		DesktopFilesWritten:             false,
+		HostRootModified:                false,
+		BackendDetailsExposed:           false,
+		RawOutputExposed:                false,
+		RemotePathExposed:               false,
+		PrivilegedContainerRequired:     false,
+		HostNetworkingRequired:          false,
+		DockerSocketMounted:             false,
+		BroadHostMountRequired:          false,
+		HostCompilationRequired:         false,
+		HostCompilationAvoided:          true,
+		TargetedRemoteVerificationReady: true,
+		BlockedActions: []string{
+			"start q4 execution from run-plan preview",
+			"launch verified app directly from KDE catalog card",
+			"write desktop files from run-plan preview",
+			"expose remote q4 paths from run-plan preview",
+			"expose raw app output from run-plan preview",
+			"compile known app runner on the host",
+		},
+		DesktopSafeSummary: selected.DisplayName + " is ready for an operator-triggered q4 known Windows app run using the verified catalog entry.",
+	}
+	if err := validateNoBackendTerms(preview, "known app verified catalog run plan"); err != nil {
+		return KnownAppVerifiedCatalogRunPlanPreview{}, err
+	}
+	return preview, nil
 }
 
 func validateKnownAppVerifiedCatalogEvidence(evidence KnownAppMatrixEvidencePreview) error {

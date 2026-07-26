@@ -326,6 +326,108 @@ func TestKDECenterPagePreviewCommandRejectsUnsafeKnownAppVerifiedCatalog(t *test
 	}
 }
 
+func TestKnownAppVerifiedCatalogRunPlanPreviewCommandSelectsQ4RunnableApp(t *testing.T) {
+	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+
+	var catalogOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-preview", "--matrix-evidence", matrixEvidencePath}, &catalogOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, catalogOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile verified catalog returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"known-app-verified-catalog-run-plan-preview", "--verified-catalog", catalogPath, "--app", "busybox-w32"}, &output)
+	if err != nil {
+		t.Fatalf("known-app-verified-catalog-run-plan-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_app_verified_catalog_run_plan.v1" ||
+		payload["request_type"] != "known-app-verified-catalog-run-plan-preview" ||
+		payload["source"] != "known-app-verified-catalog+q4-run-plan" ||
+		payload["runtime_method"] != "PlanKnownVerifiedApplicationRun" ||
+		payload["read_method"] != "GetKnownVerifiedApplicationRunPlan" ||
+		payload["verified_catalog_consumed"] != true ||
+		payload["requested_app_id"] != "busybox-w32" ||
+		payload["app_id"] != "busybox-w32" ||
+		payload["verification_state"] != "verified-real-q4-matrix-run" ||
+		payload["desktop_catalog_state"] != "visible-review-only" {
+		t.Fatalf("unexpected run plan payload: %#v", payload)
+	}
+	launchCommand := payload["launch_request_command"].([]any)
+	remoteSmokeCommand := payload["remote_smoke_command"].([]any)
+	if launchCommand[0] != "xnix-compat-launch" ||
+		launchCommand[1] != "--app" ||
+		launchCommand[2] != "busybox-w32" ||
+		remoteSmokeCommand[0] != "ruby" ||
+		remoteSmokeCommand[1] != "scripts/remote_known_winapp_guest_wine_smoke.rb" ||
+		remoteSmokeCommand[2] != "--execute" ||
+		remoteSmokeCommand[3] != "--app" ||
+		remoteSmokeCommand[4] != "busybox-w32" ||
+		payload["remote_smoke_request_type"] != "remote-known-winapp-guest-wine-smoke" {
+		t.Fatalf("unexpected run plan commands: %#v", payload)
+	}
+	if payload["q4_execution_required"] != true ||
+		payload["q4_execution_planned"] != true ||
+		payload["q4_execution_started"] != false ||
+		payload["review_only"] != true ||
+		payload["operator_review_required"] != true ||
+		payload["direct_launch_enabled"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["desktop_files_written"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_output_exposed"] != false ||
+		payload["remote_path_exposed"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["host_compilation_required"] != false ||
+		payload["host_compilation_avoided"] != true ||
+		payload["targeted_remote_verification_ready"] != true {
+		t.Fatalf("unexpected run plan safety flags: %#v", payload)
+	}
+	if strings.Contains(output.String(), catalogPath) ||
+		strings.Contains(output.String(), matrixEvidencePath) ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") {
+		t.Fatalf("run plan exposed local or q4 evidence paths: %s", output.String())
+	}
+}
+
+func TestKnownAppVerifiedCatalogRunPlanPreviewCommandRejectsUnknownApp(t *testing.T) {
+	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+
+	var catalogOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-preview", "--matrix-evidence", matrixEvidencePath}, &catalogOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, catalogOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile verified catalog returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"known-app-verified-catalog-run-plan-preview", "--verified-catalog", catalogPath, "--app", "missing-app"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "missing-app") {
+		t.Fatalf("expected unknown app error, got %v", err)
+	}
+}
+
 func knownAppVerifiedCatalogCLIFixture(t *testing.T) []byte {
 	t.Helper()
 	apps := []appidentity.KnownAppMatrixEvidenceApp{

@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc195] - 2026-07-27
+
+### Added
+
+- Added `known-app-verified-catalog-run-plan-preview`, a Go-owned run plan that selects a verified catalog app and emits the q4 known Windows app execution harness command.
+- Added unit and CLI coverage for busybox-w32 run-plan selection and unknown-app rejection.
+
+### Changed
+
+- Expanded the q4 remote Go test default regex to include verified catalog run-plan tests.
+- Verified the rc195 run-plan path with a q4 `busybox-w32` known Windows app QEMU/Wine smoke.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc195`.
+
 ## [0.2.640-rc194] - 2026-07-27
 
 ### Added
