@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc182] - 2026-07-26
+
+### Added
+
+- Added `scripts/q4_winapp_smoke.rb`, a generic q4-first Windows GUI smoke wrapper for known app ids and q4-hosted remote executables.
+- Added Ruby coverage proving the generic q4 Windows app wrapper plans known-app, remote-executable, file-argument, owner-file-open, and real-run acceptance modes without local Go compilation.
+- Added real q4 validation evidence that the generic wrapper can run the `org.xnix.apps.mines` Windows GUI app with observed and matched window evidence.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc182`.
+
 ## [0.2.640-rc181] - 2026-07-26
 
 ### Added

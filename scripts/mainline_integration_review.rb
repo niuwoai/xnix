@@ -344,11 +344,13 @@ LANES = [
       %r{\Ascripts/winapp_container_smoke\.rb\z},
       %r{\Ascripts/winapp_guest_wine_smoke\.rb\z},
       %r{\Ascripts/q4_sample_notepad_smoke\.rb\z},
+      %r{\Ascripts/q4_winapp_smoke\.rb\z},
       %r{\Ascripts/staged_desktop_notepad_smoke\.rb\z},
       %r{\Ascripts/staged_desktop_external_winapp_smoke\.rb\z},
       %r{\Ascripts/staged_launcher_smoke\.rb\z},
       %r{\Ascripts/known_winapp_},
       %r{\Atest/test_q4_sample_notepad_smoke_script\.rb\z},
+      %r{\Atest/test_q4_winapp_smoke_script\.rb\z},
       %r{\Atest/test_known_winapp_guest_wine_smoke_script\.rb\z},
       %r{\Atest/test_winapp_smoke_script\.rb\z},
       %r{\Atest/fixtures/winapp/}

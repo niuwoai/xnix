@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc181
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc182
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc182 checkpoint adds a generic q4 Windows app smoke entrypoint for growing beyond the fixed Sample Notepad lane. `scripts/q4_winapp_smoke.rb` delegates to the maintained remote Wine guest GUI smoke, accepts either a Runtime known-app id or a q4-hosted remote executable, requires window-match evidence, supports remote or generated sample file arguments, and can require the owner-controlled file-open plus Go real-run acceptance path for known apps. Its safe summary hides raw remote executable and file-argument paths while still exposing whether q4 compilation was required, host compilation was avoided, GUI execution was observed, and host/container safety gates stayed closed. The first real generic-wrapper run passed for `org.xnix.apps.mines` on q4 with observed GUI and matched window evidence.
 
 The v0.2.640-rc181 checkpoint makes the q4-first compile policy harder to bypass from older local staged smoke entrypoints. Staged launcher, staged launcher dispatch, staged desktop Notepad, and staged desktop external Windows app smokes now skip cleanly by default when prebuilt Runtime binaries are unavailable and `XNIX_ALLOW_LOCAL_GO_COMPILE=1` is not set. Each skip message points operators toward `scripts/remote_go_build.rb --execute`, and local staged desktop smoke experiments can use `XNIX_COMPAT_LAUNCH_BIN` to provide a prebuilt launcher without rebuilding Go code on the macOS host. This preserves Mac responsiveness while keeping the real Windows app path moving through q4-built Runtime binaries.
 
