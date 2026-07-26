@@ -10,10 +10,11 @@ require "securerandom"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 ORIGINAL_ARGV = ARGV.dup
-BUS_NAME = "org.xnix.Compatibility1"
-OBJECT_PATH = "/org/xnix/Compatibility1"
-INTERFACE = "org.xnix.Compatibility1"
-PUBLIC_METHOD = "org.xnix.Compatibility1.ShowRuntimeControlledLaunch"
+DEFAULT_BUS_NAME = "org.xnix.Compatibility1"
+DEFAULT_OBJECT_PATH = "/org/xnix/Compatibility1"
+DEFAULT_INTERFACE = "org.xnix.Compatibility1"
+DEFAULT_PUBLIC_METHOD = "org.xnix.Compatibility1.ShowRuntimeControlledLaunch"
+DEFAULT_DESKTOP_ENTRY_FILE = PROJECT_ROOT.join("kde/actions/xnix-runtime-status-controlled-launch.desktop").to_s
 DEFAULT_APP_ID = "7zr"
 DEFAULT_GUEST_BOUNDARY = "managed-known-app-guest-smoke"
 SMOKE_NAME = "D-Bus controlled launch owner fixture smoke"
@@ -27,7 +28,8 @@ options = {
   state_root: "",
   cache_root: "",
   gui_smoke_evidence_file: "",
-  runtime_command: ""
+  runtime_command: "",
+  desktop_entry_file: DEFAULT_DESKTOP_ENTRY_FILE
 }
 
 OptionParser.new do |parser|
@@ -38,12 +40,63 @@ OptionParser.new do |parser|
   parser.on("--cache-root PATH", "Known Windows app cache root for the fixture run.") { |value| options[:cache_root] = value }
   parser.on("--gui-smoke-evidence-file PATH", "Optional GUI smoke or verified-catalog app-execution evidence file.") { |value| options[:gui_smoke_evidence_file] = value }
   parser.on("--runtime-command PATH", "Use an existing xnix-runtime-go binary instead of PATH discovery.") { |value| options[:runtime_command] = value }
+  parser.on("--desktop-entry-file PATH", "KDE desktop action metadata used as the D-Bus invocation source.") { |value| options[:desktop_entry_file] = value }
 end.parse!
 
 abort "D-Bus controlled launch owner fixture smoke does not accept positional arguments" unless ARGV.empty?
 
+def load_desktop_action_metadata(path)
+  clean = Pathname.new(path).expand_path(PROJECT_ROOT).cleanpath
+  abort "desktop entry file must stay under this checkout or /workspace" unless clean.to_s.start_with?(PROJECT_ROOT.to_s) || clean.to_s.start_with?("/workspace/")
+  abort "desktop entry file must exist" unless clean.file?
+
+  fields = {}
+  clean.read.each_line do |line|
+    next unless line.start_with?("X-Xnix-")
+
+    key, value = line.strip.split("=", 2)
+    fields[key] = value.to_s
+  end
+  expected = {
+    "X-Xnix-KDE-Action-ID" => "xnix.runtime-status.controlled-launch",
+    "X-Xnix-Runtime-Preview" => "xnix-runtime-go kde-controlled-launch-action-preview",
+    "X-Xnix-Restricted-Smoke-Plan" => "xnix-runtime-go kde-controlled-launch-session-bus-smoke-plan-preview",
+    "X-Xnix-DBus-Service" => DEFAULT_BUS_NAME,
+    "X-Xnix-DBus-Object-Path" => DEFAULT_OBJECT_PATH,
+    "X-Xnix-DBus-Method" => DEFAULT_PUBLIC_METHOD,
+    "X-Xnix-Forwarded-Argument" => "evidence-relative-path",
+    "X-Xnix-Forwards-Only-Evidence-Handle" => "true",
+    "X-Xnix-KDE-Policy-Owner" => "false",
+    "X-Xnix-Owner-Service-Args-Exposed-To-KDE" => "false",
+    "X-Xnix-State-Root-Access" => "false",
+    "X-Xnix-Receipt-Reconstruction" => "false",
+    "X-Xnix-Backend-Launch-Enabled" => "false",
+    "X-Xnix-Execution-Started" => "false",
+    "X-Xnix-Host-Root-Modified" => "false",
+    "X-Xnix-Docker-Socket-Mounted" => "false",
+    "X-Xnix-Privileged-Container-Required" => "false",
+    "X-Xnix-Host-Network-Required" => "false"
+  }
+  expected.each do |key, value|
+    abort "desktop action metadata mismatch for #{key}" unless fields.fetch(key, "") == value
+  end
+  {
+    "action_id" => fields.fetch("X-Xnix-KDE-Action-ID"),
+    "bus_name" => fields.fetch("X-Xnix-DBus-Service"),
+    "object_path" => fields.fetch("X-Xnix-DBus-Object-Path"),
+    "interface" => fields.fetch("X-Xnix-DBus-Method").split(".")[0...-1].join("."),
+    "method" => fields.fetch("X-Xnix-DBus-Method"),
+    "forwarded_argument" => fields.fetch("X-Xnix-Forwarded-Argument")
+  }
+end
+
 APP_ID = options.fetch(:app_id).to_s.strip
 GUEST_BOUNDARY = options.fetch(:guest_boundary).to_s.strip
+DESKTOP_ACTION = load_desktop_action_metadata(options.fetch(:desktop_entry_file))
+BUS_NAME = DESKTOP_ACTION.fetch("bus_name")
+OBJECT_PATH = DESKTOP_ACTION.fetch("object_path")
+INTERFACE = DESKTOP_ACTION.fetch("interface")
+PUBLIC_METHOD = DESKTOP_ACTION.fetch("method")
 RUN_ID = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{Process.pid}-#{SecureRandom.hex(4)}"
 CONTAINER_SCRATCH_ROOT = "/workspace/.xnix-dbus-controlled-launch-scratch"
 DEFAULT_WORK_ROOT = if Dir.exist?(CONTAINER_SCRATCH_ROOT)
@@ -427,13 +480,15 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
-    "--method", desktop_trigger.fetch("method"),
+    "--method", DESKTOP_ACTION.fetch("method"),
     desktop_trigger.fetch("evidence_relative_path")
   )
   assert(status.success?, "runtime smoke adapter must answer ShowRuntimeControlledLaunch: #{stderr}")
   assert(stdout.include?("runtime-controlled-launch-dbus-action"), "D-Bus response must expose controlled launch action evidence")
   assert(stdout.include?("desktop-action-dispatch"), "D-Bus response must classify the call as a desktop action dispatch")
   assert(stdout.include?("kde-dbus-runtime-status-action"), "D-Bus response must preserve the KDE Runtime-status route")
+  assert(DESKTOP_ACTION.fetch("action_id") == "xnix.runtime-status.controlled-launch", "D-Bus invocation must be sourced from the KDE controlled-launch action metadata")
+  assert(DESKTOP_ACTION.fetch("forwarded_argument") == "evidence-relative-path", "D-Bus invocation must forward only the KDE evidence handle")
   assert(stdout.include?("go_service_call_materialization_available"), "D-Bus response must expose Go service-call materialization availability")
   assert(stdout.include?("go_service_call_materialization_json"), "D-Bus response must expose Go service-call materialization metadata")
   assert(stdout.include?("go_owner_service_call_available"), "D-Bus response must expose owner service-call availability")

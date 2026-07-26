@@ -246,6 +246,10 @@ plan = {
   "container_goarch" => container_goarch,
   "tools_image_build_planned" => true,
   "tools_image_built_on_q4" => false,
+  "desktop_action_metadata_consumed" => false,
+  "desktop_action_id" => "xnix.runtime-status.controlled-launch",
+  "desktop_action_dbus_method" => "org.xnix.Compatibility1.ShowRuntimeControlledLaunch",
+  "desktop_action_metadata_path_exposed" => false,
   "app_id" => app_id,
   "app_execution_evidence_required" => true,
   "app_execution_evidence_copied_to_q4" => false,
@@ -340,7 +344,8 @@ remote_commands = [
     "--state-root", "#{SCRATCH_ROOT}/state",
     "--cache-root", "#{SCRATCH_ROOT}/known-winapps",
     "--gui-smoke-evidence-file", "/workspace/q4-dbus-input/known-app-verified-catalog-app-execution.json",
-    "--runtime-command", "/usr/local/bin/xnix-runtime-go"
+    "--runtime-command", "/usr/local/bin/xnix-runtime-go",
+    "--desktop-entry-file", "/workspace/kde/actions/xnix-runtime-status-controlled-launch.desktop"
   ])
 ]
 remote_script = [
@@ -363,6 +368,7 @@ require_passed_remote_fixture!(stdout)
 summary = plan.merge(
   "status" => "passed",
   "tools_image_built_on_q4" => stdout.include?("XNIX_Q4_TOOLS_IMAGE_BUILT=1"),
+  "desktop_action_metadata_consumed" => true,
   "app_execution_evidence_copied_to_q4" => true,
   "linux_runtime_built_on_q4" => true,
   "dbus_adapter_compiled_in_q4_container" => true,

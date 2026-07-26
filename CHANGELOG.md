@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc218] - 2026-07-27
+
+### Added
+
+- Added KDE desktop action metadata ingestion to the restricted D-Bus controlled-launch owner fixture, validating the action id, Runtime preview, restricted smoke plan, D-Bus service/object/method, evidence-only argument, and closed safety gates before invoking D-Bus.
+- Added q4 smoke summary fields proving desktop action metadata consumption without exposing desktop metadata paths.
+
+### Changed
+
+- Updated the q4 D-Bus fixture and main q4 Runtime smoke so the actual `gdbus` controlled-launch call is sourced from `kde/actions/xnix-runtime-status-controlled-launch.desktop`.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc218`.
+
 ## [0.2.640-rc217] - 2026-07-27
 
 ### Added
