@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc238] - 2026-08-13
+
+### Changed
+
+- Updated the q4 staged desktop external Windows app smoke to generate the Go Runtime `external-winapp-compatibility-evidence-bundle-preview` artifact on q4 after the real imported Notepad run.
+- Extended q4 smoke artifact fetching and plan coverage to include `compatibility-evidence-bundle.json` alongside the one-shot, launch packet, Runtime GUI packet, and KDE page artifacts.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc238`.
+
 ## [0.2.640-rc237] - 2026-08-13
 
 ### Added

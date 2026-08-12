@@ -172,6 +172,7 @@ remote_runtime_bin = "#{remote_binary_root}/xnix-runtime-go"
 remote_launcher_bin = "#{remote_binary_root}/xnix-compat-launch"
 remote_report = "#{remote_run_root}/q4-staged-desktop-external-winapp-smoke.json"
 remote_markdown = "#{remote_run_root}/q4-staged-desktop-external-winapp-smoke.md"
+remote_compatibility_bundle = "#{remote_run_root}/compatibility-evidence-bundle.json"
 artifact_specs = [
   ["delegated_launcher_payload", "delegated_launcher_payload_path", "delegated-launcher-payload.json"],
   ["activation_status", "activation_status_path", "activation-status.json"],
@@ -179,7 +180,8 @@ artifact_specs = [
   ["one_shot", "one_shot_path", "one-shot-import-stage-launch.json"],
   ["one_shot_launch_packet", "one_shot_launch_packet_path", "one-shot-desktop-launch-packet.json"],
   ["runtime_packet", "runtime_packet_path", "runtime-gui-evidence-packet.json"],
-  ["kde_page", "kde_page_path", "kde-external-app-page.json"]
+  ["kde_page", "kde_page_path", "kde-external-app-page.json"],
+  ["compatibility_evidence_bundle", "compatibility_evidence_bundle_path", "compatibility-evidence-bundle.json"]
 ]
 planned_artifact_outputs = artifact_specs.to_h do |name, _remote_key, local_name|
   ["#{name}_artifact_output_path", artifact_output_root.join(local_name).to_s]
@@ -299,6 +301,34 @@ end
 FileUtils.mkdir_p(markdown_output_path.dirname)
 File.write(markdown_output_path, remote_markdown_text)
 
+bundle_command = [
+  remote_runtime_bin,
+  "external-winapp-compatibility-evidence-bundle-preview",
+  "--one-shot-result", delegated.fetch("one_shot_path"),
+  "--desktop-launch-packet", delegated.fetch("desktop_launch_packet_path"),
+  "--runtime-gui-evidence-packet", delegated.fetch("runtime_packet_path"),
+  "--kde-page", delegated.fetch("kde_page_path"),
+  "--output", remote_compatibility_bundle
+]
+bundle_stdout, bundle_stderr, bundle_status = run_command(
+  ssh_command(remote_host, shell_join(bundle_command)),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless bundle_status.zero?
+  warn bundle_stdout unless bundle_stdout.empty?
+  warn bundle_stderr unless bundle_stderr.empty?
+  abort "q4 external Windows app compatibility evidence bundle generation failed"
+end
+compatibility_bundle = JSON.parse(bundle_stdout)
+unless compatibility_bundle.fetch("request_type") == "external-winapp-compatibility-evidence-bundle-preview" &&
+       compatibility_bundle.fetch("safe_for_kde") == true &&
+       compatibility_bundle.fetch("real_windows_app_run_verified") == true &&
+       compatibility_bundle.fetch("kde_external_app_page_verified") == true
+  warn bundle_stdout
+  abort "q4 external Windows app compatibility evidence bundle did not prove the real app path"
+end
+delegated["compatibility_evidence_bundle_path"] = remote_compatibility_bundle
+
 fetched_artifacts = {}
 artifact_specs.each do |name, remote_key, local_name|
   remote_path = delegated.fetch(remote_key)
@@ -382,6 +412,13 @@ result = plan.merge(
   "kde_page_card_x_window_observed" => delegated.fetch("kde_page_card_x_window_observed"),
   "remote_report_fetched" => true,
   "remote_markdown_fetched" => true,
+  "compatibility_evidence_bundle_generated" => true,
+  "compatibility_evidence_bundle_request_type" => compatibility_bundle.fetch("request_type"),
+  "compatibility_evidence_bundle_safe_for_kde" => compatibility_bundle.fetch("safe_for_kde"),
+  "compatibility_evidence_bundle_real_windows_app_run_verified" => compatibility_bundle.fetch("real_windows_app_run_verified"),
+  "compatibility_evidence_bundle_runtime_owned" => compatibility_bundle.fetch("runtime_owned"),
+  "compatibility_evidence_bundle_go_runtime_backed" => compatibility_bundle.fetch("go_runtime_backed"),
+  "compatibility_evidence_bundle_kde_policy_owner" => compatibility_bundle.fetch("kde_policy_owner"),
   "artifact_fetch_count" => fetched_artifacts.count { |key, value| key.end_with?("_artifact_fetched") && value == true },
   "artifacts_fetched" => fetched_artifacts,
   "markdown_output_written" => markdown_output_path.file?,
