@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc251
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc252
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc252 checkpoint turns the q4 MessageBox fixture into a one-command staged external desktop proof. The MessageBox harness can now build the real Windows GUI `.exe` on q4, run the existing generic GUI smoke, and optionally feed that same q4 executable into the staged external app path. That second leg exercises Go Runtime import, KDE desktop activation staging, the managed launcher, copied file-open bridging, compatibility evidence bundling, application detail rendering, and accepted KDE page consumption while keeping q4 paths operator-only and the macOS host out of compilation. Targeted q4 validation passed with `staged_external_status=passed`, document-marker observation, 13 fetched staged evidence artifacts, and `runtime-accepted-real-app-run` accepted application detail plus KDE page state.
 
 The v0.2.640-rc251 checkpoint makes the real external Windows app path easier to operate on q4. The staged external app q4 wrapper now accepts an executable already placed under a scoped q4 Xnix path, forwards app identity and optional window-match metadata to the delegated runner, and drives the existing Go Runtime import, desktop activation staging, managed launcher, Wine GUI execution, compatibility evidence bundle, application detail, KDE page, and accepted-state artifact flow without compiling on the macOS host. Targeted q4 validation passed for the Notepad file-open GUI path, including remote Runtime and launcher builds, a real Wine GUI run, 13 fetched evidence artifacts, and final `runtime-accepted-real-app-run` KDE consumption.
 

@@ -11,6 +11,7 @@ require "timeout"
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
 Q4_WINAPP_SMOKE = PROJECT_ROOT.join("scripts/q4_winapp_smoke.rb")
+Q4_STAGED_EXTERNAL_SMOKE = PROJECT_ROOT.join("scripts/q4_staged_desktop_external_winapp_smoke.rb")
 
 DEFAULT_REMOTE_HOST = ENV.fetch("XNIX_REMOTE_HOST", "root@q4")
 DEFAULT_REMOTE_TIMEOUT_SECONDS = Integer(ENV.fetch("XNIX_Q4_MESSAGEBOX_TIMEOUT_SECONDS", "420"), 10)
@@ -23,7 +24,10 @@ DEFAULT_APP_ID = "org.xnix.apps.messagebox"
 DEFAULT_DISPLAY_NAME = "Xnix MessageBox"
 DEFAULT_WINDOW_MATCH = "Xnix document opened by Windows app"
 DIRECT_WINDOW_MATCH = "Xnix Windows GUI Smoke"
+STAGED_EXTERNAL_WINDOW_MATCH = "Xnix external Windows app file-open smoke document"
 DEFAULT_SAMPLE_FILE_ARGUMENT = ENV.fetch("XNIX_Q4_MESSAGEBOX_SAMPLE_FILE", "messagebox-document.txt")
+DEFAULT_STAGED_EXTERNAL_OUTPUT = PROJECT_ROOT.join("output", "q4-staged-messagebox-external-#{VERSION}.json").to_s
+DEFAULT_STAGED_EXTERNAL_MARKDOWN_OUTPUT = PROJECT_ROOT.join("output", "q4-staged-messagebox-external-#{VERSION}.md").to_s
 
 options = {
   execute: false,
@@ -38,9 +42,12 @@ options = {
   display_name: DEFAULT_DISPLAY_NAME,
   window_match: DEFAULT_WINDOW_MATCH,
   owner_file_open: ENV.fetch("XNIX_Q4_MESSAGEBOX_OWNER_FILE_OPEN", "1") != "0",
+  staged_external: ENV.fetch("XNIX_Q4_MESSAGEBOX_STAGED_EXTERNAL", "0") == "1",
   sample_file_argument: DEFAULT_SAMPLE_FILE_ARGUMENT,
   remote_timeout_seconds: DEFAULT_REMOTE_TIMEOUT_SECONDS,
-  output: ENV.fetch("XNIX_Q4_MESSAGEBOX_OUTPUT", "")
+  output: ENV.fetch("XNIX_Q4_MESSAGEBOX_OUTPUT", ""),
+  staged_external_output: ENV.fetch("XNIX_Q4_MESSAGEBOX_STAGED_EXTERNAL_OUTPUT", DEFAULT_STAGED_EXTERNAL_OUTPUT),
+  staged_external_markdown_output: ENV.fetch("XNIX_Q4_MESSAGEBOX_STAGED_EXTERNAL_MARKDOWN_OUTPUT", DEFAULT_STAGED_EXTERNAL_MARKDOWN_OUTPUT)
 }
 
 OptionParser.new do |parser|
@@ -58,9 +65,12 @@ OptionParser.new do |parser|
   parser.on("--window-match TEXT", "Window title/text required for GUI observation, default: #{DEFAULT_WINDOW_MATCH}") { |value| options[:window_match] = value }
   parser.on("--direct", "Run the q4 MessageBox executable directly instead of through owner-controlled file-open.") { options[:owner_file_open] = false }
   parser.on("--owner-file-open", "Run the q4 MessageBox executable through owner-controlled file-open; default.") { options[:owner_file_open] = true }
+  parser.on("--staged-external", "After building the q4 MessageBox executable, also run it through the staged external app desktop path.") { options[:staged_external] = true }
   parser.on("--sample-file-argument NAME", "Sample file name passed through the owner file-open path, default: #{DEFAULT_SAMPLE_FILE_ARGUMENT}") { |value| options[:sample_file_argument] = value }
   parser.on("--remote-timeout-seconds SECONDS", Integer, "Timeout for remote q4 operations.") { |value| options[:remote_timeout_seconds] = value }
   parser.on("--output PATH", "Write the plan or passed result JSON under this checkout or /tmp/xnix-*.") { |value| options[:output] = value }
+  parser.on("--staged-external-output PATH", "Write the staged external JSON result under this checkout or /tmp/xnix-*.") { |value| options[:staged_external_output] = value }
+  parser.on("--staged-external-markdown-output PATH", "Write the staged external Markdown result under this checkout or /tmp/xnix-*.") { |value| options[:staged_external_markdown_output] = value }
 end.parse!
 
 abort "q4 MessageBox smoke does not accept positional arguments" unless ARGV.empty?
@@ -149,6 +159,8 @@ remote_fixture_root = "#{remote_materials_root}/fixtures"
 remote_executable = "#{remote_fixture_root}/xnix-messagebox-smoke-#{VERSION}.exe"
 remote_go_dir = Pathname.new(options.fetch(:remote_go)).dirname.to_s
 output_path = ensure_local_output_path!(options.fetch(:output))
+staged_external_output_path = ensure_local_output_path!(options.fetch(:staged_external_output))
+staged_external_markdown_output_path = ensure_local_output_path!(options.fetch(:staged_external_markdown_output))
 delegated_output = "/tmp/xnix-q4-messagebox-winapp-#{VERSION}.json"
 sample_file_argument = options.fetch(:sample_file_argument).strip
 abort "sample file argument must be a simple file name" if !sample_file_argument.empty? && File.basename(sample_file_argument) != sample_file_argument
@@ -172,6 +184,22 @@ if options.fetch(:owner_file_open)
   delegated_command << "--owner-file-open"
   delegated_command << "--require-real-run-acceptance"
 end
+staged_external_app_id = "#{options.fetch(:app_id)}.staged-external"
+staged_external_display_name = "#{options.fetch(:display_name)} Staged External"
+staged_external_command = [
+  "ruby",
+  "scripts/q4_staged_desktop_external_winapp_smoke.rb",
+  "--execute",
+  "--fixture", "external",
+  "--remote-executable", remote_executable,
+  "--app-id", staged_external_app_id,
+  "--display-name", staged_external_display_name,
+  "--window-match", STAGED_EXTERNAL_WINDOW_MATCH,
+  "--remote", remote_host,
+  "--remote-timeout-seconds", options.fetch(:remote_timeout_seconds).to_s,
+  "--output", staged_external_output_path.to_s,
+  "--markdown-output", staged_external_markdown_output_path.to_s
+]
 
 plan = {
   "schema_version" => "xnix.scripts.q4_messagebox_smoke.v1",
@@ -202,6 +230,20 @@ plan = {
   "delegated_script" => "scripts/q4_winapp_smoke.rb",
   "delegated_command" => delegated_command,
   "delegated_output" => delegated_output,
+  "staged_external_run_planned" => options.fetch(:staged_external),
+  "staged_external_script" => "scripts/q4_staged_desktop_external_winapp_smoke.rb",
+  "staged_external_command" => staged_external_command,
+  "staged_external_output_path" => staged_external_output_path.to_s,
+  "staged_external_markdown_output_path" => staged_external_markdown_output_path.to_s,
+  "staged_external_app_id" => staged_external_app_id,
+  "staged_external_display_name" => staged_external_display_name,
+  "staged_external_window_match" => STAGED_EXTERNAL_WINDOW_MATCH,
+  "staged_external_remote_executable_configured" => true,
+  "staged_external_remote_executable_path_exposed" => false,
+  "staged_external_runtime_owned" => true,
+  "staged_external_go_runtime_backed" => true,
+  "staged_external_kde_policy_owner" => false,
+  "staged_external_acceptance_required" => options.fetch(:staged_external),
   "output_path" => output_path ? output_path.to_s : "",
   "q4_compile_required" => true,
   "host_compilation_avoided" => true,
@@ -291,6 +333,30 @@ unless delegated.fetch("status") == "passed" &&
   exit 1
 end
 
+staged_external = nil
+if options.fetch(:staged_external)
+  staged_args = staged_external_command.dup
+  staged_args[1] = Q4_STAGED_EXTERNAL_SMOKE.to_s
+  staged_stdout, staged_stderr, staged_status = Open3.capture3(*staged_args, chdir: PROJECT_ROOT.to_s)
+  unless staged_status.success?
+    warn staged_stdout unless staged_stdout.empty?
+    warn staged_stderr unless staged_stderr.empty?
+    warn "FAIL: q4 MessageBox staged external Windows app smoke failed"
+    exit 1
+  end
+  staged_external = JSON.parse(staged_stdout)
+  unless staged_external.fetch("status") == "passed" &&
+         bool(staged_external, "remote_executable_supplied") &&
+         bool(staged_external, "one_shot_runtime_launch_executed") &&
+         bool(staged_external, "windows_process_file_argument_window_observed") &&
+         bool(staged_external, "go_owned_q4_staged_external_winapp_acceptance_ready") &&
+         staged_external.fetch("accepted_application_detail_compatibility_state") == "runtime-accepted-real-app-run"
+    warn staged_stdout
+    warn "FAIL: q4 MessageBox staged external smoke did not satisfy Runtime-accepted desktop evidence"
+    exit 1
+  end
+end
+
 result = plan.merge(
   "status" => "passed",
   "remote_windows_executable_built" => true,
@@ -350,6 +416,19 @@ result = plan.merge(
   "go_owned_q4_winapp_acceptance_delegated_command_exposed" => delegated.fetch("go_owned_q4_winapp_acceptance_delegated_command_exposed"),
   "go_owned_q4_winapp_acceptance_remote_executable_path_exposed" => delegated.fetch("go_owned_q4_winapp_acceptance_remote_executable_path_exposed"),
   "go_owned_q4_winapp_acceptance_remote_file_argument_path_exposed" => delegated.fetch("go_owned_q4_winapp_acceptance_remote_file_argument_path_exposed"),
+  "staged_external_status" => staged_external ? staged_external.fetch("status") : "not-run",
+  "staged_external_remote_executable_supplied" => staged_external ? bool(staged_external, "remote_executable_supplied") : false,
+  "staged_external_remote_build_completed" => staged_external ? bool(staged_external, "remote_build_completed") : false,
+  "staged_external_one_shot_status" => staged_external ? staged_external.fetch("one_shot_status") : "",
+  "staged_external_one_shot_runtime_launch_executed" => staged_external ? bool(staged_external, "one_shot_runtime_launch_executed") : false,
+  "staged_external_file_bridge_ready" => staged_external ? bool(staged_external, "external_file_bridge_ready") : false,
+  "staged_external_document_marker_observed" => staged_external ? bool(staged_external, "windows_process_file_argument_window_observed") : false,
+  "staged_external_artifact_fetch_count" => staged_external ? staged_external.fetch("artifact_fetch_count") : 0,
+  "staged_external_acceptance_ready" => staged_external ? bool(staged_external, "go_owned_q4_staged_external_winapp_acceptance_ready") : false,
+  "staged_external_accepted_application_detail_state" => staged_external ? staged_external.fetch("accepted_application_detail_compatibility_state") : "",
+  "staged_external_accepted_application_detail_label" => staged_external ? staged_external.fetch("accepted_application_detail_compatibility_label") : "",
+  "staged_external_kde_accepted_page_state" => staged_external ? staged_external.fetch("kde_page_from_accepted_application_detail_compatibility_state") : "",
+  "staged_external_kde_accepted_page_label" => staged_external ? staged_external.fetch("kde_page_from_accepted_application_detail_compatibility_label") : "",
   "host_root_modified" => bool(delegated, "host_root_modified"),
   "privileged_container_required" => bool(delegated, "privileged_container_required"),
   "host_networking_required" => bool(delegated, "host_networking_required"),

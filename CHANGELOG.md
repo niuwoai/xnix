@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc252] - 2026-08-13
+
+### Changed
+
+- Added `--staged-external` to the q4 MessageBox smoke harness so the q4-built Windows GUI executable can also run through the staged external desktop path.
+- Recorded staged external MessageBox evidence fields for Runtime-owned import, managed launcher execution, file-open bridging, accepted application detail, and accepted KDE page consumption.
+- Passed targeted q4 MessageBox staged external validation with q4-built Windows GUI execution, document-marker observation, 13 fetched artifacts, and `runtime-accepted-real-app-run` accepted KDE state.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc252`.
+
 ## [0.2.640-rc251] - 2026-08-13
 
 ### Changed

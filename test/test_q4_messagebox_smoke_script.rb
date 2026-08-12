@@ -23,6 +23,10 @@ assert(source.include?("test/fixtures/winapp/messagebox"), "q4 MessageBox smoke 
 assert(source.include?("GOOS=windows"), "q4 MessageBox smoke must cross-compile a Windows executable")
 assert(source.include?("GOARCH=386"), "q4 MessageBox smoke must build the 32-bit fixture for the Wine guest")
 assert(source.include?("scripts/q4_winapp_smoke.rb"), "q4 MessageBox smoke must delegate execution through the generic q4 app smoke")
+assert(source.include?("scripts/q4_staged_desktop_external_winapp_smoke.rb"), "q4 MessageBox smoke must optionally delegate through the staged external app smoke")
+assert(source.include?("--staged-external"), "q4 MessageBox smoke must expose the staged external run option")
+assert(source.include?("staged_external_run_planned"), "q4 MessageBox smoke must report staged external planning")
+assert(source.include?("staged_external_acceptance_ready"), "q4 MessageBox smoke must report staged external acceptance")
 assert(source.include?("go_owned_q4_winapp_acceptance_ready"), "q4 MessageBox smoke must require Go-owned q4 acceptance")
 assert(source.include?("--owner-file-open"), "q4 MessageBox smoke must support owner-controlled file-open")
 assert(source.include?("--require-real-run-acceptance"), "q4 MessageBox smoke must require real-run acceptance in owner mode")
@@ -73,6 +77,13 @@ assert(payload.fetch("delegated_command").include?("--owner-file-open"), "q4 Mes
 assert(payload.fetch("delegated_command").include?("--require-real-run-acceptance"), "q4 MessageBox plan must delegate real-run acceptance")
 assert(payload.fetch("delegated_command").include?("--sample-file-argument"), "q4 MessageBox plan must delegate sample file")
 assert(!payload.fetch("delegated_command").include?("--known-app-id"), "q4 MessageBox plan must prove the external executable lane")
+assert(payload.fetch("staged_external_run_planned") == false, "q4 MessageBox plan must not run staged external by default")
+assert(payload.fetch("staged_external_script") == "scripts/q4_staged_desktop_external_winapp_smoke.rb", "q4 MessageBox plan must identify the staged external wrapper")
+assert(payload.fetch("staged_external_command").include?("--fixture"), "q4 MessageBox plan must pass staged external fixture")
+assert(payload.fetch("staged_external_command").include?("external"), "q4 MessageBox plan must select the external fixture")
+assert(payload.fetch("staged_external_command").include?("--remote-executable"), "q4 MessageBox plan must pass the q4-built exe to staged external")
+assert(payload.fetch("staged_external_command").include?("Xnix external Windows app file-open smoke document"), "q4 MessageBox plan must require staged external document marker observation")
+assert(payload.fetch("staged_external_acceptance_required") == false, "q4 MessageBox plan must not require staged external acceptance by default")
 
 direct_stdout, direct_stderr, direct_status = Open3.capture3(
   "ruby",
@@ -86,6 +97,25 @@ assert(direct.fetch("window_match") == "Xnix Windows GUI Smoke", "q4 MessageBox 
 assert(direct.fetch("file_open_entrypoint_requested") == false, "q4 MessageBox direct plan must disable file-open")
 assert(direct.fetch("real_run_acceptance_required") == false, "q4 MessageBox direct plan must not require real-run acceptance")
 assert(!direct.fetch("delegated_command").include?("--owner-file-open"), "q4 MessageBox direct plan must not delegate owner file-open")
+
+staged_stdout, staged_stderr, staged_status = Open3.capture3(
+  "ruby",
+  script.to_s,
+  "--direct",
+  "--staged-external"
+)
+assert(staged_status.success?, "q4 MessageBox staged external plan must exit successfully: #{staged_stderr}")
+staged = JSON.parse(staged_stdout)
+assert(staged.fetch("staged_external_run_planned") == true, "q4 MessageBox staged external plan must enable staged external run")
+assert(staged.fetch("staged_external_acceptance_required") == true, "q4 MessageBox staged external plan must require staged external acceptance")
+assert(staged.fetch("staged_external_remote_executable_configured") == true, "q4 MessageBox staged external plan must configure the remote executable")
+assert(staged.fetch("staged_external_remote_executable_path_exposed") == false, "q4 MessageBox staged external plan must hide the remote executable path from safe fields")
+assert(staged.fetch("staged_external_runtime_owned") == true, "q4 MessageBox staged external plan must keep Runtime ownership")
+assert(staged.fetch("staged_external_go_runtime_backed") == true, "q4 MessageBox staged external plan must keep Go Runtime backing")
+assert(staged.fetch("staged_external_kde_policy_owner") == false, "q4 MessageBox staged external plan must not make KDE the policy owner")
+assert(staged.fetch("staged_external_command").include?("--execute"), "q4 MessageBox staged external plan must execute the delegated staged smoke only when the parent executes")
+assert(staged.fetch("staged_external_command").include?("--app-id"), "q4 MessageBox staged external plan must pass app identity")
+assert(staged.fetch("staged_external_command").include?("org.xnix.apps.messagebox.staged-external"), "q4 MessageBox staged external plan must use a distinct staged app id")
 
 stdout, stderr, status = Open3.capture3(
   "ruby",
