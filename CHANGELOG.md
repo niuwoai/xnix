@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc246] - 2026-08-13
+
+### Added
+
+- Added the Go Runtime `q4-staged-external-winapp-acceptance-preview` command to consume q4 staged external Windows app smoke reports and emit redacted desktop-safe acceptance evidence.
+- Added CLI and Runtime coverage for the staged external app acceptance path, including rejection of missing KDE verified state, missing file-bridge evidence, unsafe host mutation, and incomplete artifact fetches.
+
+### Changed
+
+- Updated the q4 staged desktop external Windows app smoke to require the Go-owned staged external app acceptance before reporting success.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc246`.
+
 ## [0.2.640-rc245] - 2026-08-13
 
 ### Changed

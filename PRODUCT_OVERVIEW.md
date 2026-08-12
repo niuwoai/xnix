@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc245
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc246
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc246 checkpoint moves the final acceptance decision for the q4 staged external Windows app desktop lane into the Go Runtime. `q4-staged-external-winapp-acceptance-preview` consumes the q4 wrapper report for the imported Notepad file-open run, verifies the handle-only KDE desktop route, real GUI and file-open evidence, Runtime application detail, KDE verified state, fetched artifacts, q4-hosted compilation, and closed unsafe gates, then returns a redacted desktop-safe acceptance payload. The Ruby wrapper remains the q4 orchestration harness and now requires the Go-owned acceptance before it can report success.
 
 The v0.2.640-rc245 checkpoint turns the q4 real imported Windows app smoke into a stronger regression gate for the product-facing KDE detail surface. After q4 runs the imported Notepad file-open path and generates `kde-page-from-application-detail.json`, the wrapper now requires the page header and application summary to expose the Runtime-verified `Verified real app run` / `real-app-run-verified` state while execution, backend launch, settings persistence, backend detail exposure, and host-root mutation stay disabled.
 

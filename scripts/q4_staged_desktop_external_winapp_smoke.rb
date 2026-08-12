@@ -160,6 +160,35 @@ def bool(payload, key)
   payload[key] == true
 end
 
+def remote_q4_staged_external_winapp_acceptance(remote_host, remote_runtime_bin, remote_input_path, payload_json, timeout_seconds:)
+  writer = shell_join(["ruby", "-e", "File.write(ARGV.fetch(0), STDIN.read)", remote_input_path])
+  _write_stdout, write_stderr, write_status = Open3.capture3(
+    *ssh_command(remote_host, writer),
+    stdin_data: payload_json,
+    chdir: PROJECT_ROOT.to_s
+  )
+  unless write_status.success?
+    warn write_stderr unless write_stderr.empty?
+    abort "q4 staged external Windows app Go acceptance input write failed"
+  end
+
+  acceptance_args = [
+    remote_runtime_bin,
+    "q4-staged-external-winapp-acceptance-preview",
+    "--q4-staged-external-winapp-smoke", remote_input_path
+  ]
+  stdout, stderr, status = run_command(
+    ssh_command(remote_host, shell_join(acceptance_args)),
+    timeout_seconds: timeout_seconds
+  )
+  unless status.zero?
+    warn stdout unless stdout.empty?
+    warn stderr unless stderr.empty?
+    abort "q4 staged external Windows app Go acceptance preview failed"
+  end
+  JSON.parse(stdout)
+end
+
 remote_host = options.fetch(:remote_host)
 remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetch(:remote_source_root))
 remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
@@ -175,6 +204,7 @@ remote_markdown = "#{remote_run_root}/q4-staged-desktop-external-winapp-smoke.md
 remote_compatibility_bundle = "#{remote_run_root}/compatibility-evidence-bundle.json"
 remote_application_detail = "#{remote_run_root}/external-winapp-application-detail.json"
 remote_kde_page_from_detail = "#{remote_run_root}/kde-page-from-application-detail.json"
+remote_go_acceptance_input = "#{remote_run_root}/q4-staged-external-winapp-acceptance-input.json"
 artifact_specs = [
   ["delegated_launcher_payload", "delegated_launcher_payload_path", "delegated-launcher-payload.json"],
   ["activation_status", "activation_status_path", "activation-status.json"],
@@ -232,6 +262,8 @@ plan = {
   "runtime_owned" => true,
   "go_runtime_backed" => true,
   "kde_policy_owner" => false,
+  "go_owned_q4_staged_external_winapp_acceptance_planned" => true,
+  "go_owned_q4_staged_external_winapp_acceptance_ready" => false,
   "host_root_modified" => false,
   "privileged_container_required" => false,
   "host_networking_required" => false,
@@ -544,6 +576,29 @@ result = plan.merge(
   "host_networking_required" => false,
   "docker_socket_mounted" => delegated.fetch("docker_socket_mounted"),
   "broad_host_mount_required" => delegated.fetch("broad_host_mount_required")
+)
+
+go_acceptance = remote_q4_staged_external_winapp_acceptance(
+  remote_host,
+  remote_runtime_bin,
+  remote_go_acceptance_input,
+  JSON.pretty_generate(result) + "\n",
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless go_acceptance.fetch("acceptance_ready")
+  warn JSON.pretty_generate(go_acceptance)
+  abort "q4 staged external Windows app Go-owned acceptance did not pass"
+end
+
+result.merge!(
+  "go_owned_q4_staged_external_winapp_acceptance_schema" => go_acceptance.fetch("schema_version"),
+  "go_owned_q4_staged_external_winapp_acceptance_request_type" => go_acceptance.fetch("request_type"),
+  "go_owned_q4_staged_external_winapp_acceptance_ready" => go_acceptance.fetch("acceptance_ready"),
+  "go_owned_q4_staged_external_winapp_acceptance_consumed" => go_acceptance.fetch("smoke_report_consumed"),
+  "go_owned_q4_staged_external_winapp_acceptance_path_exposed" => go_acceptance.fetch("smoke_report_path_exposed"),
+  "go_owned_q4_staged_external_winapp_acceptance_remote_host_exposed" => go_acceptance.fetch("remote_host_exposed"),
+  "go_owned_q4_staged_external_winapp_acceptance_delegated_command_exposed" => go_acceptance.fetch("delegated_command_exposed"),
+  "go_owned_q4_staged_external_winapp_acceptance_raw_path_exposed" => go_acceptance.fetch("raw_path_exposed")
 )
 
 emit_json(result, output_path)
