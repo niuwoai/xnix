@@ -389,6 +389,8 @@ unless kde_page_from_detail_status.zero?
   abort "q4 KDE page from external Windows app application detail generation failed"
 end
 kde_page_from_detail = JSON.parse(kde_page_from_detail_stdout)
+kde_page_from_detail_header = kde_page_from_detail.fetch("header")
+kde_page_from_detail_application_summary = kde_page_from_detail.fetch("application_summary")
 unless kde_page_from_detail.fetch("request_type") == "kde-center-page-preview" &&
        kde_page_from_detail.fetch("external_winapp_application_detail_consumed") == true &&
        kde_page_from_detail.fetch("external_winapp_application_detail_count") == 1 &&
@@ -397,7 +399,18 @@ unless kde_page_from_detail.fetch("request_type") == "kde-center-page-preview" &
        kde_page_from_detail.fetch("go_runtime_backed") == true &&
        kde_page_from_detail.fetch("kde_policy_owner") == false &&
        kde_page_from_detail.fetch("launch_enabled") == false &&
-       kde_page_from_detail.fetch("backend_details_exposed") == false
+       kde_page_from_detail.fetch("backend_details_exposed") == false &&
+       kde_page_from_detail_header.fetch("badge") == application_detail.fetch("compatibility_label") &&
+       kde_page_from_detail_header.fetch("badge_tone") == "success" &&
+       kde_page_from_detail_header.fetch("backend_details_exposed") == false &&
+       kde_page_from_detail_application_summary.fetch("compatibility_state") == application_detail.fetch("compatibility_state") &&
+       kde_page_from_detail_application_summary.fetch("compatibility_label") == application_detail.fetch("compatibility_label") &&
+       kde_page_from_detail_application_summary.fetch("diagnostics_state") == "real-app-run-verified" &&
+       kde_page_from_detail_application_summary.fetch("backend_launch_enabled") == false &&
+       kde_page_from_detail_application_summary.fetch("action_execution_enabled") == false &&
+       kde_page_from_detail_application_summary.fetch("settings_persistence_enabled") == false &&
+       kde_page_from_detail_application_summary.fetch("backend_details_exposed") == false &&
+       kde_page_from_detail_application_summary.fetch("host_root_modified") == false
   warn kde_page_from_detail_stdout
   abort "q4 KDE page from external Windows app application detail did not prove desktop consumption"
 end
@@ -511,6 +524,17 @@ result = plan.merge(
   "kde_page_from_application_detail_runtime_owned" => kde_page_from_detail.fetch("runtime_owned"),
   "kde_page_from_application_detail_go_runtime_backed" => kde_page_from_detail.fetch("go_runtime_backed"),
   "kde_page_from_application_detail_kde_policy_owner" => kde_page_from_detail.fetch("kde_policy_owner"),
+  "kde_page_from_application_detail_header_badge" => kde_page_from_detail_header.fetch("badge"),
+  "kde_page_from_application_detail_header_badge_tone" => kde_page_from_detail_header.fetch("badge_tone"),
+  "kde_page_from_application_detail_header_backend_details_exposed" => kde_page_from_detail_header.fetch("backend_details_exposed"),
+  "kde_page_from_application_detail_summary_compatibility_state" => kde_page_from_detail_application_summary.fetch("compatibility_state"),
+  "kde_page_from_application_detail_summary_compatibility_label" => kde_page_from_detail_application_summary.fetch("compatibility_label"),
+  "kde_page_from_application_detail_summary_diagnostics_state" => kde_page_from_detail_application_summary.fetch("diagnostics_state"),
+  "kde_page_from_application_detail_summary_backend_launch_enabled" => kde_page_from_detail_application_summary.fetch("backend_launch_enabled"),
+  "kde_page_from_application_detail_summary_action_execution_enabled" => kde_page_from_detail_application_summary.fetch("action_execution_enabled"),
+  "kde_page_from_application_detail_summary_settings_persistence_enabled" => kde_page_from_detail_application_summary.fetch("settings_persistence_enabled"),
+  "kde_page_from_application_detail_summary_backend_details_exposed" => kde_page_from_detail_application_summary.fetch("backend_details_exposed"),
+  "kde_page_from_application_detail_summary_host_root_modified" => kde_page_from_detail_application_summary.fetch("host_root_modified"),
   "artifact_fetch_count" => fetched_artifacts.count { |key, value| key.end_with?("_artifact_fetched") && value == true },
   "artifacts_fetched" => fetched_artifacts,
   "markdown_output_written" => markdown_output_path.file?,

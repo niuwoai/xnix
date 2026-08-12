@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc245] - 2026-08-13
+
+### Changed
+
+- Strengthened the q4 staged desktop external Windows app smoke so the KDE page generated from Runtime application detail must expose the verified real app run header badge and application summary state.
+- Added q4 smoke report fields for the KDE-from-detail header badge, badge tone, summary compatibility state, diagnostics state, and closed execution/backend/settings/host gates.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc245`.
+
 ## [0.2.640-rc244] - 2026-08-13
 
 ### Changed
