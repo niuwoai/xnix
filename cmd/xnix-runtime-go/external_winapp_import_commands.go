@@ -66,6 +66,7 @@ type externalWinAppImportStageLaunchResult struct {
 	RawExecutablePathExposed         bool                                `json:"raw_executable_path_exposed"`
 	RawLauncherPathExposed           bool                                `json:"raw_launcher_path_exposed"`
 	RawLauncherOutputExposed         bool                                `json:"raw_launcher_output_exposed"`
+	ExistingImportRecordConsumed     bool                                `json:"existing_import_record_consumed"`
 	StageResult                      activation.StageResult              `json:"stage_result"`
 	LauncherResult                   appidentity.ExternalWinAppRunResult `json:"launcher_result"`
 	DesktopSafeSummary               string                              `json:"desktop_safe_summary"`
@@ -352,6 +353,7 @@ func runExternalWinAppImportStageAndLaunch(args []string, stdout io.Writer) erro
 	flags := flag.NewFlagSet(externalWinAppImportStageLaunchRequestType, flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	stateRoot := flags.String("state-root", "", "controlled Runtime state root for imported external Windows apps")
+	externalAppImportRecord := flags.String("external-app-import-record", "", "existing Runtime external Windows app import record to stage and launch")
 	executablePath := flags.String("executable", "", "local Windows .exe file to import, stage, and launch")
 	bundleRoot := flags.String("bundle-root", "", "local portable Windows app directory to import, stage, and launch")
 	executableRelativePath := flags.String("executable-relative-path", "", "portable bundle relative path to the Windows .exe")
@@ -387,17 +389,31 @@ func runExternalWinAppImportStageAndLaunch(args []string, stdout io.Writer) erro
 	}
 	executableSupplied := strings.TrimSpace(*executablePath) != ""
 	bundleSupplied := strings.TrimSpace(*bundleRoot) != "" || strings.TrimSpace(*executableRelativePath) != ""
-	if executableSupplied && bundleSupplied {
-		return errors.New("external-winapp-import-stage-and-launch accepts either --executable or --bundle-root with --executable-relative-path, not both")
+	recordSupplied := strings.TrimSpace(*externalAppImportRecord) != ""
+	sourceCount := 0
+	for _, supplied := range []bool{recordSupplied, executableSupplied, bundleSupplied} {
+		if supplied {
+			sourceCount++
+		}
 	}
-	if !executableSupplied && !bundleSupplied {
-		return errors.New("external-winapp-import-stage-and-launch requires --executable or --bundle-root with --executable-relative-path")
+	if sourceCount > 1 {
+		return errors.New("external-winapp-import-stage-and-launch accepts exactly one source: --external-app-import-record, --executable, or --bundle-root with --executable-relative-path")
+	}
+	if sourceCount == 0 {
+		return errors.New("external-winapp-import-stage-and-launch requires --external-app-import-record, --executable, or --bundle-root with --executable-relative-path")
 	}
 	var record appidentity.ExternalWinAppImportRecord
-	if bundleSupplied {
+	effectiveStateRoot := strings.TrimSpace(*stateRoot)
+	if recordSupplied {
+		record, err = appidentity.LoadExternalWinAppImportRecord(*externalAppImportRecord)
+		if err != nil {
+			return err
+		}
+		effectiveStateRoot, err = stateRootFromExternalWinAppImportRecordPath(*externalAppImportRecord, record)
+	} else if bundleSupplied {
 		record, err = appidentity.RecordExternalWinAppBundleImport(appidentity.ExternalWinAppBundleImportRequest{
 			Version:                version,
-			StateRoot:              *stateRoot,
+			StateRoot:              effectiveStateRoot,
 			BundleRoot:             *bundleRoot,
 			ExecutableRelativePath: *executableRelativePath,
 			AppID:                  *appID,
@@ -407,7 +423,7 @@ func runExternalWinAppImportStageAndLaunch(args []string, stdout io.Writer) erro
 	} else {
 		record, err = appidentity.RecordExternalWinAppImport(appidentity.ExternalWinAppImportRequest{
 			Version:        version,
-			StateRoot:      *stateRoot,
+			StateRoot:      effectiveStateRoot,
 			ExecutablePath: *executablePath,
 			AppID:          *appID,
 			DisplayName:    *displayName,
@@ -437,7 +453,7 @@ func runExternalWinAppImportStageAndLaunch(args []string, stdout io.Writer) erro
 	launcherPath, launcherFromStage := stagedLauncherPath(*launcherBinary, *managedLauncherBinary, *stagingRoot)
 	launcherResult, err := invokeExternalWinAppStagedLauncher(invokeExternalWinAppStagedLauncherRequest{
 		LauncherPath:              launcherPath,
-		StateRoot:                 *stateRoot,
+		StateRoot:                 effectiveStateRoot,
 		ExternalAppHandle:         record.ApplicationID,
 		DesktopArguments:          flags.Args(),
 		ActivationRoot:            *stagingRoot,
@@ -501,6 +517,7 @@ func runExternalWinAppImportStageAndLaunch(args []string, stdout io.Writer) erro
 		RawExecutablePathExposed:         launcherResult.RawExecutablePathExposed,
 		RawLauncherPathExposed:           false,
 		RawLauncherOutputExposed:         false,
+		ExistingImportRecordConsumed:     recordSupplied,
 		StageResult:                      stageResult,
 		LauncherResult:                   launcherResult,
 		DesktopSafeSummary:               record.DisplayName + " was imported, staged as a KDE desktop activation entry, and launched through the Runtime-managed desktop launcher without exposing local paths.",
@@ -521,6 +538,31 @@ func runExternalWinAppImportStageAndLaunch(args []string, stdout io.Writer) erro
 		return fmt.Errorf("write external Windows app import-stage-and-launch output: %w", err)
 	}
 	return nil
+}
+
+func stateRootFromExternalWinAppImportRecordPath(recordPath string, record appidentity.ExternalWinAppImportRecord) (string, error) {
+	absoluteRecordPath, err := filepath.Abs(strings.TrimSpace(recordPath))
+	if err != nil {
+		return "", fmt.Errorf("resolve external Windows app import record path: %w", err)
+	}
+	recordRelativePath := filepath.Clean(filepath.FromSlash(record.RecordRelativePath))
+	if filepath.IsAbs(recordRelativePath) ||
+		strings.Contains(filepath.ToSlash(recordRelativePath), "../") ||
+		strings.HasPrefix(filepath.ToSlash(recordRelativePath), "..") {
+		return "", errors.New("external Windows app import record has an unsafe record path")
+	}
+	stateRoot := filepath.Dir(absoluteRecordPath)
+	recordRelativeDir := filepath.Dir(recordRelativePath)
+	if recordRelativeDir != "." {
+		for range strings.Split(filepath.ToSlash(recordRelativeDir), "/") {
+			stateRoot = filepath.Dir(stateRoot)
+		}
+	}
+	expectedRecordPath := filepath.Clean(filepath.Join(stateRoot, recordRelativePath))
+	if filepath.Clean(absoluteRecordPath) != expectedRecordPath {
+		return "", errors.New("external Windows app import record path does not match its state-root relative path")
+	}
+	return stateRoot, nil
 }
 
 type invokeExternalWinAppStagedLauncherRequest struct {

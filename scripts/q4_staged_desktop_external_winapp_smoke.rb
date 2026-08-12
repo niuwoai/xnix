@@ -38,6 +38,7 @@ options = {
   remote_executable: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_REMOTE_EXECUTABLE", ""),
   remote_bundle_root: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_REMOTE_BUNDLE_ROOT", ""),
   executable_relative_path: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_EXECUTABLE_RELATIVE_PATH", ""),
+  remote_import_record: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_REMOTE_IMPORT_RECORD", ""),
   app_id: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_APP_ID", ""),
   display_name: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_DISPLAY_NAME", ""),
   window_match: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_WINDOW_MATCH", ""),
@@ -57,6 +58,7 @@ OptionParser.new do |parser|
   parser.on("--remote-executable PATH", "Optional Windows executable already staged on q4 under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_executable] = value }
   parser.on("--remote-bundle-root PATH", "Optional portable Windows app directory already staged on q4 under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_bundle_root] = value }
   parser.on("--executable-relative-path PATH", "Portable bundle relative path to the Windows .exe.") { |value| options[:executable_relative_path] = value }
+  parser.on("--remote-import-record PATH", "Optional Runtime external Windows app import record already staged on q4 under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_import_record] = value }
   parser.on("--app-id ID", "Application id for an operator-supplied external executable.") { |value| options[:app_id] = value }
   parser.on("--display-name NAME", "Display name for an operator-supplied external executable.") { |value| options[:display_name] = value }
   parser.on("--window-match TEXT", "Optional observed-window text required for the external executable.") { |value| options[:window_match] = value }
@@ -211,7 +213,10 @@ remote_executable = ensure_remote_xnix_path!("remote executable", remote_executa
 remote_bundle_root = options.fetch(:remote_bundle_root).to_s.strip
 remote_bundle_root = ensure_remote_xnix_path!("remote bundle root", remote_bundle_root) unless remote_bundle_root.empty?
 executable_relative_path = options.fetch(:executable_relative_path).to_s.strip
-abort "use either --remote-executable or --remote-bundle-root, not both" if !remote_executable.empty? && !remote_bundle_root.empty?
+remote_import_record = options.fetch(:remote_import_record).to_s.strip
+remote_import_record = ensure_remote_xnix_path!("remote import record", remote_import_record) unless remote_import_record.empty?
+remote_source_count = [!remote_executable.empty?, !remote_bundle_root.empty?, !remote_import_record.empty?].count(true)
+abort "use exactly one of --remote-executable, --remote-bundle-root, or --remote-import-record" if remote_source_count > 1
 abort "--executable-relative-path requires --remote-bundle-root" if remote_bundle_root.empty? && !executable_relative_path.empty?
 abort "--remote-bundle-root requires --executable-relative-path" if !remote_bundle_root.empty? && executable_relative_path.empty?
 output_path = ensure_local_output_path!("output path", options.fetch(:output))
@@ -260,6 +265,7 @@ delegated_command = [
   "--timeout", options.fetch(:timeout)
 ]
 delegated_command.concat(["--executable", remote_executable]) unless remote_executable.empty?
+delegated_command.concat(["--import-record", remote_import_record]) unless remote_import_record.empty?
 unless remote_bundle_root.empty?
   delegated_command.concat([
     "--bundle-root", remote_bundle_root,
@@ -290,8 +296,11 @@ plan = {
   "remote_executable_path_exposed_only_for_operator" => !remote_executable.empty?,
   "remote_bundle_root_supplied" => !remote_bundle_root.empty?,
   "remote_bundle_root_path_exposed_only_for_operator" => !remote_bundle_root.empty?,
+  "remote_import_record_supplied" => !remote_import_record.empty?,
+  "remote_import_record_path_exposed_only_for_operator" => !remote_import_record.empty?,
+  "record_first_launch_path" => !remote_import_record.empty?,
   "executable_relative_path_supplied" => !executable_relative_path.empty?,
-  "portable_directory_external_app" => !remote_bundle_root.empty?,
+  "portable_directory_external_app" => !remote_bundle_root.empty? || !remote_import_record.empty?,
   "operator_app_id_supplied" => !options.fetch(:app_id).to_s.strip.empty?,
   "operator_display_name_supplied" => !options.fetch(:display_name).to_s.strip.empty?,
   "operator_window_match_supplied" => !options.fetch(:window_match).to_s.strip.empty?,
@@ -520,6 +529,8 @@ result = plan.merge(
   "display_name" => delegated.fetch("display_name"),
   "portable_directory_external_app" => delegated.fetch("portable_directory_external_app", false),
   "portable_directory_bundle_import_recorded" => delegated.fetch("portable_directory_bundle_import_recorded", false),
+  "existing_import_record_consumed" => delegated.fetch("existing_import_record_consumed", false),
+  "record_first_launch_path" => delegated.fetch("record_first_launch_path", false),
   "artifact_kind" => delegated.fetch("artifact_kind", ""),
   "bundle_manifest_sha256_present" => delegated.fetch("bundle_manifest_sha256_present", false),
   "executable_relative_path" => delegated.fetch("executable_relative_path", ""),

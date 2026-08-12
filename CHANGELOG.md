@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc262] - 2026-08-13
+
+### Changed
+
+- Added record-first staged external Windows app execution: `external-winapp-import-stage-and-launch`, `scripts/staged_desktop_external_winapp_smoke.rb`, and the q4 staged wrapper can now consume an existing Runtime external app import record instead of re-importing a bundle path.
+- Updated the q4 Notepad++ Portable smoke to pass the Runtime-owned `import-record.json` into the staged KDE/Wine path, proving handle/record consumption before GUI execution.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc262`.
+
+### Fixed
+
+- Fixed portable-directory staged smoke reporting so record-first runs preserve `bundle_manifest_sha256_present=true` from the consumed import record.
+
 ## [0.2.640-rc261] - 2026-08-13
 
 ### Changed

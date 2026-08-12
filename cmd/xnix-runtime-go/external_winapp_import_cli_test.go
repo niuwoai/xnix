@@ -843,6 +843,97 @@ func TestExternalWinAppImportStageAndLaunchCommandSupportsPortableBundle(t *test
 	}
 }
 
+func TestExternalWinAppImportStageAndLaunchCommandConsumesExistingPortableImportRecord(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	stagingRoot := filepath.Join(tempDir, "stage")
+	bundleRoot := filepath.Join(tempDir, "NotepadPlusPlusPortable")
+	executableRelativePath := "notepad++.exe"
+	if err := os.MkdirAll(filepath.Join(bundleRoot, "plugins"), 0o700); err != nil {
+		t.Fatalf("MkdirAll bundle returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(bundleRoot, executableRelativePath), []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile portable executable returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(bundleRoot, "plugins", "plugin.ini"), []byte("portable sidecar"), 0o600); err != nil {
+		t.Fatalf("WriteFile portable sidecar returned error: %v", err)
+	}
+	var importOutput bytes.Buffer
+	if err := run([]string{
+		"external-winapp-bundle-import-record",
+		"--state-root", stateRoot,
+		"--bundle-root", bundleRoot,
+		"--executable-relative-path", executableRelativePath,
+		"--app-id", "org.xnix.external.notepadplusplus",
+		"--display-name", "Notepad++ Portable",
+	}, &importOutput); err != nil {
+		t.Fatalf("external-winapp-bundle-import-record returned error: %v", err)
+	}
+	recordPath, err := appidentity.ExternalWinAppImportRecordPathFromHandle(stateRoot, "org.xnix.external.notepadplusplus")
+	if err != nil {
+		t.Fatalf("ExternalWinAppImportRecordPathFromHandle returned error: %v", err)
+	}
+	launcherLog := filepath.Join(tempDir, "launcher.log")
+	launcherSource := filepath.Join(tempDir, "xnix-compat-launch-source")
+	launcherBody := "#!/bin/sh\n" +
+		"printf 'args=%s\\nstate=%s\\n' \"$*\" \"$XNIX_EXTERNAL_APP_STATE_ROOT\" > \"" + launcherLog + "\"\n" +
+		"printf '%s\\n' '{\"version\":\"0.2.640-test\",\"schema_version\":\"xnix.runtime.external_winapp_run.v1\",\"request_type\":\"windows-external-app-run\",\"status\":\"passed\",\"application_id\":\"org.xnix.external.notepadplusplus\",\"display_name\":\"Notepad++ Portable\",\"app_version\":\"0.2.640-test\",\"executable_name\":\"notepad++.exe\",\"artifact_kind\":\"portable-directory\",\"executable_relative_path\":\"notepad++.exe\",\"application_workspace_copied\":true,\"application_workspace_mode\":\"portable-directory\",\"external_app_import_record_consumed\":true,\"external_app_handle_consumed\":true,\"external_app_handle\":\"org.xnix.external.notepadplusplus\",\"external_desktop_argument_count\":1,\"external_file_uri_arguments_accepted\":true,\"external_file_open_requested\":true,\"external_file_bridge_ready\":true,\"imported_artifact_digest_verified\":true,\"runtime_run_requested\":true,\"runtime_run_executed\":true,\"execution_started\":true,\"backend_process_started\":true,\"container_runtime_used\":true,\"container_network_mode\":\"none\",\"container_host_mount_count\":0,\"x_window_observed\":true,\"window_observed\":true,\"runtime_owned\":true,\"go_runtime_backed\":true,\"kde_policy_owner\":false,\"desktop_launch_enabled\":false,\"action_execution_enabled\":false,\"backend_details_exposed\":false,\"raw_import_record_path_exposed\":false,\"raw_external_app_handle_path_exposed\":false,\"raw_state_root_path_exposed\":false,\"raw_executable_path_exposed\":false,\"host_root_modified\":false,\"privileged_container_required\":false,\"host_networking_required\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false}'\n"
+	if err := os.WriteFile(launcherSource, []byte(launcherBody), 0o755); err != nil {
+		t.Fatalf("WriteFile launcher returned error: %v", err)
+	}
+	documentPath := filepath.Join(tempDir, "sample-document.txt")
+	if err := os.WriteFile(documentPath, []byte("record-first portable external staged launcher fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	documentURI := "file://" + filepath.ToSlash(documentPath)
+	var output bytes.Buffer
+	if err := run([]string{
+		"external-winapp-import-stage-and-launch",
+		"--external-app-import-record", recordPath,
+		"--mode", "development",
+		"--staging-root", stagingRoot,
+		"--managed-launcher-bin", launcherSource,
+		"--image", "local/wine-x-gui:test",
+		"--docker", filepath.Join(tempDir, "fake-docker"),
+		"--timeout", "5s",
+		documentURI,
+	}, &output); err != nil {
+		t.Fatalf("record-first portable import-stage-and-launch returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal record-first portable import-stage-and-launch output returned error: %v\n%s", err, output.String())
+	}
+	launcherResult := payload["launcher_result"].(map[string]any)
+	if payload["request_type"] != "external-winapp-import-stage-and-launch" ||
+		payload["status"] != "passed" ||
+		payload["application_id"] != "org.xnix.external.notepadplusplus" ||
+		payload["import_recorded"] != true ||
+		payload["existing_import_record_consumed"] != true ||
+		payload["desktop_activation_staged"] != true ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["external_app_handle_consumed"] != true ||
+		payload["imported_artifact_digest_verified"] != true ||
+		launcherResult["artifact_kind"] != "portable-directory" ||
+		launcherResult["application_workspace_copied"] != true ||
+		launcherResult["application_workspace_mode"] != "portable-directory" {
+		t.Fatalf("unexpected record-first portable import-stage-and-launch payload: %#v", payload)
+	}
+	launcherInvocation, err := os.ReadFile(launcherLog)
+	if err != nil {
+		t.Fatalf("ReadFile launcher log returned error: %v", err)
+	}
+	if !strings.Contains(string(launcherInvocation), "state="+stateRoot) ||
+		!strings.Contains(string(launcherInvocation), "--external-app-handle org.xnix.external.notepadplusplus --timeout 5s "+documentURI) {
+		t.Fatalf("record-first staged launcher invocation did not use the existing state root and handle route:\n%s", string(launcherInvocation))
+	}
+	for _, forbidden := range []string{stateRoot, stagingRoot, bundleRoot, recordPath, launcherSource, documentPath, documentURI, filepath.Join(tempDir, "fake-docker")} {
+		if strings.Contains(output.String(), forbidden) {
+			t.Fatalf("record-first portable import-stage-and-launch output exposed forbidden path %q: %s", forbidden, output.String())
+		}
+	}
+}
+
 func TestExternalWinAppImportAndRunCommandImportsAndRunsFileOpen(t *testing.T) {
 	tempDir := t.TempDir()
 	stateRoot := filepath.Join(tempDir, "state")

@@ -186,14 +186,13 @@ known_bundle_import_command = [
   "--report-output", remote_known_bundle_import_report
 ]
 
-def staged_command(remote_host, remote_bundle_root, output_path, markdown_output_path, timeout_seconds)
+def staged_command(remote_host, remote_import_record, output_path, markdown_output_path, timeout_seconds)
   [
     "ruby",
     "scripts/q4_staged_desktop_external_winapp_smoke.rb",
     "--execute",
     "--fixture", "external",
-    "--remote-bundle-root", remote_bundle_root,
-    "--executable-relative-path", NOTEPADPP_EXE_RELATIVE_PATH,
+    "--remote-import-record", remote_import_record,
     "--app-id", "org.xnix.external.notepadplusplus",
     "--display-name", "Notepad++ Portable",
     "--window-match", NOTEPADPP_WINDOW_MATCH,
@@ -209,8 +208,7 @@ planned_staged_command = [
   "scripts/q4_staged_desktop_external_winapp_smoke.rb",
   "--execute",
   "--fixture", "external",
-  "--remote-bundle-root", "#{remote_state_root}/external-apps/org.xnix.external.notepadplusplus/bundles/<verified-bundle-manifest>",
-  "--executable-relative-path", NOTEPADPP_EXE_RELATIVE_PATH,
+  "--remote-import-record", "#{remote_state_root}/external-apps/org.xnix.external.notepadplusplus/import-record.json",
   "--app-id", "org.xnix.external.notepadplusplus",
   "--display-name", "Notepad++ Portable",
   "--window-match", NOTEPADPP_WINDOW_MATCH,
@@ -248,6 +246,7 @@ plan = {
   "known_portable_bundle_import_recorded" => false,
   "known_portable_bundle_import_status" => "planned",
   "go_known_portable_bundle_import_backed" => true,
+  "record_first_launch_path" => true,
   "remote_cache_root" => remote_cache_root,
   "remote_state_root" => remote_state_root,
   "portable_directory_external_app" => true,
@@ -257,6 +256,7 @@ plan = {
   "remote_zip" => "#{remote_cache_root}/org.xnix.external.notepadplusplus/#{NOTEPADPP_ZIP}",
   "remote_bundle_root" => "",
   "remote_executable" => "",
+  "remote_import_record" => "",
   "remote_paths_exposed_only_for_operator" => true,
   "app_id" => "org.xnix.external.notepadplusplus",
   "display_name" => "Notepad++ Portable",
@@ -335,6 +335,7 @@ end
 import_record = known_import.fetch("import_record")
 remote_bundle_root = "#{remote_state_root}/#{import_record.fetch("bundle_relative_path")}"
 remote_executable = "#{remote_bundle_root}/#{NOTEPADPP_EXE_RELATIVE_PATH}"
+remote_import_record = "#{remote_state_root}/#{import_record.fetch("record_relative_path")}"
 plan["notepadpp_downloaded"] = bool(known_import, "downloaded") || known_import.fetch("fetch_cache_status", "") == "verified"
 plan["notepadpp_sha256_verified"] = bool(known_import, "checksum_verified")
 plan["notepadpp_extracted"] = bool(known_import, "extracted")
@@ -342,10 +343,11 @@ plan["known_portable_bundle_import_recorded"] = bool(known_import, "import_recor
 plan["known_portable_bundle_import_status"] = known_import.fetch("status")
 plan["remote_bundle_root"] = remote_bundle_root
 plan["remote_executable"] = remote_executable
+plan["remote_import_record"] = remote_import_record
 
 staged_command = staged_command(
   remote_host,
-  remote_bundle_root,
+  remote_import_record,
   output_path,
   markdown_output_path,
   options.fetch(:remote_timeout_seconds)
@@ -367,6 +369,8 @@ passed = delegated.fetch("status") == "passed" &&
          bool(delegated, "remote_build_completed") &&
          bool(delegated, "portable_directory_external_app") &&
          bool(delegated, "portable_directory_bundle_import_recorded") &&
+         bool(delegated, "existing_import_record_consumed") &&
+         bool(delegated, "record_first_launch_path") &&
          delegated.fetch("artifact_kind", "") == "portable-directory" &&
          bool(delegated, "bundle_manifest_sha256_present") &&
          bool(delegated, "application_workspace_copied") &&
@@ -396,6 +400,8 @@ result = plan.merge(
   "remote_build_completed" => bool(delegated, "remote_build_completed"),
   "portable_directory_external_app" => bool(delegated, "portable_directory_external_app"),
   "portable_directory_bundle_import_recorded" => bool(delegated, "portable_directory_bundle_import_recorded"),
+  "existing_import_record_consumed" => bool(delegated, "existing_import_record_consumed"),
+  "record_first_launch_path" => bool(delegated, "record_first_launch_path"),
   "artifact_kind" => delegated.fetch("artifact_kind", ""),
   "bundle_manifest_sha256_present" => bool(delegated, "bundle_manifest_sha256_present"),
   "application_workspace_copied" => bool(delegated, "application_workspace_copied"),

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc261`.
+The project is currently at `v0.2.640-rc262`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc261`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc262 makes the real Notepad++ Portable staged path record-first. The q4 smoke now passes the Runtime-owned `import-record.json` into the staged KDE/Wine runner, and `external-winapp-import-stage-and-launch` can consume an existing external app import record directly instead of re-importing the portable bundle path.
 
 v0.2.640-rc261 makes the q4 Notepad++ Portable real-app smoke go through the Go Runtime known bundle importer before staged GUI execution. The Runtime command now handles q4 download authorization, checksum verification, retry after transient EOF failures, safe extraction, and external bundle import; the validated smoke reached `runtime-accepted-real-app-run`.
 

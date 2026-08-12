@@ -54,6 +54,7 @@ options = {
   executable: "",
   bundle_root: "",
   executable_relative_path: "",
+  import_record: "",
   app_id: "",
   display_name: "",
   window_match: "",
@@ -79,6 +80,7 @@ OptionParser.new do |parser|
   parser.on("--executable PATH", "Optional existing Windows GUI executable; defaults to Wine Notepad from the local image") { |value| options[:executable] = value }
   parser.on("--bundle-root PATH", "Optional portable Windows app directory to import for the external fixture") { |value| options[:bundle_root] = value }
   parser.on("--executable-relative-path PATH", "Portable bundle relative path to the Windows .exe") { |value| options[:executable_relative_path] = value }
+  parser.on("--import-record PATH", "Optional existing Runtime external Windows app import record to stage and launch") { |value| options[:import_record] = value }
   parser.on("--app-id ID", "Application id for an operator-supplied external executable") { |value| options[:app_id] = value }
   parser.on("--display-name NAME", "Display name for an operator-supplied external executable") { |value| options[:display_name] = value }
   parser.on("--window-match TEXT", "Optional observed-window text required for the external executable") { |value| options[:window_match] = value }
@@ -220,6 +222,18 @@ def desktop_exec_from(path)
   line.delete_prefix("Exec=").strip
 end
 
+def state_root_from_import_record_path(record_path, record)
+  relative_path = Pathname.new(record.fetch("record_relative_path")).cleanpath
+  abort "external import record has an unsafe record_relative_path" if relative_path.absolute? || relative_path.each_filename.any? { |part| part == ".." }
+
+  state_root = record_path.dirname
+  relative_path.dirname.each_filename { |_part| state_root = state_root.dirname }
+  expected = state_root.join(relative_path).cleanpath
+  abort "external import record path does not match record_relative_path" unless expected == record_path.cleanpath
+
+  state_root
+end
+
 def write_skip_report(report_output, markdown_output, reason, app_id, app_name)
   packet = {
     "schema_version" => SCHEMA_VERSION,
@@ -333,15 +347,19 @@ fixture = options.fetch(:fixture).to_s.strip
 bundle_root_option = options.fetch(:bundle_root).to_s.strip
 executable_relative_path = options.fetch(:executable_relative_path).to_s.strip
 bundle_mode = !bundle_root_option.empty? || !executable_relative_path.empty?
+import_record_option = options.fetch(:import_record).to_s.strip
+record_mode = !import_record_option.empty?
 app_id = DEFAULT_APP_ID
 app_name = DEFAULT_APP_NAME
 window_match = ""
 case fixture
 when "notepad"
+  abort "notepad fixture does not accept --import-record" if record_mode
   abort "notepad fixture does not accept --bundle-root" if bundle_mode
 
   executable_path = options.fetch(:executable).to_s.strip.empty? ? run_root.join("notepad.exe") : absolute_path(options.fetch(:executable))
 when "notepad-file-argument"
+  abort "notepad-file-argument fixture does not accept --import-record" if record_mode
   abort "notepad-file-argument fixture does not accept --bundle-root" if bundle_mode
 
   app_id = NOTEPAD_FILE_ARGUMENT_APP_ID
@@ -350,15 +368,23 @@ when "notepad-file-argument"
   executable_path = options.fetch(:executable).to_s.strip.empty? ? run_root.join("notepad.exe") : absolute_path(options.fetch(:executable))
 when "external"
   executable_supplied = !options.fetch(:executable).to_s.strip.empty?
-  abort "external fixture accepts either --executable or --bundle-root with --executable-relative-path, not both" if executable_supplied && bundle_mode
-  abort "external fixture requires --executable or --bundle-root with --executable-relative-path" unless executable_supplied || bundle_mode
+  source_count = [record_mode, executable_supplied, bundle_mode].count(true)
+  abort "external fixture accepts exactly one source: --import-record, --executable, or --bundle-root with --executable-relative-path" if source_count > 1
+  abort "external fixture requires --import-record, --executable, or --bundle-root with --executable-relative-path" if source_count.zero?
   abort "external fixture portable bundle import requires --bundle-root" if bundle_mode && bundle_root_option.empty?
   abort "external fixture portable bundle import requires --executable-relative-path" if bundle_mode && executable_relative_path.empty?
 
   app_id = DEFAULT_OPERATOR_APP_ID
   app_name = DEFAULT_OPERATOR_APP_NAME
+  import_record_path = absolute_path(import_record_option) if record_mode
   bundle_root_path = absolute_path(bundle_root_option) if bundle_mode
-  executable_path = bundle_mode ? bundle_root_path.join(executable_relative_path).cleanpath : absolute_path(options.fetch(:executable))
+  executable_path = if record_mode
+                      nil
+                    elsif bundle_mode
+                      bundle_root_path.join(executable_relative_path).cleanpath
+                    else
+                      absolute_path(options.fetch(:executable))
+                    end
 else
   abort "unsupported fixture #{fixture.inspect}; expected notepad, notepad-file-argument, or external"
 end
@@ -456,45 +482,56 @@ if options.fetch(:executable).to_s.strip.empty? && %w[notepad notepad-file-argum
   copy_container_notepad(docker_bin, options.fetch(:image), notepad_path, executable_path)
 end
 
-assert(executable_path.file?, "external Windows executable must exist")
+assert(import_record_path.file?, "external Windows import record must exist") if record_mode
+assert(executable_path.file?, "external Windows executable must exist") unless record_mode
 if bundle_mode
   assert(bundle_root_path.directory?, "external Windows portable bundle root must exist")
   assert(executable_path.to_s.start_with?("#{bundle_root_path}/"), "external Windows portable executable must stay inside the bundle root")
 end
 
-import_command = [
-  *runtime_command,
-  bundle_mode ? "external-winapp-bundle-import-record" : "external-winapp-import-record",
-  "--state-root", state_root.to_s
-]
-if bundle_mode
-  import_command.concat([
-    "--bundle-root", bundle_root_path.to_s,
-    "--executable-relative-path", executable_relative_path
-  ])
+if record_mode
+  import_record = JSON.parse(import_record_path.read)
+  app_id = import_record.fetch("application_id")
+  app_name = import_record.fetch("display_name")
+  state_root = state_root_from_import_record_path(import_record_path, import_record)
+  import_stdout = JSON.pretty_generate(import_record)
+  import_stdout_forbidden = [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, import_record_path.to_s]
 else
-  import_command.concat(["--executable", executable_path.to_s])
+  import_command = [
+    *runtime_command,
+    bundle_mode ? "external-winapp-bundle-import-record" : "external-winapp-import-record",
+    "--state-root", state_root.to_s
+  ]
+  if bundle_mode
+    import_command.concat([
+      "--bundle-root", bundle_root_path.to_s,
+      "--executable-relative-path", executable_relative_path
+    ])
+  else
+    import_command.concat(["--executable", executable_path.to_s])
+  end
+  import_command.concat([
+    "--app-id", app_id,
+    "--display-name", app_name
+  ])
+  import_record, import_stdout = run_json(go_env, *import_command)
+  import_record_path = state_root.join(import_record.fetch("record_relative_path"))
+  import_stdout_forbidden = [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, executable_path.to_s, bundle_mode ? bundle_root_path.to_s : ""]
 end
-import_command.concat([
-  "--app-id", app_id,
-  "--display-name", app_name
-])
-import_record, import_stdout = run_json(go_env, *import_command)
 assert(import_record.fetch("import_recorded") == true, "external app import record must be persisted")
 assert(import_record.fetch("artifact_copied") == true, "external app import must copy the artifact")
 assert(import_record.fetch("windows_executable_validated") == true, "external app import must validate an MZ executable")
-if bundle_mode
+if bundle_mode || import_record.fetch("artifact_kind", "") == "portable-directory"
   assert(import_record.fetch("request_type") == "external-winapp-bundle-import-record", "external portable bundle import must use the bundle import record request type")
   assert(import_record.fetch("artifact_kind") == "portable-directory", "external portable bundle import must record portable-directory artifact kind")
   assert(import_record.fetch("bundle_manifest_sha256").to_s.match?(/\A[0-9a-f]{64}\z/), "external portable bundle import must record the bundle manifest digest")
-  assert(import_record.fetch("executable_relative_path") == executable_relative_path, "external portable bundle import must preserve the executable relative path")
+  executable_relative_path = import_record.fetch("executable_relative_path", executable_relative_path)
+  assert(!executable_relative_path.empty?, "external portable bundle import must preserve the executable relative path")
 else
   assert(import_record.fetch("request_type") == "external-winapp-import-record", "external single executable import must use the executable import record request type")
 end
 assert(import_record.fetch("host_root_modified") == false, "external app import must not mutate the host root")
-assert_no_forbidden(import_stdout, [state_root.to_s, executable_path.to_s, bundle_mode ? bundle_root_path.to_s : ""], "external import output")
-
-import_record_path = state_root.join(import_record.fetch("record_relative_path"))
+assert_no_forbidden(import_stdout, import_stdout_forbidden, "external import output")
 stage, stage_stdout = run_json(
   go_env,
   *runtime_command,
@@ -664,15 +701,18 @@ assert_no_forbidden(launch_packet_text, [PROJECT_ROOT.to_s, run_root.to_s, stage
 
 one_shot_command = [
   *runtime_command,
-  "external-winapp-import-stage-and-launch",
-  "--state-root", one_shot_state_root.to_s,
+  "external-winapp-import-stage-and-launch"
 ]
-if bundle_mode
+if record_mode
+  one_shot_command.concat(["--external-app-import-record", import_record_path.to_s])
+elsif bundle_mode
+  one_shot_command.concat(["--state-root", one_shot_state_root.to_s])
   one_shot_command.concat([
     "--bundle-root", bundle_root_path.to_s,
     "--executable-relative-path", executable_relative_path
   ])
 else
+  one_shot_command.concat(["--state-root", one_shot_state_root.to_s])
   one_shot_command.concat(["--executable", executable_path.to_s])
 end
 one_shot_command.concat([
@@ -695,6 +735,7 @@ assert(one_shot.fetch("status") == "passed", "one-shot Runtime command must pass
 assert(one_shot.fetch("application_id") == app_id, "one-shot Runtime command must target the imported app")
 assert(one_shot.fetch("external_app_handle") == app_id, "one-shot Runtime command must preserve the opaque desktop handle")
 assert(one_shot.fetch("import_recorded") == true, "one-shot Runtime command must persist the import record")
+assert(one_shot.fetch("existing_import_record_consumed") == record_mode, "one-shot Runtime command must report whether it consumed an existing import record")
 assert(one_shot.fetch("desktop_activation_staged") == true, "one-shot Runtime command must stage desktop activation artifacts")
 assert(one_shot.fetch("staged_launcher_invoked") == true, "one-shot Runtime command must invoke the staged launcher")
 assert(one_shot.fetch("staged_launcher_from_activation_root") == true, "one-shot Runtime command must run the launcher staged under the activation root")
@@ -787,10 +828,12 @@ packet = {
   "app_id" => app_id,
   "display_name" => app_name,
   "version" => VERSION,
-  "portable_directory_external_app" => bundle_mode,
-  "portable_directory_bundle_import_recorded" => bundle_mode && import_record.fetch("request_type") == "external-winapp-bundle-import-record",
+  "portable_directory_external_app" => import_record.fetch("artifact_kind", "") == "portable-directory",
+  "portable_directory_bundle_import_recorded" => import_record.fetch("request_type") == "external-winapp-bundle-import-record",
+  "existing_import_record_consumed" => record_mode,
+  "record_first_launch_path" => record_mode,
   "artifact_kind" => import_record.fetch("artifact_kind", ""),
-  "bundle_manifest_sha256_present" => bundle_mode && import_record.fetch("bundle_manifest_sha256", "").to_s.match?(/\A[0-9a-f]{64}\z/),
+  "bundle_manifest_sha256_present" => import_record.fetch("bundle_manifest_sha256", "").to_s.match?(/\A[0-9a-f]{64}\z/),
   "executable_relative_path" => import_record.fetch("executable_relative_path", ""),
   "application_workspace_copied" => payload.fetch("application_workspace_copied", false),
   "application_workspace_mode" => payload.fetch("application_workspace_mode", ""),
