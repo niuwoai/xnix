@@ -919,6 +919,10 @@ func runWindowsKnownAppBundleStageAndLaunch(args []string, stdout io.Writer) err
 		"--image", image,
 		"--timeout", timeoutText,
 	}
+	desktopLaunchPacketOutput := knownBundleStageLaunchDesktopPacketOutput(reportOutput)
+	if desktopLaunchPacketOutput != "" {
+		launchArgs = append(launchArgs, "--desktop-launch-packet-output", desktopLaunchPacketOutput)
+	}
 	if strings.TrimSpace(managedLauncherBin) != "" {
 		launchArgs = append(launchArgs, "--managed-launcher-bin", managedLauncherBin)
 	}
@@ -943,6 +947,14 @@ func runWindowsKnownAppBundleStageAndLaunch(args []string, stdout io.Writer) err
 		return err
 	}
 	return writeJSONResponse(stdout, reportOutput, result)
+}
+
+func knownBundleStageLaunchDesktopPacketOutput(reportOutput string) string {
+	cleanReportOutput := strings.TrimSpace(reportOutput)
+	if cleanReportOutput == "" {
+		return ""
+	}
+	return filepath.Join(filepath.Dir(cleanReportOutput), "known-portable-bundle-stage-launch-desktop-packet.json")
 }
 
 func baseWindowsKnownAppBundleStageLaunchResult(version string, importResult appidentity.KnownPortableBundleImportResult) windowsKnownAppBundleStageLaunchResult {

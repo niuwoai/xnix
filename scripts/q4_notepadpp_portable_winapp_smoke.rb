@@ -150,6 +150,18 @@ def remote_step!(shell, remote_host, remote_command, timeout_seconds, failure)
   stdout
 end
 
+def fetch_remote_artifact(shell, remote_host, remote_path, local_path, timeout_seconds:)
+  FileUtils.mkdir_p(local_path.dirname)
+  _stdout, stderr, status = run_shell(
+    shell,
+    shell_join(["scp", "-q", "#{remote_host}:#{remote_path}", local_path.to_s]),
+    timeout_seconds: timeout_seconds
+  )
+  abort "failed to fetch q4 artifact #{remote_path}: #{stderr}" unless status.zero?
+
+  true
+end
+
 def run_json_command(shell, argv, timeout_seconds:)
   stdout, stderr, status = run_shell(
     shell,
@@ -175,11 +187,13 @@ remote_staging_root = "#{remote_app_root}/runtime-staging"
 remote_document = "#{remote_app_root}/sample-document.txt"
 remote_known_bundle_import_report = "#{remote_app_root}/known-portable-bundle-import-record.json"
 remote_known_bundle_stage_launch_report = "#{remote_app_root}/known-portable-bundle-stage-launch.json"
+remote_known_bundle_gui_evidence_packet = "#{remote_app_root}/known-portable-bundle-gui-evidence-packet.json"
 remote_binary_root = "#{remote_build_root}/bin/linux-amd64"
 remote_runtime_bin = "#{remote_binary_root}/xnix-runtime-go"
 remote_launcher_bin = "#{remote_binary_root}/xnix-compat-launch"
 output_path = ensure_local_output_path!("output path", options.fetch(:output))
 markdown_output_path = ensure_local_output_path!("markdown output path", options.fetch(:markdown_output))
+artifact_output_root = output_path.dirname.join("artifacts")
 
 known_bundle_import_command = [
   remote_runtime_bin,
@@ -207,6 +221,13 @@ known_bundle_stage_launch_command = [
   "--timeout", "#{options.fetch(:remote_timeout_seconds)}s",
   "--report-output", remote_known_bundle_stage_launch_report,
   "file://#{remote_document}"
+]
+
+known_bundle_gui_evidence_packet_command = [
+  remote_runtime_bin,
+  "real-winapp-gui-evidence-packet-preview",
+  "--gui-smoke-report", remote_known_bundle_stage_launch_report,
+  "--output", remote_known_bundle_gui_evidence_packet
 ]
 
 def staged_command(remote_host, remote_import_record, output_path, markdown_output_path, timeout_seconds)
@@ -274,6 +295,10 @@ plan = {
   "known_portable_bundle_stage_launch_report" => remote_known_bundle_stage_launch_report,
   "known_portable_bundle_stage_launch_status" => "planned",
   "go_known_portable_bundle_stage_launch_backed" => true,
+  "known_portable_bundle_gui_evidence_packet_planned" => true,
+  "known_portable_bundle_gui_evidence_packet_command" => known_bundle_gui_evidence_packet_command,
+  "known_portable_bundle_gui_evidence_packet_report" => remote_known_bundle_gui_evidence_packet,
+  "known_portable_bundle_gui_evidence_packet_status" => "planned",
   "record_first_launch_path" => true,
   "remote_cache_root" => remote_cache_root,
   "remote_state_root" => remote_state_root,
@@ -297,6 +322,7 @@ plan = {
   "delegated_command" => planned_staged_command,
   "output_path" => output_path.to_s,
   "markdown_output_path" => markdown_output_path.to_s,
+  "artifact_output_root" => artifact_output_root.to_s,
   "runtime_owned" => true,
   "go_runtime_backed" => true,
   "kde_policy_owner" => false,
@@ -384,6 +410,34 @@ unless known_stage_launch.fetch("status") == "passed" &&
   warn JSON.pretty_generate(known_stage_launch)
   abort "q4 Notepad++ Go Runtime known portable bundle staged launch did not pass"
 end
+known_bundle_gui_packet_stdout = remote_step!(
+  options.fetch(:local_shell),
+  remote_host,
+  "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(known_bundle_gui_evidence_packet_command)}",
+  options.fetch(:remote_timeout_seconds),
+  "q4 Notepad++ Go Runtime known portable bundle GUI evidence packet failed"
+)
+known_bundle_gui_packet = JSON.parse(known_bundle_gui_packet_stdout)
+unless known_bundle_gui_packet.fetch("report_status") == "passed" &&
+       known_bundle_gui_packet.fetch("request_type") == "real-winapp-gui-evidence-packet-preview" &&
+       known_bundle_gui_packet.fetch("app_id") == "org.xnix.external.notepadplusplus" &&
+       bool(known_bundle_gui_packet, "external_app_run_record_consumed") &&
+       bool(known_bundle_gui_packet, "external_app_handle_consumed") &&
+       bool(known_bundle_gui_packet, "external_app_import_record_consumed") &&
+       bool(known_bundle_gui_packet, "imported_artifact_digest_verified") &&
+       bool(known_bundle_gui_packet, "x_window_observed") &&
+       bool(known_bundle_gui_packet, "window_observed")
+  warn JSON.pretty_generate(known_bundle_gui_packet)
+  abort "q4 Notepad++ Go Runtime known portable bundle GUI evidence packet did not pass"
+end
+known_bundle_gui_packet_local_path = artifact_output_root.join("known-portable-bundle-gui-evidence-packet.json")
+known_bundle_gui_packet_fetched = fetch_remote_artifact(
+  options.fetch(:local_shell),
+  remote_host,
+  remote_known_bundle_gui_evidence_packet,
+  known_bundle_gui_packet_local_path,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
 remote_bundle_root = "#{remote_state_root}/#{known_stage_launch.fetch("known_portable_bundle_bundle_relative_path")}"
 remote_executable = "#{remote_bundle_root}/#{NOTEPADPP_EXE_RELATIVE_PATH}"
 remote_import_record = "#{remote_state_root}/#{known_stage_launch.fetch("known_portable_bundle_record_relative_path")}"
@@ -393,6 +447,7 @@ plan["notepadpp_extracted"] = bool(known_import, "extracted")
 plan["known_portable_bundle_import_recorded"] = bool(known_import, "import_recorded")
 plan["known_portable_bundle_import_status"] = known_import.fetch("status")
 plan["known_portable_bundle_stage_launch_status"] = known_stage_launch.fetch("status")
+plan["known_portable_bundle_gui_evidence_packet_status"] = known_bundle_gui_packet.fetch("report_status")
 plan["remote_bundle_root"] = remote_bundle_root
 plan["remote_executable"] = remote_executable
 plan["remote_import_record"] = remote_import_record
@@ -445,6 +500,14 @@ result = plan.merge(
   "known_portable_bundle_stage_launch_existing_import_record_consumed" => bool(known_stage_launch, "existing_import_record_consumed"),
   "known_portable_bundle_stage_launch_application_workspace_copied" => bool(known_stage_launch, "application_workspace_copied"),
   "known_portable_bundle_stage_launch_windows_process_file_argument_window_observed" => bool(known_stage_launch, "windows_process_file_argument_window_observed"),
+  "known_portable_bundle_gui_evidence_packet_status" => known_bundle_gui_packet.fetch("report_status"),
+  "known_portable_bundle_gui_evidence_packet_request_type" => known_bundle_gui_packet.fetch("request_type"),
+  "known_portable_bundle_gui_evidence_packet_external_app_run_record_consumed" => bool(known_bundle_gui_packet, "external_app_run_record_consumed"),
+  "known_portable_bundle_gui_evidence_packet_external_app_import_record_consumed" => bool(known_bundle_gui_packet, "external_app_import_record_consumed"),
+  "known_portable_bundle_gui_evidence_packet_imported_artifact_digest_verified" => bool(known_bundle_gui_packet, "imported_artifact_digest_verified"),
+  "known_portable_bundle_gui_evidence_packet_window_observed" => bool(known_bundle_gui_packet, "window_observed"),
+  "known_portable_bundle_gui_evidence_packet_artifact_fetched" => known_bundle_gui_packet_fetched,
+  "known_portable_bundle_gui_evidence_packet_artifact_output_path" => known_bundle_gui_packet_local_path.to_s,
   "known_portable_bundle_import_status" => known_import.fetch("status"),
   "known_portable_bundle_import_recorded" => bool(known_import, "import_recorded"),
   "known_portable_bundle_import_request_type" => known_import.fetch("request_type"),

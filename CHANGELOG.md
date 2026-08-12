@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc264] - 2026-08-13
+
+### Added
+
+- Added direct consumption of `windows-known-app-bundle-stage-and-launch` reports in the Go Runtime `real-winapp-gui-evidence-packet-preview` command, so known portable bundle staged launches can produce desktop-safe real Windows app GUI evidence packets without falling back to lower-level one-shot artifacts.
+- Added q4 Notepad++ Portable smoke coverage that generates, validates, fetches, and reports the Go-owned known bundle GUI evidence packet artifact.
+
+### Changed
+
+- Updated the known bundle staged launch command to write the desktop launch packet sidecar beside its report, preserving strict GUI evidence requirements for downstream packet generation.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc264`.
+
 ## [0.2.640-rc263] - 2026-08-13
 
 ### Added

@@ -190,6 +190,26 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		if err != nil {
 			return RealWinAppGUIEvidencePacket{}, fmt.Errorf("encode wrapped one-shot external Windows app run payload: %w", err)
 		}
+	} else if report.SchemaVersion == "xnix.runtime.known_portable_bundle_stage_launch.v1" {
+		stageLaunchContent, err := unwrapKnownPortableBundleStageLaunchPayload(content)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, err
+		}
+		runContent, err := unwrapExternalWinAppImportStageLaunchPayload(stageLaunchContent)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, err
+		}
+		payload, wrapped, err := wrapExternalWinAppRunPayload(runContent)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, err
+		}
+		rawRuntimePayload = true
+		runtimePayload = payload
+		report = wrapped
+		projectionContent, err = json.Marshal(wrapped)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, fmt.Errorf("encode wrapped known portable bundle staged launch payload: %w", err)
+		}
 	}
 	projectionRequest := GUISmokeEvidencePreviewRequest{
 		AppID:       request.AppID,
@@ -354,6 +374,103 @@ type externalWinAppImportStageLaunchPayload struct {
 	RawLauncherPathExposed           bool            `json:"raw_launcher_path_exposed"`
 	RawLauncherOutputExposed         bool            `json:"raw_launcher_output_exposed"`
 	LauncherResult                   json.RawMessage `json:"launcher_result"`
+}
+
+type knownPortableBundleStageLaunchPayload struct {
+	SchemaVersion                              string          `json:"schema_version"`
+	RequestType                                string          `json:"request_type"`
+	Status                                     string          `json:"status"`
+	AppID                                      string          `json:"app_id"`
+	DisplayName                                string          `json:"display_name"`
+	KnownPortableBundleImportRequestType       string          `json:"known_portable_bundle_import_request_type"`
+	KnownPortableBundleImportStatus            string          `json:"known_portable_bundle_import_status"`
+	KnownPortableBundleImportRecorded          bool            `json:"known_portable_bundle_import_recorded"`
+	KnownPortableBundleChecksumVerified        bool            `json:"known_portable_bundle_checksum_verified"`
+	KnownPortableBundleArchiveVerified         bool            `json:"known_portable_bundle_archive_verified"`
+	KnownPortableBundleExtracted               bool            `json:"known_portable_bundle_extracted"`
+	KnownPortableBundleImportRecordRequestType string          `json:"known_portable_bundle_import_record_request_type"`
+	KnownPortableBundleImportedArtifactKind    string          `json:"known_portable_bundle_imported_artifact_kind"`
+	KnownPortableBundleManifestSHA256Present   bool            `json:"known_portable_bundle_manifest_sha256_present"`
+	RecordFirstLaunchPath                      bool            `json:"record_first_launch_path"`
+	StageLaunchRequestType                     string          `json:"stage_launch_request_type"`
+	StageLaunchStatus                          string          `json:"stage_launch_status"`
+	ExistingImportRecordConsumed               bool            `json:"existing_import_record_consumed"`
+	ExternalAppImportRecordConsumed            bool            `json:"external_app_import_record_consumed"`
+	ExternalAppHandleConsumed                  bool            `json:"external_app_handle_consumed"`
+	ImportedArtifactDigestVerified             bool            `json:"imported_artifact_digest_verified"`
+	ArtifactKind                               string          `json:"artifact_kind"`
+	ApplicationWorkspaceCopied                 bool            `json:"application_workspace_copied"`
+	ApplicationWorkspaceMode                   string          `json:"application_workspace_mode"`
+	ExternalFileBridgeReady                    bool            `json:"external_file_bridge_ready"`
+	WindowsProcessFileArgumentWindowObserved   bool            `json:"windows_process_file_argument_window_observed"`
+	RuntimeLaunchExecuted                      bool            `json:"runtime_launch_executed"`
+	WindowObserved                             bool            `json:"window_observed"`
+	XWindowObserved                            bool            `json:"x_window_observed"`
+	RuntimeOwned                               bool            `json:"runtime_owned"`
+	GoRuntimeBacked                            bool            `json:"go_runtime_backed"`
+	KDEPolicyOwner                             bool            `json:"kde_policy_owner"`
+	HostRootModified                           bool            `json:"host_root_modified"`
+	PrivilegedContainerRequired                bool            `json:"privileged_container_required"`
+	HostNetworkingRequired                     bool            `json:"host_networking_required"`
+	DockerSocketMounted                        bool            `json:"docker_socket_mounted"`
+	BroadHostMountRequired                     bool            `json:"broad_host_mount_required"`
+	RawHostPathExposed                         bool            `json:"raw_host_path_exposed"`
+	RawArchivePathExposed                      bool            `json:"raw_archive_path_exposed"`
+	RawBundleRootPathExposed                   bool            `json:"raw_bundle_root_path_exposed"`
+	RawImportRecordPathExposed                 bool            `json:"raw_import_record_path_exposed"`
+	RawStateRootPathExposed                    bool            `json:"raw_state_root_path_exposed"`
+	RawExecutablePathExposed                   bool            `json:"raw_executable_path_exposed"`
+	RawLauncherPathExposed                     bool            `json:"raw_launcher_path_exposed"`
+	RawLauncherOutputExposed                   bool            `json:"raw_launcher_output_exposed"`
+	BackendDetailsExposed                      bool            `json:"backend_details_exposed"`
+	StageLaunchResult                          json.RawMessage `json:"stage_launch_result"`
+}
+
+func unwrapKnownPortableBundleStageLaunchPayload(content []byte) ([]byte, error) {
+	var payload knownPortableBundleStageLaunchPayload
+	if err := json.Unmarshal(content, &payload); err != nil {
+		return nil, fmt.Errorf("parse known portable bundle staged launch payload: %w", err)
+	}
+	switch {
+	case payload.SchemaVersion != "xnix.runtime.known_portable_bundle_stage_launch.v1":
+		return nil, fmt.Errorf("known portable bundle staged launch payload has unsupported schema %q", payload.SchemaVersion)
+	case payload.RequestType != "windows-known-app-bundle-stage-and-launch":
+		return nil, errors.New("known portable bundle staged launch payload has invalid request type")
+	case payload.Status != "passed":
+		return nil, errors.New("known portable bundle staged launch payload requires passed status")
+	case strings.TrimSpace(payload.AppID) == "" || strings.TrimSpace(payload.DisplayName) == "":
+		return nil, errors.New("known portable bundle staged launch payload requires app identity")
+	case payload.KnownPortableBundleImportRequestType != KnownPortableBundleImportRecordRequestType ||
+		payload.KnownPortableBundleImportStatus != "passed" ||
+		!payload.KnownPortableBundleImportRecorded ||
+		!payload.KnownPortableBundleChecksumVerified ||
+		!payload.KnownPortableBundleArchiveVerified ||
+		!payload.KnownPortableBundleExtracted:
+		return nil, errors.New("known portable bundle staged launch payload requires verified bundle import evidence")
+	case payload.KnownPortableBundleImportRecordRequestType != ExternalWinAppBundleImportRecordRequestType ||
+		payload.KnownPortableBundleImportedArtifactKind != "portable-directory" ||
+		!payload.KnownPortableBundleManifestSHA256Present:
+		return nil, errors.New("known portable bundle staged launch payload requires portable-directory import record evidence")
+	case payload.StageLaunchRequestType != "external-winapp-import-stage-and-launch" || payload.StageLaunchStatus != "passed":
+		return nil, errors.New("known portable bundle staged launch payload requires a passed staged launch result")
+	case !payload.RecordFirstLaunchPath || !payload.ExistingImportRecordConsumed || !payload.ExternalAppImportRecordConsumed || !payload.ExternalAppHandleConsumed:
+		return nil, errors.New("known portable bundle staged launch payload requires record-first import handle consumption")
+	case !payload.ImportedArtifactDigestVerified || payload.ArtifactKind != "portable-directory" || !payload.ApplicationWorkspaceCopied || payload.ApplicationWorkspaceMode != "portable-directory":
+		return nil, errors.New("known portable bundle staged launch payload requires copied portable-directory execution")
+	case !payload.ExternalFileBridgeReady || !payload.WindowsProcessFileArgumentWindowObserved || !payload.RuntimeLaunchExecuted || !payload.WindowObserved || !payload.XWindowObserved:
+		return nil, errors.New("known portable bundle staged launch payload requires observed Runtime GUI execution")
+	case !payload.RuntimeOwned || !payload.GoRuntimeBacked || payload.KDEPolicyOwner:
+		return nil, errors.New("known portable bundle staged launch payload has invalid ownership flags")
+	case payload.HostRootModified || payload.PrivilegedContainerRequired || payload.HostNetworkingRequired || payload.DockerSocketMounted || payload.BroadHostMountRequired:
+		return nil, errors.New("known portable bundle staged launch payload opens unsafe host or container gates")
+	case payload.RawHostPathExposed || payload.RawArchivePathExposed || payload.RawBundleRootPathExposed || payload.RawImportRecordPathExposed || payload.RawStateRootPathExposed || payload.RawExecutablePathExposed || payload.RawLauncherPathExposed || payload.RawLauncherOutputExposed:
+		return nil, errors.New("known portable bundle staged launch payload exposes unsafe raw paths or launcher output")
+	case payload.BackendDetailsExposed:
+		return nil, errors.New("known portable bundle staged launch payload exposes backend details")
+	case len(payload.StageLaunchResult) == 0:
+		return nil, errors.New("known portable bundle staged launch payload requires nested staged launch result")
+	}
+	return payload.StageLaunchResult, nil
 }
 
 func unwrapExternalWinAppImportStageLaunchPayload(content []byte) ([]byte, error) {

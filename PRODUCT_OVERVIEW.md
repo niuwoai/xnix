@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc263
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc264
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc264 checkpoint makes the Go-owned known bundle staged launch directly consumable by the Runtime GUI evidence packet path. `real-winapp-gui-evidence-packet-preview` now accepts `windows-known-app-bundle-stage-and-launch` reports, unwraps the nested external app staged run only after verifying the known bundle import, record-first launch, desktop packet, file bridge, window evidence, Runtime ownership, q4 safety gates, and path redaction constraints, and emits the same desktop-safe GUI evidence packet used by KDE. The q4 Notepad++ Portable smoke now generates and fetches `known-portable-bundle-gui-evidence-packet.json` before continuing through the accepted Runtime/KDE chain.
 
 The v0.2.640-rc263 checkpoint moves the real Notepad++ Portable run one step deeper into Go product logic. The new `windows-known-app-bundle-stage-and-launch` Runtime command imports the known portable bundle, consumes the Runtime-owned external app `import-record.json`, stages desktop activation, and launches through the managed Runtime desktop path. The q4 Notepad++ smoke now proves that Go-owned direct staged launch first, then reuses the existing q4 staged Runtime/KDE acceptance chain so the final evidence still reaches `runtime-accepted-real-app-run`.
 

@@ -523,6 +523,80 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesExternalAppOneShotLaun
 	}
 }
 
+func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesKnownBundleStageLaunchRecord(t *testing.T) {
+	tempDir := t.TempDir()
+	reportPath := filepath.Join(tempDir, "known-bundle-stage-launch.json")
+	outputPath := filepath.Join(tempDir, "packet", "known-bundle-stage-launch-packet.json")
+	if err := os.WriteFile(reportPath, []byte(rawKnownPortableBundleStageLaunchPayloadCLIFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile report returned error: %v", err)
+	}
+	var output bytes.Buffer
+	if err := run([]string{
+		"real-winapp-gui-evidence-packet-preview",
+		"--gui-smoke-report", reportPath,
+		"--output", outputPath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.real_winapp_gui_evidence_packet.v1" ||
+		payload["request_type"] != "real-winapp-gui-evidence-packet-preview" ||
+		payload["app_id"] != "org.xnix.external.notepad-file" ||
+		payload["external_app_run_record_consumed"] != true ||
+		payload["external_app_handle_consumed"] != true ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["imported_artifact_digest_verified"] != true ||
+		payload["known_app_gui_evidence_verified_count"] != float64(1) ||
+		payload["container_runtime_used"] != true ||
+		payload["container_network_mode"] != "none" ||
+		payload["container_host_mount_count"] != float64(0) ||
+		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected known bundle staged launch real GUI packet: %#v", payload)
+	}
+	var externalPageOutput bytes.Buffer
+	if err := run([]string{"kde-center-page-preview", "--external-app-evidence-file", outputPath, "--decision", "approved"}, &externalPageOutput); err != nil {
+		t.Fatalf("external app KDE page returned error: %v", err)
+	}
+	var externalPage map[string]any
+	if err := json.Unmarshal(externalPageOutput.Bytes(), &externalPage); err != nil {
+		t.Fatalf("Unmarshal external app KDE output returned error: %v", err)
+	}
+	cards := externalPage["known_app_gui_evidence_cards"].([]any)
+	if len(cards) != 1 {
+		t.Fatalf("unexpected external app KDE cards: %#v", cards)
+	}
+	card := cards[0].(map[string]any)
+	if card["external_app_run_record_consumed"] != true ||
+		card["external_app_handle_consumed"] != true ||
+		card["external_app_import_record_consumed"] != true ||
+		card["imported_artifact_digest_verified"] != true ||
+		card["x_window_observed"] != true ||
+		card["window_observed"] != true ||
+		card["desktop_launch_enabled"] != false ||
+		card["backend_launch_enabled"] != false ||
+		card["host_root_modified"] != false {
+		t.Fatalf("unexpected known bundle staged launch KDE card: %#v", card)
+	}
+	if strings.Contains(output.String(), reportPath) ||
+		strings.Contains(output.String(), outputPath) ||
+		strings.Contains(externalPageOutput.String(), reportPath) ||
+		strings.Contains(externalPageOutput.String(), outputPath) ||
+		strings.Contains(output.String(), "docker run") ||
+		strings.Contains(externalPageOutput.String(), "docker run") ||
+		strings.Contains(output.String(), "/var/run/docker.sock") ||
+		strings.Contains(externalPageOutput.String(), "/var/run/docker.sock") {
+		t.Fatalf("known bundle staged launch packet exposed unsafe details: packet=%s page=%s", output.String(), externalPageOutput.String())
+	}
+}
+
 func rawContainerXGUIRuntimePayloadCLIFixture() string {
 	return `{
   "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",
@@ -730,5 +804,65 @@ func rawExternalWinAppOneShotLaunchPayloadCLIFixture() string {
   "raw_launcher_path_exposed": false,
   "raw_launcher_output_exposed": false,
   "launcher_result": ` + run + `
+}`
+}
+
+func rawKnownPortableBundleStageLaunchPayloadCLIFixture() string {
+	stageLaunch := rawExternalWinAppOneShotLaunchPayloadCLIFixture()
+	return `{
+  "version": "0.2.640-test",
+  "schema_version": "xnix.runtime.known_portable_bundle_stage_launch.v1",
+  "request_type": "windows-known-app-bundle-stage-and-launch",
+  "source": "known-portable-catalog+external-winapp-import-record+staged-runtime-launch",
+  "runtime_method": "ImportKnownPortableBundleAndStageLaunch",
+  "status": "passed",
+  "app_id": "org.xnix.external.notepad-file",
+  "display_name": "External Notepad File",
+  "app_version": "0.2.640-test",
+  "known_portable_bundle_import_request_type": "windows-known-app-bundle-import-record",
+  "known_portable_bundle_import_status": "passed",
+  "known_portable_bundle_import_recorded": true,
+  "known_portable_bundle_checksum_verified": true,
+  "known_portable_bundle_archive_verified": true,
+  "known_portable_bundle_extracted": true,
+  "known_portable_bundle_extracted_file_count": 219,
+  "known_portable_bundle_import_record_request_type": "external-winapp-bundle-import-record",
+  "known_portable_bundle_imported_artifact_kind": "portable-directory",
+  "known_portable_bundle_manifest_sha256_present": true,
+  "known_portable_bundle_record_relative_path": "external-apps/org.xnix.external.notepad-file/import-record.json",
+  "known_portable_bundle_bundle_relative_path": "external-apps/org.xnix.external.notepad-file/bundles/0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208",
+  "record_first_launch_path": true,
+  "stage_launch_request_type": "external-winapp-import-stage-and-launch",
+  "stage_launch_status": "passed",
+  "existing_import_record_consumed": true,
+  "external_app_import_record_consumed": true,
+  "external_app_handle_consumed": true,
+  "imported_artifact_digest_verified": true,
+  "artifact_kind": "portable-directory",
+  "application_workspace_copied": true,
+  "application_workspace_mode": "portable-directory",
+  "external_file_bridge_ready": true,
+  "windows_process_file_argument_window_observed": true,
+  "runtime_launch_executed": true,
+  "window_observed": true,
+  "x_window_observed": true,
+  "runtime_owned": true,
+  "go_runtime_backed": true,
+  "kde_policy_owner": false,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "raw_host_path_exposed": false,
+  "raw_archive_path_exposed": false,
+  "raw_bundle_root_path_exposed": false,
+  "raw_import_record_path_exposed": false,
+  "raw_state_root_path_exposed": false,
+  "raw_executable_path_exposed": false,
+  "raw_launcher_path_exposed": false,
+  "raw_launcher_output_exposed": false,
+  "backend_details_exposed": false,
+  "stage_launch_result": ` + stageLaunch + `
 }`
 }
