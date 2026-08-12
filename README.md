@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc229`.
+The project is currently at `v0.2.640-rc230`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc229`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc230 adds the Go Runtime `external-winapp-import-and-run` command. It gives operators a one-shot path from a local `.exe` plus optional KDE-style file URI arguments to a digest-recorded Runtime import and an isolated Wine/Xvfb GUI run, while preserving the same no-network/no-host-mount/no-Docker-socket evidence boundary as the staged q4 smoke.
 
 v0.2.640-rc229 makes q4 full smoke fail earlier and more clearly when the remote build host or source-sync transport is unavailable. The q4 wrapper now runs a bounded SSH preflight for Ruby, rsync, and Docker before source sync, and rsync uses the same bounded SSH BatchMode/keepalive transport as direct q4 commands.
 

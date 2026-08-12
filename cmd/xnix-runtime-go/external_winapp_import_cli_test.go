@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"xnix.local/xnix/internal/runtime/appidentity"
 )
 
 func TestExternalWinAppImportRecordCommandPersistsRuntimeManagedExecutable(t *testing.T) {
@@ -354,5 +356,120 @@ func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
 		strings.Contains(output.String(), "--network host") ||
 		strings.Contains(output.String(), "--privileged") {
 		t.Fatalf("external app handle run output exposed unsafe details: %s", output.String())
+	}
+}
+
+func TestExternalWinAppImportAndRunCommandImportsAndRunsFileOpen(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	executablePath := filepath.Join(tempDir, "ExternalGui.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	documentPath := filepath.Join(tempDir, "sample-document.txt")
+	if err := os.WriteFile(documentPath, []byte("external app one-shot file-open fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	documentURI := "file://" + filepath.ToSlash(documentPath)
+	dockerLog := filepath.Join(tempDir, "fake-docker.log")
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
+		"if test \"$1 $2\" = 'image inspect'; then printf 'linux/amd64\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'create'; then printf 'fake-x-gui-container\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'cp'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'start -a'; then " +
+		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_FILE_ARGS_PASSED=1\\n'\n" +
+		"printf 'XNIX_X_GUI_FILE_ARGS_WINEPATH_TRANSLATED=1\\n'\n" +
+		"printf '0x700001 \"sample-document.txt - Notepad\": (\"notepad.exe\" \"notepad.exe\") 320x160+20+20 +20+20\\n'\n" +
+		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'rm'; then exit 0; fi\n" +
+		"exit 2\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+	outputPath := filepath.Join(tempDir, "import-and-run.json")
+	var output bytes.Buffer
+	if err := run([]string{
+		"external-winapp-import-and-run",
+		"--state-root", stateRoot,
+		"--executable", executablePath,
+		"--app-id", "org.xnix.external.gui",
+		"--display-name", "External GUI",
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+		"--output", outputPath,
+		documentURI,
+	}, &output); err != nil {
+		t.Fatalf("external app import-and-run returned error: %v", err)
+	}
+	written, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile output returned error: %v", err)
+	}
+	if string(written) != output.String() {
+		t.Fatalf("written output must match stdout\nstdout=%s\nwritten=%s", output.String(), string(written))
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal import-and-run output returned error: %v\n%s", err, output.String())
+	}
+	if payload["schema_version"] != "xnix.runtime.external_winapp_run.v1" ||
+		payload["request_type"] != "windows-external-app-run" ||
+		payload["status"] != "passed" ||
+		payload["application_id"] != "org.xnix.external.gui" ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["external_app_handle_consumed"] != true ||
+		payload["external_app_handle"] != "org.xnix.external.gui" ||
+		payload["external_desktop_argument_count"] != float64(1) ||
+		payload["external_file_bridge_ready"] != true ||
+		payload["external_file_bridge_winepath_translated"] != true ||
+		payload["imported_artifact_digest_verified"] != true ||
+		payload["runtime_run_executed"] != true ||
+		payload["container_network_mode"] != "none" ||
+		payload["container_host_mount_count"] != float64(0) ||
+		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["docker_socket_mounted"] != false {
+		t.Fatalf("unexpected external import-and-run payload: %#v", payload)
+	}
+	runtimePayload := payload["runtime_payload"].(map[string]any)
+	if runtimePayload["window_match"] != "sample-document.txt" ||
+		runtimePayload["file_bridge_copied_count"] != float64(1) ||
+		runtimePayload["file_bridge_winepath_translated_count"] != float64(1) {
+		t.Fatalf("unexpected import-and-run runtime payload: %#v", runtimePayload)
+	}
+	recordPath, err := appidentity.ExternalWinAppImportRecordPathFromHandle(stateRoot, "org.xnix.external.gui")
+	if err != nil {
+		t.Fatalf("ExternalWinAppImportRecordPathFromHandle returned error: %v", err)
+	}
+	if _, err := os.Stat(recordPath); err != nil {
+		t.Fatalf("one-shot import-and-run must persist the import record: %v", err)
+	}
+	dockerInvocation, err := os.ReadFile(dockerLog)
+	if err != nil {
+		t.Fatalf("ReadFile docker log returned error: %v", err)
+	}
+	if !strings.Contains(string(dockerInvocation), "ExternalGui.exe") ||
+		!strings.Contains(string(dockerInvocation), documentPath) ||
+		!strings.Contains(string(dockerInvocation), "/file-1-sample-document.txt") ||
+		!strings.Contains(string(dockerInvocation), "XNIX_WINDOW_MATCH=sample-document.txt") {
+		t.Fatalf("fake Docker did not receive the one-shot import-and-run flow: %s", string(dockerInvocation))
+	}
+	if strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), executablePath) ||
+		strings.Contains(output.String(), dockerPath) ||
+		strings.Contains(output.String(), documentPath) ||
+		strings.Contains(output.String(), documentURI) ||
+		strings.Contains(output.String(), "docker run") ||
+		strings.Contains(output.String(), "/var/run/docker.sock") ||
+		strings.Contains(output.String(), "--network host") ||
+		strings.Contains(output.String(), "--privileged") {
+		t.Fatalf("external import-and-run output exposed unsafe details: %s", output.String())
 	}
 }
