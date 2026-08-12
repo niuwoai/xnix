@@ -54,17 +54,26 @@ const (
 	KnownRunBackendGuestWine = "guest-wine"
 )
 
+const (
+	KnownPortableArtifactSingleExecutable = "single-executable"
+	KnownPortableArtifactZipBundle        = "portable-zip-bundle"
+)
+
 type KnownPortableApp struct {
 	ID                       string
 	DisplayName              string
 	Version                  string
 	Architecture             string
 	ExecutableName           string
+	ArtifactKind             string
+	DownloadArtifactName     string
+	ExecutableRelativePath   string
 	SourcePageURL            string
 	DownloadURL              string
 	SHA256                   string
 	ExpectedMarker           string
 	Arguments                []string
+	PortableBundleArchive    bool
 	GuestBuiltinGUI          bool
 	GuestGUIAppPath          string
 	RecipeBackedContainerGUI bool
@@ -87,6 +96,10 @@ type KnownFetchResult struct {
 	AppVersion             string `json:"app_version"`
 	Architecture           string `json:"architecture"`
 	ExecutableName         string `json:"executable_name"`
+	ArtifactKind           string `json:"artifact_kind"`
+	DownloadArtifactName   string `json:"download_artifact_name"`
+	ExecutableRelativePath string `json:"executable_relative_path,omitempty"`
+	PortableBundleArchive  bool   `json:"portable_bundle_archive"`
 	SourcePageURL          string `json:"source_page_url"`
 	DownloadURL            string `json:"download_url"`
 	ExpectedSHA256         string `json:"expected_sha256"`
@@ -790,7 +803,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc258",
+		Version:         "0.2.640-rc259",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
@@ -801,7 +814,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.messagebox",
 		DisplayName:     "Xnix MessageBox",
-		Version:         "0.2.640-rc258",
+		Version:         "0.2.640-rc259",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "xnix-messagebox-smoke.exe",
 		SourcePageURL:   "runtime-managed-external-gui-fixture",
@@ -811,7 +824,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:                       "org.xnix.sample.notepad",
 		DisplayName:              "Sample Notepad",
-		Version:                  "0.2.640-rc258",
+		Version:                  "0.2.640-rc259",
 		Architecture:             "windows-x86-gui",
 		ExecutableName:           "notepad.exe",
 		SourcePageURL:            "runtime-recipe-container-gui-fixture",
@@ -819,6 +832,21 @@ var knownPortableCatalog = []KnownPortableApp{
 		RecipeBackedContainerGUI: true,
 		GuestBuiltinGUI:          true,
 		GuestGUIAppPath:          "/usr/lib/wine/i386-windows/notepad.exe",
+	},
+	{
+		ID:                     "org.xnix.external.notepadplusplus",
+		DisplayName:            "Notepad++ Portable",
+		Version:                "8.9.7",
+		Architecture:           "windows-x86-gui",
+		ExecutableName:         "notepad++.exe",
+		ArtifactKind:           KnownPortableArtifactZipBundle,
+		DownloadArtifactName:   "npp.8.9.7.portable.zip",
+		ExecutableRelativePath: "notepad++.exe",
+		SourcePageURL:          "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/tag/v8.9.7",
+		DownloadURL:            "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.9.7/npp.8.9.7.portable.zip",
+		SHA256:                 "ce0690fac91c1fc5d61dcdf5b09733ff0d143a61d0a27c6cb9f4003ea92765bb",
+		ExpectedMarker:         "sample-document.txt",
+		PortableBundleArchive:  true,
 	},
 }
 
@@ -1025,6 +1053,17 @@ func PreviewKnownPortableManagedLaunch(request KnownManagedLaunchRequest) (Known
 		return result, err
 	}
 	if ok {
+		if app.PortableBundleArchive {
+			result.Status = "needs-bundle-import"
+			result.CacheStatus = "verified"
+			result.ArtifactVerified = true
+			result.LaunchEnabled = false
+			result.PreparationRequired = true
+			result.RealAppSmokeGate = "q4-portable-bundle-winapp-smoke"
+			result.DesktopSafeSummary = fmt.Sprintf("%s has a verified portable bundle archive and must be imported through the Runtime external bundle path before managed launch.", app.DisplayName)
+			result.BlockedReason = "portable bundle archive must be extracted and imported before managed launch"
+			return result, nil
+		}
 		result.Status = "ready"
 		result.CacheStatus = "verified"
 		result.ArtifactVerified = true
@@ -1353,6 +1392,12 @@ func MaterializeKnownPortableLaunchProfile(request KnownLaunchProfileMaterialize
 	}
 	result.CacheStatus = "verified"
 	result.ArtifactVerified = true
+	if app.PortableBundleArchive {
+		result.Status = SkippedStatus
+		result.SkipReason = "known Windows app portable bundle requires Runtime external bundle import path"
+		result.ApplicationWorkspaceMode = "portable-directory"
+		return result, nil
+	}
 
 	stateRoot, err := knownLaunchProfileStateRoot(request.StateRoot, request.CacheRoot, app)
 	if err != nil {
@@ -1834,6 +1879,10 @@ func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 		AppVersion:             app.Version,
 		Architecture:           app.Architecture,
 		ExecutableName:         app.ExecutableName,
+		ArtifactKind:           knownPortableArtifactKind(app),
+		DownloadArtifactName:   knownAppDownloadArtifactName(app),
+		ExecutableRelativePath: strings.TrimSpace(app.ExecutableRelativePath),
+		PortableBundleArchive:  app.PortableBundleArchive,
 		SourcePageURL:          app.SourcePageURL,
 		DownloadURL:            app.DownloadURL,
 		ExpectedSHA256:         strings.ToLower(app.SHA256),
@@ -2323,7 +2372,7 @@ func knownAppCachePath(cacheRoot string, app KnownPortableApp) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve known app cache root: %w", err)
 	}
-	return filepath.Join(absoluteRoot, app.ID, app.ExecutableName), nil
+	return filepath.Join(absoluteRoot, app.ID, knownAppDownloadArtifactName(app)), nil
 }
 
 func knownLaunchProfileStateRoot(stateRoot string, cacheRoot string, app KnownPortableApp) (string, error) {
@@ -2355,7 +2404,26 @@ func knownLaunchProfileOutputPath(profileOutput string, stateRoot string, app Kn
 }
 
 func knownAppCacheRelativePath(app KnownPortableApp) string {
-	return filepath.ToSlash(filepath.Join(app.ID, app.ExecutableName))
+	return filepath.ToSlash(filepath.Join(app.ID, knownAppDownloadArtifactName(app)))
+}
+
+func knownAppDownloadArtifactName(app KnownPortableApp) string {
+	name := strings.TrimSpace(app.DownloadArtifactName)
+	if name == "" {
+		name = strings.TrimSpace(app.ExecutableName)
+	}
+	return name
+}
+
+func knownPortableArtifactKind(app KnownPortableApp) string {
+	kind := strings.TrimSpace(app.ArtifactKind)
+	if kind != "" {
+		return kind
+	}
+	if app.PortableBundleArchive {
+		return KnownPortableArtifactZipBundle
+	}
+	return KnownPortableArtifactSingleExecutable
 }
 
 func verifyKnownAppFile(path string, app KnownPortableApp) (string, bool, error) {

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc258
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc259
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc259 checkpoint promotes Notepad++ Portable from a one-off q4 smoke target into the Go Runtime known Windows app catalog. The catalog entry pins the official Notepad++ 8.9.7 Portable zip, exposes the archive as a `portable-zip-bundle`, records the selected executable relative path `notepad++.exe`, and prevents the legacy single-exe profile materializer from treating the archive as a runnable executable. The real execution path remains the q4 external bundle import/run smoke until the known-app verified catalog is wired directly to the bundle importer.
 
 The v0.2.640-rc258 checkpoint adds an operator-facing q4 Notepad++ Portable smoke for real bundled Windows desktop apps. The new script downloads the official Notepad++ 8.9.7 Portable zip on q4, verifies the pinned SHA256, extracts the portable directory on q4, and delegates to the staged external Runtime/KDE path using `--remote-bundle-root` plus `--executable-relative-path notepad++.exe`. The smoke requires q4 download, extraction, compilation, and GUI execution while keeping the macOS host limited to source editing, lightweight checks, Git, and fetched reports.
 

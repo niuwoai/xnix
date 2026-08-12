@@ -55,6 +55,27 @@ func TestKnownPortableCatalogContainsPinnedBusyBoxW32ConsoleExecutable(t *testin
 	}
 }
 
+func TestKnownPortableCatalogContainsPinnedNotepadPlusPlusPortableBundle(t *testing.T) {
+	app, err := LookupKnownPortableApp("org.xnix.external.notepadplusplus")
+	if err != nil {
+		t.Fatalf("LookupKnownPortableApp returned error: %v", err)
+	}
+	if app.DisplayName != "Notepad++ Portable" ||
+		app.Version != "8.9.7" ||
+		app.Architecture != "windows-x86-gui" ||
+		app.ExecutableName != "notepad++.exe" ||
+		app.ArtifactKind != KnownPortableArtifactZipBundle ||
+		app.DownloadArtifactName != "npp.8.9.7.portable.zip" ||
+		app.ExecutableRelativePath != "notepad++.exe" ||
+		app.SourcePageURL != "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/tag/v8.9.7" ||
+		app.DownloadURL != "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.9.7/npp.8.9.7.portable.zip" ||
+		app.SHA256 != "ce0690fac91c1fc5d61dcdf5b09733ff0d143a61d0a27c6cb9f4003ea92765bb" ||
+		app.ExpectedMarker != "sample-document.txt" ||
+		!app.PortableBundleArchive {
+		t.Fatalf("unexpected Notepad++ Portable catalog entry: %#v", app)
+	}
+}
+
 func TestFetchKnownPortableAppDownloadsAndVerifiesPinnedArtifact(t *testing.T) {
 	body := []byte("fixture portable windows executable")
 	sum := sha256.Sum256(body)
@@ -109,6 +130,57 @@ func TestFetchKnownPortableAppDownloadsAndVerifiesPinnedArtifact(t *testing.T) {
 		result.BroadHostMountRequired ||
 		result.RawHostPathExposed {
 		t.Fatalf("unexpected fetch result: %#v", result)
+	}
+}
+
+func TestFetchKnownPortableBundleDownloadsArchiveWithoutPretendingItIsExe(t *testing.T) {
+	body := []byte("PK\x03\x04fixture portable bundle")
+	sum := sha256.Sum256(body)
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(string(body))),
+			Header:     make(http.Header),
+			Request:    request,
+		}, nil
+	})}
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:                     "fixture-bundle",
+		DisplayName:            "Fixture Portable Bundle",
+		Version:                "1.0.0",
+		Architecture:           "windows-x86-gui",
+		ExecutableName:         "PortableGui.exe",
+		ArtifactKind:           KnownPortableArtifactZipBundle,
+		DownloadArtifactName:   "fixture-portable.zip",
+		ExecutableRelativePath: "bin/PortableGui.exe",
+		SourcePageURL:          "https://example.invalid/fixture",
+		DownloadURL:            "https://example.invalid/fixture-portable.zip",
+		SHA256:                 hex.EncodeToString(sum[:]),
+		ExpectedMarker:         "Fixture",
+		PortableBundleArchive:  true,
+	}})
+
+	result, err := FetchKnownPortableApp(context.Background(), KnownFetchRequest{
+		AppID:         "fixture-bundle",
+		CacheRoot:     t.TempDir(),
+		AllowDownload: true,
+		HTTPClient:    client,
+		Timeout:       5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("FetchKnownPortableApp returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.ExecutableName != "PortableGui.exe" ||
+		result.ArtifactKind != KnownPortableArtifactZipBundle ||
+		result.DownloadArtifactName != "fixture-portable.zip" ||
+		result.ExecutableRelativePath != "bin/PortableGui.exe" ||
+		!result.PortableBundleArchive ||
+		result.CacheRelativePath != "fixture-bundle/fixture-portable.zip" ||
+		!result.Downloaded ||
+		!result.ChecksumVerified {
+		t.Fatalf("unexpected portable bundle fetch result: %#v", result)
 	}
 }
 
@@ -190,6 +262,68 @@ func TestMaterializeKnownPortableLaunchProfileSkipsUntilArtifactIsVerified(t *te
 		t.Fatalf("unexpected skipped known launch profile materialization: %#v", result)
 	}
 	assertKnownLaunchProfileMaterializeSafe(t, result, tempDir)
+}
+
+func TestMaterializeKnownPortableBundleSkipsSingleExeProfileUntilBundleImport(t *testing.T) {
+	body := []byte("PK\x03\x04fixture portable bundle")
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:                     "fixture-bundle",
+		DisplayName:            "Fixture Portable Bundle",
+		Version:                "1.0.0",
+		Architecture:           "windows-x86-gui",
+		ExecutableName:         "PortableGui.exe",
+		ArtifactKind:           KnownPortableArtifactZipBundle,
+		DownloadArtifactName:   "fixture-portable.zip",
+		ExecutableRelativePath: "bin/PortableGui.exe",
+		SourcePageURL:          "https://example.invalid/fixture",
+		DownloadURL:            "https://example.invalid/fixture-portable.zip",
+		SHA256:                 hex.EncodeToString(sum[:]),
+		ExpectedMarker:         "Fixture",
+		PortableBundleArchive:  true,
+	}})
+	cachePath := filepath.Join(cacheRoot, "fixture-bundle", "fixture-portable.zip")
+	if err := os.MkdirAll(filepath.Dir(cachePath), 0o700); err != nil {
+		t.Fatalf("MkdirAll cache returned error: %v", err)
+	}
+	if err := os.WriteFile(cachePath, body, 0o600); err != nil {
+		t.Fatalf("WriteFile cache returned error: %v", err)
+	}
+
+	managed, err := PreviewKnownPortableManagedLaunch(KnownManagedLaunchRequest{
+		AppID:     "fixture-bundle",
+		CacheRoot: cacheRoot,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownPortableManagedLaunch returned error: %v", err)
+	}
+	if managed.Status != "needs-bundle-import" ||
+		!managed.ArtifactVerified ||
+		managed.LaunchEnabled ||
+		!managed.PreparationRequired ||
+		managed.RealAppSmokeGate != "q4-portable-bundle-winapp-smoke" ||
+		managed.BlockedReason != "portable bundle archive must be extracted and imported before managed launch" {
+		t.Fatalf("unexpected portable bundle managed launch preview: %#v", managed)
+	}
+
+	result, err := MaterializeKnownPortableLaunchProfile(KnownLaunchProfileMaterializeRequest{
+		AppID:     "fixture-bundle",
+		CacheRoot: cacheRoot,
+		StateRoot: filepath.Join(cacheRoot, "state"),
+	})
+	if err != nil {
+		t.Fatalf("MaterializeKnownPortableLaunchProfile returned error: %v", err)
+	}
+	if result.Status != SkippedStatus ||
+		result.CacheStatus != "verified" ||
+		!result.ArtifactVerified ||
+		result.ProfileWritten ||
+		result.LauncherBundleWritten ||
+		result.ApplicationWorkspaceMode != "portable-directory" ||
+		result.SkipReason != "known Windows app portable bundle requires Runtime external bundle import path" {
+		t.Fatalf("unexpected portable bundle materialization result: %#v", result)
+	}
 }
 
 func TestPrepareKnownPortableLaunchProfileSkipsOfflineMissingArtifact(t *testing.T) {

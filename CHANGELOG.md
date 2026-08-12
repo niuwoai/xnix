@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc259] - 2026-08-13
+
+### Added
+
+- Added Notepad++ Portable to the Go Runtime known Windows app catalog as a pinned `portable-zip-bundle`.
+- Added catalog metadata for the downloaded archive name, selected bundle executable relative path, and portable bundle archive status.
+- Added targeted Go coverage proving portable bundle downloads keep the zip artifact distinct from the executable entrypoint.
+
+### Changed
+
+- Blocked the legacy known-app single-exe profile materializer from treating portable zip bundles as runnable `.exe` artifacts; bundle apps now explicitly require the Runtime external bundle import path.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc259`.
+
 ## [0.2.640-rc258] - 2026-08-13
 
 ### Added

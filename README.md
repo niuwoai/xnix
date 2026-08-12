@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc258`.
+The project is currently at `v0.2.640-rc259`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc258`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc259 adds Notepad++ Portable to the Go Runtime known Windows app catalog as a pinned portable zip bundle. The catalog now distinguishes the downloaded archive `npp.8.9.7.portable.zip` from the bundle entry executable `notepad++.exe`, records the executable relative path, and blocks the old single-exe profile materializer until the Runtime external bundle import path is used.
 
 v0.2.640-rc258 adds a q4-only Notepad++ Portable real-app smoke. `scripts/q4_notepadpp_portable_winapp_smoke.rb --execute` downloads the official Notepad++ 8.9.7 Portable zip on q4, verifies the pinned SHA256, extracts the bundle on q4, imports it through `external-winapp-bundle-import-record`, and runs the selected `notepad++.exe` through the staged Runtime/KDE path while keeping host download and compilation avoided.
 
