@@ -207,6 +207,8 @@ remote_application_detail = "#{remote_run_root}/external-winapp-application-deta
 remote_kde_page_from_detail = "#{remote_run_root}/kde-page-from-application-detail.json"
 remote_go_acceptance_input = "#{remote_run_root}/q4-staged-external-winapp-acceptance-input.json"
 remote_go_acceptance = "#{remote_run_root}/q4-staged-external-winapp-acceptance.json"
+remote_accepted_application_detail = "#{remote_run_root}/external-winapp-application-detail-with-acceptance.json"
+remote_kde_page_from_accepted_detail = "#{remote_run_root}/kde-page-from-accepted-application-detail.json"
 artifact_specs = [
   ["delegated_launcher_payload", "delegated_launcher_payload_path", "delegated-launcher-payload.json"],
   ["activation_status", "activation_status_path", "activation-status.json"],
@@ -222,7 +224,9 @@ artifact_specs = [
 planned_artifact_outputs = artifact_specs.to_h do |name, _remote_key, local_name|
   ["#{name}_artifact_output_path", artifact_output_root.join(local_name).to_s]
 end.merge(
-  "go_owned_q4_staged_external_winapp_acceptance_artifact_output_path" => artifact_output_root.join("q4-staged-external-winapp-acceptance.json").to_s
+  "go_owned_q4_staged_external_winapp_acceptance_artifact_output_path" => artifact_output_root.join("q4-staged-external-winapp-acceptance.json").to_s,
+  "accepted_application_detail_artifact_output_path" => artifact_output_root.join("external-winapp-application-detail-with-acceptance.json").to_s,
+  "kde_page_from_accepted_application_detail_artifact_output_path" => artifact_output_root.join("kde-page-from-accepted-application-detail.json").to_s
 )
 
 delegated_command = [
@@ -256,7 +260,7 @@ plan = {
   "output_path" => output_path.to_s,
   "markdown_output_path" => markdown_output_path.to_s,
   "artifact_output_root" => artifact_output_root.to_s,
-  "artifact_output_count" => artifact_specs.length + 1,
+  "artifact_output_count" => artifact_specs.length + 3,
   "artifact_outputs" => planned_artifact_outputs,
   "q4_compile_required" => true,
   "host_compilation_avoided" => true,
@@ -605,6 +609,61 @@ result.merge!(
   "go_owned_q4_staged_external_winapp_acceptance_delegated_command_exposed" => go_acceptance.fetch("delegated_command_exposed"),
   "go_owned_q4_staged_external_winapp_acceptance_raw_path_exposed" => go_acceptance.fetch("raw_path_exposed")
 )
+accepted_application_detail_command = [
+  remote_runtime_bin,
+  "external-winapp-application-detail-preview",
+  "--compatibility-evidence-bundle", remote_compatibility_bundle,
+  "--q4-staged-external-winapp-acceptance", remote_go_acceptance,
+  "--output", remote_accepted_application_detail
+]
+accepted_application_detail_stdout, accepted_application_detail_stderr, accepted_application_detail_status = run_command(
+  ssh_command(remote_host, shell_join(accepted_application_detail_command)),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless accepted_application_detail_status.zero?
+  warn accepted_application_detail_stdout unless accepted_application_detail_stdout.empty?
+  warn accepted_application_detail_stderr unless accepted_application_detail_stderr.empty?
+  abort "q4 accepted external Windows app application detail generation failed"
+end
+accepted_application_detail = JSON.parse(accepted_application_detail_stdout)
+unless accepted_application_detail.fetch("q4_staged_external_winapp_acceptance_consumed") == true &&
+       accepted_application_detail.fetch("q4_staged_external_winapp_acceptance_ready") == true &&
+       accepted_application_detail.fetch("go_owned_staged_external_winapp_acceptance_verified") == true &&
+       accepted_application_detail.fetch("evidence_artifact_count") == 5
+  warn accepted_application_detail_stdout
+  abort "q4 accepted external Windows app application detail did not consume Go-owned acceptance"
+end
+
+kde_page_from_accepted_detail_command = [
+  remote_runtime_bin,
+  "kde-center-page-preview",
+  "--external-app-application-detail", remote_accepted_application_detail,
+  "--decision", "approved",
+  "--output", remote_kde_page_from_accepted_detail
+]
+kde_page_from_accepted_detail_stdout, kde_page_from_accepted_detail_stderr, kde_page_from_accepted_detail_status = run_command(
+  ssh_command(remote_host, "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(kde_page_from_accepted_detail_command)}"),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless kde_page_from_accepted_detail_status.zero?
+  warn kde_page_from_accepted_detail_stdout unless kde_page_from_accepted_detail_stdout.empty?
+  warn kde_page_from_accepted_detail_stderr unless kde_page_from_accepted_detail_stderr.empty?
+  abort "q4 KDE page from accepted external Windows app application detail generation failed"
+end
+kde_page_from_accepted_detail = JSON.parse(kde_page_from_accepted_detail_stdout)
+accepted_detail_cards = kde_page_from_accepted_detail.fetch("external_winapp_application_detail_cards")
+accepted_detail_card = accepted_detail_cards.fetch(0)
+unless accepted_detail_card.fetch("q4_staged_external_winapp_acceptance_consumed") == true &&
+       accepted_detail_card.fetch("q4_staged_external_winapp_acceptance_ready") == true &&
+       accepted_detail_card.fetch("go_owned_staged_external_winapp_acceptance_verified") == true &&
+       accepted_detail_card.fetch("evidence_signal_count") == 5 &&
+       accepted_detail_card.fetch("backend_details_exposed") == false &&
+       accepted_detail_card.fetch("raw_paths_exposed") == false &&
+       accepted_detail_card.fetch("host_root_modified") == false
+  warn kde_page_from_accepted_detail_stdout
+  abort "q4 KDE page from accepted external Windows app application detail did not consume Go-owned acceptance"
+end
+
 acceptance_local_path = artifact_output_root.join("q4-staged-external-winapp-acceptance.json")
 fetched_artifacts["go_owned_q4_staged_external_winapp_acceptance_artifact_fetched"] = fetch_remote_artifact(
   remote_host,
@@ -613,8 +672,34 @@ fetched_artifacts["go_owned_q4_staged_external_winapp_acceptance_artifact_fetche
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
 fetched_artifacts["go_owned_q4_staged_external_winapp_acceptance_artifact_output_path"] = acceptance_local_path.to_s
+accepted_application_detail_local_path = artifact_output_root.join("external-winapp-application-detail-with-acceptance.json")
+fetched_artifacts["accepted_application_detail_artifact_fetched"] = fetch_remote_artifact(
+  remote_host,
+  remote_accepted_application_detail,
+  accepted_application_detail_local_path,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+fetched_artifacts["accepted_application_detail_artifact_output_path"] = accepted_application_detail_local_path.to_s
+kde_page_from_accepted_detail_local_path = artifact_output_root.join("kde-page-from-accepted-application-detail.json")
+fetched_artifacts["kde_page_from_accepted_application_detail_artifact_fetched"] = fetch_remote_artifact(
+  remote_host,
+  remote_kde_page_from_accepted_detail,
+  kde_page_from_accepted_detail_local_path,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+fetched_artifacts["kde_page_from_accepted_application_detail_artifact_output_path"] = kde_page_from_accepted_detail_local_path.to_s
 result["artifact_fetch_count"] = fetched_artifacts.count { |key, value| key.end_with?("_artifact_fetched") && value == true }
 result["go_owned_q4_staged_external_winapp_acceptance_artifact_fetched"] = fetched_artifacts.fetch("go_owned_q4_staged_external_winapp_acceptance_artifact_fetched")
 result["go_owned_q4_staged_external_winapp_acceptance_artifact_output_path"] = acceptance_local_path.to_s
+result["accepted_application_detail_generated"] = true
+result["accepted_application_detail_artifact_fetched"] = fetched_artifacts.fetch("accepted_application_detail_artifact_fetched")
+result["accepted_application_detail_q4_staged_acceptance_consumed"] = accepted_application_detail.fetch("q4_staged_external_winapp_acceptance_consumed")
+result["accepted_application_detail_go_owned_acceptance_verified"] = accepted_application_detail.fetch("go_owned_staged_external_winapp_acceptance_verified")
+result["accepted_application_detail_evidence_artifact_count"] = accepted_application_detail.fetch("evidence_artifact_count")
+result["kde_page_from_accepted_application_detail_generated"] = true
+result["kde_page_from_accepted_application_detail_artifact_fetched"] = fetched_artifacts.fetch("kde_page_from_accepted_application_detail_artifact_fetched")
+result["kde_page_from_accepted_application_detail_acceptance_consumed"] = accepted_detail_card.fetch("q4_staged_external_winapp_acceptance_consumed")
+result["kde_page_from_accepted_application_detail_go_owned_acceptance_verified"] = accepted_detail_card.fetch("go_owned_staged_external_winapp_acceptance_verified")
+result["kde_page_from_accepted_application_detail_evidence_signal_count"] = accepted_detail_card.fetch("evidence_signal_count")
 
 emit_json(result, output_path)

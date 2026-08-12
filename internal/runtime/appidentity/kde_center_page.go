@@ -234,33 +234,36 @@ type KDECenterPageKnownAppMatrixCard struct {
 }
 
 type KDECenterPageExternalWinAppCard struct {
-	AppID                      string `json:"app_id"`
-	DisplayName                string `json:"display_name"`
-	AppVersion                 string `json:"app_version"`
-	CompatibilityState         string `json:"compatibility_state"`
-	CompatibilityLabel         string `json:"compatibility_label"`
-	PrimaryStatusTone          string `json:"primary_status_tone"`
-	RealWindowsAppRunVerified  bool   `json:"real_windows_app_run_verified"`
-	FileOpenVerified           bool   `json:"file_open_verified"`
-	RuntimeGUIEvidenceVerified bool   `json:"runtime_gui_evidence_verified"`
-	DesktopEvidenceVerified    bool   `json:"desktop_evidence_verified"`
-	KDEPageEvidenceVerified    bool   `json:"kde_page_evidence_verified"`
-	EvidenceSignalCount        int    `json:"evidence_signal_count"`
-	EvidenceArtifactCount      int    `json:"evidence_artifact_count"`
-	PrimaryActionID            string `json:"primary_action_id"`
-	PrimaryActionLabel         string `json:"primary_action_label"`
-	PrimaryActionEnabled       bool   `json:"primary_action_enabled"`
-	RuntimeOwned               bool   `json:"runtime_owned"`
-	GoRuntimeBacked            bool   `json:"go_runtime_backed"`
-	KDEPolicyOwner             bool   `json:"kde_policy_owner"`
-	SafeForKDE                 bool   `json:"safe_for_kde"`
-	SafeForAIDiagnostics       bool   `json:"safe_for_ai_diagnostics"`
-	LaunchEnabled              bool   `json:"launch_enabled"`
-	BackendLaunchEnabled       bool   `json:"backend_launch_enabled"`
-	BackendDetailsExposed      bool   `json:"backend_details_exposed"`
-	RawPathsExposed            bool   `json:"raw_paths_exposed"`
-	HostRootModified           bool   `json:"host_root_modified"`
-	Summary                    string `json:"summary"`
+	AppID                                         string `json:"app_id"`
+	DisplayName                                   string `json:"display_name"`
+	AppVersion                                    string `json:"app_version"`
+	CompatibilityState                            string `json:"compatibility_state"`
+	CompatibilityLabel                            string `json:"compatibility_label"`
+	PrimaryStatusTone                             string `json:"primary_status_tone"`
+	RealWindowsAppRunVerified                     bool   `json:"real_windows_app_run_verified"`
+	FileOpenVerified                              bool   `json:"file_open_verified"`
+	RuntimeGUIEvidenceVerified                    bool   `json:"runtime_gui_evidence_verified"`
+	DesktopEvidenceVerified                       bool   `json:"desktop_evidence_verified"`
+	KDEPageEvidenceVerified                       bool   `json:"kde_page_evidence_verified"`
+	Q4StagedExternalWinAppAcceptanceConsumed      bool   `json:"q4_staged_external_winapp_acceptance_consumed"`
+	Q4StagedExternalWinAppAcceptanceReady         bool   `json:"q4_staged_external_winapp_acceptance_ready"`
+	GoOwnedStagedExternalWinAppAcceptanceVerified bool   `json:"go_owned_staged_external_winapp_acceptance_verified"`
+	EvidenceSignalCount                           int    `json:"evidence_signal_count"`
+	EvidenceArtifactCount                         int    `json:"evidence_artifact_count"`
+	PrimaryActionID                               string `json:"primary_action_id"`
+	PrimaryActionLabel                            string `json:"primary_action_label"`
+	PrimaryActionEnabled                          bool   `json:"primary_action_enabled"`
+	RuntimeOwned                                  bool   `json:"runtime_owned"`
+	GoRuntimeBacked                               bool   `json:"go_runtime_backed"`
+	KDEPolicyOwner                                bool   `json:"kde_policy_owner"`
+	SafeForKDE                                    bool   `json:"safe_for_kde"`
+	SafeForAIDiagnostics                          bool   `json:"safe_for_ai_diagnostics"`
+	LaunchEnabled                                 bool   `json:"launch_enabled"`
+	BackendLaunchEnabled                          bool   `json:"backend_launch_enabled"`
+	BackendDetailsExposed                         bool   `json:"backend_details_exposed"`
+	RawPathsExposed                               bool   `json:"raw_paths_exposed"`
+	HostRootModified                              bool   `json:"host_root_modified"`
+	Summary                                       string `json:"summary"`
 }
 
 type KDECenterPageBackend struct {
@@ -1465,33 +1468,36 @@ func kdeCenterPageExternalWinAppApplicationDetailCards(detail *ExternalWinAppApp
 		return nil
 	}
 	return []KDECenterPageExternalWinAppCard{{
-		AppID:                      detail.ApplicationID,
-		DisplayName:                detail.DisplayName,
-		AppVersion:                 detail.AppVersion,
-		CompatibilityState:         detail.CompatibilityState,
-		CompatibilityLabel:         detail.CompatibilityLabel,
-		PrimaryStatusTone:          detail.PrimaryStatusTone,
-		RealWindowsAppRunVerified:  detail.RealWindowsAppRunVerified,
-		FileOpenVerified:           detail.FileOpenVerified,
-		RuntimeGUIEvidenceVerified: detail.RuntimeGUIEvidenceVerified,
-		DesktopEvidenceVerified:    detail.DesktopEvidenceVerified,
-		KDEPageEvidenceVerified:    detail.KDEPageEvidenceVerified,
-		EvidenceSignalCount:        len(detail.EvidenceSignals),
-		EvidenceArtifactCount:      detail.EvidenceArtifactCount,
-		PrimaryActionID:            detail.PrimaryAction.ID,
-		PrimaryActionLabel:         detail.PrimaryAction.Label,
-		PrimaryActionEnabled:       detail.PrimaryAction.Enabled,
-		RuntimeOwned:               detail.RuntimeOwned,
-		GoRuntimeBacked:            detail.GoRuntimeBacked,
-		KDEPolicyOwner:             detail.KDEPolicyOwner,
-		SafeForKDE:                 detail.SafeForKDE,
-		SafeForAIDiagnostics:       detail.SafeForAIDiagnostics,
-		LaunchEnabled:              false,
-		BackendLaunchEnabled:       false,
-		BackendDetailsExposed:      false,
-		RawPathsExposed:            false,
-		HostRootModified:           false,
-		Summary:                    detail.DesktopSafeSummary,
+		AppID:                                         detail.ApplicationID,
+		DisplayName:                                   detail.DisplayName,
+		AppVersion:                                    detail.AppVersion,
+		CompatibilityState:                            detail.CompatibilityState,
+		CompatibilityLabel:                            detail.CompatibilityLabel,
+		PrimaryStatusTone:                             detail.PrimaryStatusTone,
+		RealWindowsAppRunVerified:                     detail.RealWindowsAppRunVerified,
+		FileOpenVerified:                              detail.FileOpenVerified,
+		RuntimeGUIEvidenceVerified:                    detail.RuntimeGUIEvidenceVerified,
+		DesktopEvidenceVerified:                       detail.DesktopEvidenceVerified,
+		KDEPageEvidenceVerified:                       detail.KDEPageEvidenceVerified,
+		Q4StagedExternalWinAppAcceptanceConsumed:      detail.Q4StagedExternalWinAppAcceptanceConsumed,
+		Q4StagedExternalWinAppAcceptanceReady:         detail.Q4StagedExternalWinAppAcceptanceReady,
+		GoOwnedStagedExternalWinAppAcceptanceVerified: detail.GoOwnedStagedExternalWinAppAcceptanceVerified,
+		EvidenceSignalCount:                           len(detail.EvidenceSignals),
+		EvidenceArtifactCount:                         detail.EvidenceArtifactCount,
+		PrimaryActionID:                               detail.PrimaryAction.ID,
+		PrimaryActionLabel:                            detail.PrimaryAction.Label,
+		PrimaryActionEnabled:                          detail.PrimaryAction.Enabled,
+		RuntimeOwned:                                  detail.RuntimeOwned,
+		GoRuntimeBacked:                               detail.GoRuntimeBacked,
+		KDEPolicyOwner:                                detail.KDEPolicyOwner,
+		SafeForKDE:                                    detail.SafeForKDE,
+		SafeForAIDiagnostics:                          detail.SafeForAIDiagnostics,
+		LaunchEnabled:                                 false,
+		BackendLaunchEnabled:                          false,
+		BackendDetailsExposed:                         false,
+		RawPathsExposed:                               false,
+		HostRootModified:                              false,
+		Summary:                                       detail.DesktopSafeSummary,
 	}}
 }
 

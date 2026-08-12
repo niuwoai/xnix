@@ -187,6 +187,77 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesCompatibilityBundl
 	}
 }
 
+func TestExternalWinAppApplicationDetailPreviewCommandConsumesQ4StagedAcceptance(t *testing.T) {
+	tempDir := t.TempDir()
+	bundlePath := filepath.Join(tempDir, "compatibility-evidence-bundle.json")
+	acceptancePath := filepath.Join(tempDir, "q4-staged-external-winapp-acceptance.json")
+	outputPath := filepath.Join(tempDir, "detail", "external-winapp-detail.json")
+	writeTextFile(t, bundlePath, externalWinAppApplicationDetailBundleFixture())
+	writeTextFile(t, acceptancePath, externalWinAppApplicationDetailQ4StagedAcceptanceFixture(currentProjectVersion(t)))
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"external-winapp-application-detail-preview",
+		"--compatibility-evidence-bundle", bundlePath,
+		"--q4-staged-external-winapp-acceptance", acceptancePath,
+		"--output", outputPath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["source"] != "external-winapp-compatibility-evidence-bundle+q4-staged-external-winapp-acceptance" ||
+		payload["q4_staged_external_winapp_acceptance_consumed"] != true ||
+		payload["q4_staged_external_winapp_acceptance_ready"] != true ||
+		payload["q4_staged_external_winapp_acceptance_type"] != "staged-external-winapp-desktop-real-run-acceptance" ||
+		payload["go_owned_staged_external_winapp_acceptance_verified"] != true ||
+		payload["evidence_artifact_count"] != float64(5) {
+		t.Fatalf("unexpected acceptance-backed external Windows app detail payload: %#v", payload)
+	}
+	if len(payload["evidence_signals"].([]any)) != 5 ||
+		len(payload["review_cards"].([]any)) != 4 {
+		t.Fatalf("acceptance-backed detail must expose an extra signal and review card: %#v", payload)
+	}
+
+	var kdePageOutput bytes.Buffer
+	if err := run([]string{
+		"kde-center-page-preview",
+		"--external-app-application-detail", outputPath,
+		"--decision", "approved",
+	}, &kdePageOutput); err != nil {
+		t.Fatalf("kde-center-page-preview returned error: %v", err)
+	}
+	var kdePage map[string]any
+	if err := json.Unmarshal(kdePageOutput.Bytes(), &kdePage); err != nil {
+		t.Fatalf("Unmarshal KDE page output returned error: %v", err)
+	}
+	detailCards := kdePage["external_winapp_application_detail_cards"].([]any)
+	if len(detailCards) != 1 {
+		t.Fatalf("unexpected KDE external app detail cards: %#v", detailCards)
+	}
+	detailCard := detailCards[0].(map[string]any)
+	if detailCard["q4_staged_external_winapp_acceptance_consumed"] != true ||
+		detailCard["q4_staged_external_winapp_acceptance_ready"] != true ||
+		detailCard["go_owned_staged_external_winapp_acceptance_verified"] != true ||
+		detailCard["evidence_signal_count"] != float64(5) ||
+		detailCard["backend_details_exposed"] != false ||
+		detailCard["raw_paths_exposed"] != false ||
+		detailCard["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE acceptance-backed external app detail card: %#v", detailCard)
+	}
+	for _, rendered := range []string{output.String(), kdePageOutput.String()} {
+		if strings.Contains(rendered, acceptancePath) ||
+			strings.Contains(rendered, "root@q4") ||
+			strings.Contains(rendered, "/tmp/xnix-") ||
+			strings.Contains(rendered, "staged_desktop_external_winapp_smoke") ||
+			strings.Contains(rendered, "notepad.exe") {
+			t.Fatalf("acceptance-backed external app detail exposed unsafe details: %s", rendered)
+		}
+	}
+}
+
 func externalWinAppApplicationDetailBundleFixture() string {
 	return `{
   "version": "0.2.640-test",
@@ -236,4 +307,66 @@ func externalWinAppApplicationDetailBundleFixture() string {
   "broad_host_mount_required": false,
   "desktop_safe_summary": "External Windows app compatibility evidence is Runtime-owned and verified through a real isolated GUI run."
 }`
+}
+
+func externalWinAppApplicationDetailQ4StagedAcceptanceFixture(version string) string {
+	return strings.ReplaceAll(`{
+  "version": "VERSION_PLACEHOLDER",
+  "schema_version": "xnix.runtime.q4_staged_external_winapp_acceptance.v1",
+  "request_type": "q4-staged-external-winapp-acceptance-preview",
+  "source": "q4-staged-desktop-external-winapp-smoke+go-runtime-acceptance",
+  "runtime_method": "PreviewQ4StagedExternalWinAppAcceptance",
+  "read_method": "GetQ4StagedExternalWinAppAcceptance",
+  "acceptance_type": "staged-external-winapp-desktop-real-run-acceptance",
+  "smoke_report_consumed": true,
+  "smoke_report_path_exposed": false,
+  "output_path_exposed": false,
+  "delegated_command_exposed": false,
+  "remote_host_exposed": false,
+  "app_id": "org.xnix.external.desktop-notepad-file-argument",
+  "display_name": "External Desktop Notepad File Argument",
+  "q4_compile_required": true,
+  "host_compilation_avoided": true,
+  "remote_build_completed": true,
+  "delegated_smoke_passed": true,
+  "desktop_exec_uses_external_app_handle": true,
+  "desktop_exec_invocation_exact": true,
+  "external_app_desktop_handle_ready": true,
+  "external_app_handle_consumed": true,
+  "imported_artifact_digest_verified": true,
+  "external_file_bridge_ready": true,
+  "external_file_bridge_arguments_passed": true,
+  "external_file_bridge_winepath_translated": true,
+  "windows_process_file_argument_window_observed": true,
+  "window_observed": true,
+  "x_window_observed": true,
+  "one_shot_runtime_launch_executed": true,
+  "one_shot_window_observed": true,
+  "runtime_packet_external_app_run_record_consumed": true,
+  "kde_page_card_external_app_run_record_consumed": true,
+  "compatibility_evidence_bundle_generated": true,
+  "compatibility_evidence_bundle_real_windows_app_run_verified": true,
+  "application_detail_generated": true,
+  "application_detail_real_windows_app_run_verified": true,
+  "application_detail_file_open_verified": true,
+  "kde_page_from_application_detail_generated": true,
+  "kde_page_from_application_detail_consumed": true,
+  "kde_page_from_application_detail_header_badge": "Verified real app run",
+  "kde_page_from_application_detail_header_badge_tone": "success",
+  "kde_page_from_application_detail_summary_compatibility_state": "real-app-run-verified",
+  "kde_page_from_application_detail_summary_diagnostics_state": "real-app-run-verified",
+  "kde_page_from_application_detail_summary_backend_launch_enabled": false,
+  "kde_page_from_application_detail_summary_action_execution_enabled": false,
+  "kde_page_from_application_detail_summary_settings_persistence_enabled": false,
+  "artifact_fetch_count": 11,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "backend_details_exposed": false,
+  "raw_path_exposed": false,
+  "acceptance_ready": true,
+  "desktop_safe_summary": "A q4 staged external Windows GUI app completed the handle-only desktop launch, file-open, Runtime detail, and KDE detail acceptance lane."
+}`, "VERSION_PLACEHOLDER", version)
 }

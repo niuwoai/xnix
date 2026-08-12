@@ -17,6 +17,7 @@ func runExternalWinAppApplicationDetailPreview(args []string, stdout io.Writer) 
 	flags.SetOutput(io.Discard)
 
 	bundlePath := flags.String("compatibility-evidence-bundle", "", "external Windows app compatibility evidence bundle JSON")
+	acceptancePath := flags.String("q4-staged-external-winapp-acceptance", "", "optional q4 staged external Windows app acceptance JSON")
 	outputPath := flags.String("output", "", "optional JSON output path for the external Windows app detail")
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -26,7 +27,8 @@ func runExternalWinAppApplicationDetailPreview(args []string, stdout io.Writer) 
 	}
 
 	detail, err := appidentity.PreviewExternalWinAppApplicationDetail(appidentity.ExternalWinAppApplicationDetailRequest{
-		CompatibilityEvidenceBundlePath: *bundlePath,
+		CompatibilityEvidenceBundlePath:      *bundlePath,
+		Q4StagedExternalWinAppAcceptancePath: *acceptancePath,
 	})
 	if err != nil {
 		return err

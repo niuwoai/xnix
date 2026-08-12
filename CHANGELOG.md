@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc248] - 2026-08-13
+
+### Changed
+
+- Extended `external-winapp-application-detail-preview` with optional q4 staged external Windows app acceptance consumption, including a Go-owned acceptance signal and review card.
+- Added acceptance-backed application detail and KDE page artifacts to the q4 staged desktop external Windows app smoke after the Go-owned acceptance passes.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc248`.
+
 ## [0.2.640-rc247] - 2026-08-13
 
 ### Changed

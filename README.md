@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc247`.
+The project is currently at `v0.2.640-rc248`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc247`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc248 lets the Runtime external Windows app application detail consume the q4 staged external app acceptance artifact. `external-winapp-application-detail-preview --q4-staged-external-winapp-acceptance ACCEPTANCE.json` now adds a Go-owned acceptance signal and review card, and the q4 wrapper generates accepted application detail plus an accepted KDE page artifact after the real imported Notepad file-open run passes.
 
 v0.2.640-rc247 makes the q4 staged external Windows app acceptance a fetched Runtime artifact. `q4-staged-external-winapp-acceptance-preview` now supports `--output`, and the q4 wrapper stores and fetches `q4-staged-external-winapp-acceptance.json` beside the run, Runtime detail, and KDE detail artifacts so KDE, AI diagnostics, and operator reports can consume the Go-owned acceptance directly.
 
