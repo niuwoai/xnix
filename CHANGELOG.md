@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc232] - 2026-08-13
+
+### Added
+
+- Added the Go Runtime `external-winapp-import-stage-and-launch` command so an imported external `.exe` can be staged for KDE desktop activation and then launched through the staged or explicitly supplied `xnix-compat-launch`.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc232`.
+
 ## [0.2.640-rc231] - 2026-08-13
 
 ### Added

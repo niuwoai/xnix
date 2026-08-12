@@ -464,6 +464,142 @@ func TestExternalWinAppImportAndStageCommandImportsAndStagesDesktopActivation(t 
 	}
 }
 
+func TestExternalWinAppImportStageAndLaunchCommandInvokesStagedLauncher(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	stagingRoot := filepath.Join(tempDir, "stage")
+	executablePath := filepath.Join(tempDir, "ExternalGui.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	launcherLog := filepath.Join(tempDir, "launcher.log")
+	launcherSource := filepath.Join(tempDir, "xnix-compat-launch-source")
+	launcherBody := "#!/bin/sh\n" +
+		"{\n" +
+		"printf 'args=%s\\n' \"$*\"\n" +
+		"printf 'state=%s\\n' \"$XNIX_EXTERNAL_APP_STATE_ROOT\"\n" +
+		"printf 'image=%s\\n' \"$XNIX_WINE_IMAGE\"\n" +
+		"printf 'platform=%s\\n' \"$XNIX_CONTAINER_PLATFORM\"\n" +
+		"printf 'docker=%s\\n' \"$XNIX_DOCKER_BIN\"\n" +
+		"printf 'packet=%s\\n' \"$XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_OUTPUT\"\n" +
+		"} > \"" + launcherLog + "\"\n" +
+		"if test -n \"$XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_OUTPUT\"; then\n" +
+		"mkdir -p \"$(dirname \"$XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_OUTPUT\")\"\n" +
+		"printf '%s\\n' '{\"schema_version\":\"xnix.runtime.desktop_external_winapp_launch_packet.v1\",\"request_type\":\"desktop-external-winapp-launch-packet-preview\",\"status\":\"passed\"}' > \"$XNIX_EXTERNAL_APP_DESKTOP_LAUNCH_PACKET_OUTPUT\"\n" +
+		"fi\n" +
+		"printf '%s\\n' '{\"version\":\"0.2.640-test\",\"schema_version\":\"xnix.runtime.external_winapp_run.v1\",\"request_type\":\"windows-external-app-run\",\"status\":\"passed\",\"application_id\":\"org.xnix.external.gui\",\"display_name\":\"External GUI\",\"app_version\":\"0.2.640-test\",\"executable_name\":\"ExternalGui.exe\",\"external_app_import_record_consumed\":true,\"external_app_handle_consumed\":true,\"external_app_handle\":\"org.xnix.external.gui\",\"external_desktop_argument_count\":1,\"external_file_uri_arguments_accepted\":true,\"external_file_open_requested\":true,\"external_file_bridge_ready\":true,\"imported_artifact_digest_verified\":true,\"runtime_run_requested\":true,\"runtime_run_executed\":true,\"execution_started\":true,\"backend_process_started\":true,\"container_runtime_used\":true,\"container_network_mode\":\"none\",\"container_host_mount_count\":0,\"x_window_observed\":true,\"window_observed\":true,\"runtime_owned\":true,\"go_runtime_backed\":true,\"kde_policy_owner\":false,\"desktop_launch_enabled\":false,\"action_execution_enabled\":false,\"backend_details_exposed\":false,\"raw_import_record_path_exposed\":false,\"raw_external_app_handle_path_exposed\":false,\"raw_state_root_path_exposed\":false,\"raw_executable_path_exposed\":false,\"host_root_modified\":false,\"privileged_container_required\":false,\"host_networking_required\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false}'\n"
+	if err := os.WriteFile(launcherSource, []byte(launcherBody), 0o755); err != nil {
+		t.Fatalf("WriteFile launcher returned error: %v", err)
+	}
+	documentPath := filepath.Join(tempDir, "report.docx")
+	if err := os.WriteFile(documentPath, []byte("external staged launcher file-open fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	documentURI := "file://" + filepath.ToSlash(documentPath)
+	packetOutput := filepath.Join(tempDir, "sidecars", "desktop-launch-packet.json")
+	outputPath := filepath.Join(tempDir, "import-stage-launch.json")
+	var output bytes.Buffer
+	if err := run([]string{
+		"external-winapp-import-stage-and-launch",
+		"--state-root", stateRoot,
+		"--executable", executablePath,
+		"--app-id", "org.xnix.external.gui",
+		"--display-name", "External GUI",
+		"--mode", "development",
+		"--staging-root", stagingRoot,
+		"--managed-launcher-bin", launcherSource,
+		"--desktop-launch-packet-output", packetOutput,
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", filepath.Join(tempDir, "fake-docker"),
+		"--timeout", "5s",
+		"--output", outputPath,
+		documentURI,
+	}, &output); err != nil {
+		t.Fatalf("external app import-stage-and-launch returned error: %v", err)
+	}
+	written, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile output returned error: %v", err)
+	}
+	if string(written) != output.String() {
+		t.Fatalf("written output must match stdout\nstdout=%s\nwritten=%s", output.String(), string(written))
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal import-stage-and-launch output returned error: %v\n%s", err, output.String())
+	}
+	if payload["schema_version"] != "xnix.runtime.external_winapp_import_stage_launch.v1" ||
+		payload["request_type"] != "external-winapp-import-stage-and-launch" ||
+		payload["status"] != "passed" ||
+		payload["application_id"] != "org.xnix.external.gui" ||
+		payload["external_app_handle"] != "org.xnix.external.gui" ||
+		payload["import_recorded"] != true ||
+		payload["desktop_activation_staged"] != true ||
+		payload["staged_launcher_invoked"] != true ||
+		payload["staged_launcher_from_activation_root"] != true ||
+		payload["managed_launcher_executable_staged"] != true ||
+		payload["desktop_exec_uses_external_app_handle"] != true ||
+		payload["external_app_desktop_handle_ready"] != true ||
+		payload["desktop_launch_packet_requested"] != true ||
+		payload["desktop_launch_packet_written"] != true ||
+		payload["launcher_request_type"] != "windows-external-app-run" ||
+		payload["launcher_status"] != "passed" ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["external_app_handle_consumed"] != true ||
+		payload["external_desktop_argument_count"] != float64(1) ||
+		payload["external_file_uri_arguments_accepted"] != true ||
+		payload["external_file_bridge_ready"] != true ||
+		payload["imported_artifact_digest_verified"] != true ||
+		payload["runtime_launch_executed"] != true ||
+		payload["window_observed"] != true ||
+		payload["x_window_observed"] != true ||
+		payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["raw_launcher_path_exposed"] != false ||
+		payload["raw_launcher_output_exposed"] != false {
+		t.Fatalf("unexpected external import-stage-and-launch payload: %#v", payload)
+	}
+	recordPath, err := appidentity.ExternalWinAppImportRecordPathFromHandle(stateRoot, "org.xnix.external.gui")
+	if err != nil {
+		t.Fatalf("ExternalWinAppImportRecordPathFromHandle returned error: %v", err)
+	}
+	if _, err := os.Stat(recordPath); err != nil {
+		t.Fatalf("one-shot import-stage-and-launch must persist the import record: %v", err)
+	}
+	stagedLauncher := filepath.Join(stagingRoot, "usr/local/bin/xnix-compat-launch")
+	if _, err := os.Stat(stagedLauncher); err != nil {
+		t.Fatalf("one-shot import-stage-and-launch must stage the managed launcher: %v", err)
+	}
+	if _, err := os.Stat(packetOutput); err != nil {
+		t.Fatalf("one-shot import-stage-and-launch must allow the launcher to write the desktop launch packet: %v", err)
+	}
+	launcherInvocation, err := os.ReadFile(launcherLog)
+	if err != nil {
+		t.Fatalf("ReadFile launcher log returned error: %v", err)
+	}
+	for _, expected := range []string{
+		"--external-app-handle org.xnix.external.gui --timeout 5s " + documentURI,
+		"state=" + stateRoot,
+		"image=local/wine-x-gui:test",
+		"platform=linux/amd64",
+		"docker=" + filepath.Join(tempDir, "fake-docker"),
+		"packet=" + packetOutput,
+	} {
+		if !strings.Contains(string(launcherInvocation), expected) {
+			t.Fatalf("staged launcher invocation missing %q:\n%s", expected, string(launcherInvocation))
+		}
+	}
+	for _, forbidden := range []string{stateRoot, stagingRoot, executablePath, launcherSource, stagedLauncher, packetOutput, documentPath, documentURI, filepath.Join(tempDir, "fake-docker")} {
+		if strings.Contains(output.String(), forbidden) {
+			t.Fatalf("external import-stage-and-launch output exposed forbidden path %q: %s", forbidden, output.String())
+		}
+	}
+}
+
 func TestExternalWinAppImportAndRunCommandImportsAndRunsFileOpen(t *testing.T) {
 	tempDir := t.TempDir()
 	stateRoot := filepath.Join(tempDir, "state")

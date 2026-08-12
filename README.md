@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc231`.
+The project is currently at `v0.2.640-rc232`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc231`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc232 adds the Go Runtime `external-winapp-import-stage-and-launch` command. It closes the staged desktop loop for imported external Windows apps by importing a local `.exe`, writing KDE desktop activation artifacts, invoking the staged or explicitly supplied `xnix-compat-launch`, and returning redacted run evidence plus launch-packet sidecar status without exposing local paths.
 
 v0.2.640-rc231 adds the Go Runtime `external-winapp-import-and-stage` command. It gives the desktop integration path a one-shot flow from a local `.exe` to a digest-recorded Runtime import plus staged KDE desktop activation artifacts, including the managed launcher executable when provided, while still hiding local paths and keeping launch disabled until the Runtime grants it.
 
