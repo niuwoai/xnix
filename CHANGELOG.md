@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc240] - 2026-08-13
+
+### Changed
+
+- Recorded the twentieth-version q4 full-smoke gate as passed for full Go tests, Runtime and launcher builds, Buildroot/QEMU serial boot, Wine guest validation, known Windows app smoke, imported external Windows app desktop smoke, fixture GUI smoke, and KDE controlled-launch action smoke.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc240`.
+- Kept compile-heavy validation on q4 and confirmed host compilation was avoided while privileged containers, host networking, Docker socket mounts, broad host mounts, and host-root mutation remained closed.
+
 ## [0.2.640-rc239] - 2026-08-13
 
 ### Added
