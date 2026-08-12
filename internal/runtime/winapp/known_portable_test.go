@@ -199,6 +199,70 @@ func TestFetchKnownPortableBundleDownloadsArchiveWithoutPretendingItIsExe(t *tes
 	}
 }
 
+func TestFetchKnownPortableAppRetriesTransientEOFWithoutKeepingPartialArtifact(t *testing.T) {
+	body := []byte("fixture portable windows executable after retry")
+	sum := sha256.Sum256(body)
+	attempts := 0
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		attempts++
+		if request.Header.Get("User-Agent") != KnownAppDownloadUserAgent {
+			return nil, fmt.Errorf("unexpected known app fetch user agent: %q", request.Header.Get("User-Agent"))
+		}
+		if attempts == 1 {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       transientEOFReadCloser{reader: strings.NewReader("partial")},
+				Header:     make(http.Header),
+				Request:    request,
+			}, nil
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(string(body))),
+			Header:     make(http.Header),
+			Request:    request,
+		}, nil
+	})}
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "retry-fixture",
+		DisplayName:    "Retry Fixture",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "retry-fixture.exe",
+		SourcePageURL:  "https://example.invalid/retry",
+		DownloadURL:    "https://example.invalid/retry-fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "Retry",
+	}})
+	cacheRoot := t.TempDir()
+
+	result, err := FetchKnownPortableApp(context.Background(), KnownFetchRequest{
+		AppID:         "retry-fixture",
+		CacheRoot:     cacheRoot,
+		AllowDownload: true,
+		HTTPClient:    client,
+		Timeout:       5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("FetchKnownPortableApp returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.CacheStatus != "verified" ||
+		!result.Downloaded ||
+		!result.ChecksumVerified ||
+		attempts != 2 {
+		t.Fatalf("unexpected retry fetch result: attempts=%d result=%#v", attempts, result)
+	}
+	content, err := os.ReadFile(filepath.Join(cacheRoot, "retry-fixture", "retry-fixture.exe"))
+	if err != nil {
+		t.Fatalf("ReadFile cached retry fixture returned error: %v", err)
+	}
+	if string(content) != string(body) {
+		t.Fatalf("retry download kept partial artifact: %q", string(content))
+	}
+}
+
 func TestPreviewKnownPortableManagedLaunchBlocksUntilArtifactIsVerified(t *testing.T) {
 	tempDir := t.TempDir()
 
@@ -1772,6 +1836,22 @@ type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (function roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
 	return function(request)
+}
+
+type transientEOFReadCloser struct {
+	reader *strings.Reader
+}
+
+func (closer transientEOFReadCloser) Read(buffer []byte) (int, error) {
+	n, err := closer.reader.Read(buffer)
+	if err == io.EOF {
+		return n, io.ErrUnexpectedEOF
+	}
+	return n, err
+}
+
+func (closer transientEOFReadCloser) Close() error {
+	return nil
 }
 
 func assertManagedLaunchSurfaceSafe(t *testing.T, result any, hostPath string) {

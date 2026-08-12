@@ -11,6 +11,7 @@ require "timeout"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
+REMOTE_GO_BUILD = PROJECT_ROOT.join("scripts/remote_go_build.rb")
 
 SCHEMA_VERSION = "xnix.scripts.q4_notepadpp_portable_winapp_smoke.v1"
 REQUEST_TYPE = "q4-notepadpp-portable-winapp-smoke"
@@ -24,6 +25,8 @@ NOTEPADPP_WINDOW_MATCH = "sample-document.txt"
 DEFAULT_REMOTE_HOST = ENV.fetch("XNIX_REMOTE_HOST", "root@q4")
 DEFAULT_LOCAL_SHELL = ENV.fetch("XNIX_LOCAL_SHELL", "/bin/zsh")
 DEFAULT_REMOTE_MATERIALS_ROOT = ENV.fetch("XNIX_REMOTE_MATERIALS_ROOT", "/home/xnix-run-materials")
+DEFAULT_REMOTE_SOURCE_ROOT = ENV.fetch("XNIX_Q4_NOTEPADPP_SOURCE_ROOT", "/home/xnix-build/xnix-q4-notepadpp-portable-#{VERSION}")
+DEFAULT_REMOTE_BUILD_ROOT = ENV.fetch("XNIX_REMOTE_BUILD_ROOT", "/home/xnix-build-cache")
 DEFAULT_REMOTE_TIMEOUT_SECONDS = Integer(ENV.fetch("XNIX_Q4_NOTEPADPP_TIMEOUT_SECONDS", "1800"), 10)
 DEFAULT_OUTPUT = PROJECT_ROOT.join("output", "q4-notepadpp-portable-winapp-smoke-#{VERSION}.json").to_s
 DEFAULT_MARKDOWN_OUTPUT = PROJECT_ROOT.join("output", "q4-notepadpp-portable-winapp-smoke-#{VERSION}.md").to_s
@@ -33,6 +36,8 @@ options = {
   local_shell: DEFAULT_LOCAL_SHELL,
   remote_host: DEFAULT_REMOTE_HOST,
   remote_materials_root: DEFAULT_REMOTE_MATERIALS_ROOT,
+  remote_source_root: DEFAULT_REMOTE_SOURCE_ROOT,
+  remote_build_root: DEFAULT_REMOTE_BUILD_ROOT,
   remote_timeout_seconds: DEFAULT_REMOTE_TIMEOUT_SECONDS,
   output: ENV.fetch("XNIX_Q4_NOTEPADPP_OUTPUT", DEFAULT_OUTPUT),
   markdown_output: ENV.fetch("XNIX_Q4_NOTEPADPP_MARKDOWN_OUTPUT", DEFAULT_MARKDOWN_OUTPUT)
@@ -44,6 +49,8 @@ OptionParser.new do |parser|
   parser.on("--local-shell PATH", "Local shell used for SSH alias resolution.") { |value| options[:local_shell] = value }
   parser.on("--remote HOST", "Remote SSH target, default: #{DEFAULT_REMOTE_HOST}.") { |value| options[:remote_host] = value }
   parser.on("--remote-materials-root PATH", "Remote materials root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_materials_root] = value }
+  parser.on("--remote-source-root PATH", "Remote Runtime source root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_source_root] = value }
+  parser.on("--remote-build-root PATH", "Remote Runtime build/cache root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_build_root] = value }
   parser.on("--remote-timeout-seconds SECONDS", Integer, "Timeout for q4 download, extraction, compile, and staged execution.") { |value| options[:remote_timeout_seconds] = value }
   parser.on("--output PATH", "Write JSON result under this checkout or /tmp/xnix-*.") { |value| options[:output] = value }
   parser.on("--markdown-output PATH", "Write Markdown result under this checkout or /tmp/xnix-*.") { |value| options[:markdown_output] = value }
@@ -140,21 +147,69 @@ def remote_step!(shell, remote_host, remote_command, timeout_seconds, failure)
   stdout
 end
 
+def run_json_command(shell, argv, timeout_seconds:)
+  stdout, stderr, status = run_shell(
+    shell,
+    shell_join(argv),
+    timeout_seconds: timeout_seconds
+  )
+  unless status.zero?
+    warn stdout unless stdout.empty?
+    warn stderr unless stderr.empty?
+    abort "command failed: #{argv.first}"
+  end
+  JSON.parse(stdout)
+end
+
 remote_host = options.fetch(:remote_host)
 remote_materials_root = ensure_remote_xnix_path!("remote materials root", options.fetch(:remote_materials_root))
+remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetch(:remote_source_root))
+remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
 remote_app_root = "#{remote_materials_root}/third-party/notepad-plus-plus/#{NOTEPADPP_VERSION}"
-remote_zip = "#{remote_app_root}/#{NOTEPADPP_ZIP}"
-remote_bundle_root = "#{remote_app_root}/portable"
-remote_executable = "#{remote_bundle_root}/#{NOTEPADPP_EXE_RELATIVE_PATH}"
+remote_cache_root = "#{remote_app_root}/cache"
+remote_state_root = "#{remote_app_root}/runtime-state"
+remote_known_bundle_import_report = "#{remote_app_root}/known-portable-bundle-import-record.json"
+remote_binary_root = "#{remote_build_root}/bin/linux-amd64"
+remote_runtime_bin = "#{remote_binary_root}/xnix-runtime-go"
 output_path = ensure_local_output_path!("output path", options.fetch(:output))
 markdown_output_path = ensure_local_output_path!("markdown output path", options.fetch(:markdown_output))
 
-staged_command = [
+known_bundle_import_command = [
+  remote_runtime_bin,
+  "windows-known-app-bundle-import-record",
+  "--app", "org.xnix.external.notepadplusplus",
+  "--cache-root", remote_cache_root,
+  "--state-root", remote_state_root,
+  "--allow-download",
+  "--include-fetch",
+  "--timeout", "#{options.fetch(:remote_timeout_seconds)}s",
+  "--report-output", remote_known_bundle_import_report
+]
+
+def staged_command(remote_host, remote_bundle_root, output_path, markdown_output_path, timeout_seconds)
+  [
+    "ruby",
+    "scripts/q4_staged_desktop_external_winapp_smoke.rb",
+    "--execute",
+    "--fixture", "external",
+    "--remote-bundle-root", remote_bundle_root,
+    "--executable-relative-path", NOTEPADPP_EXE_RELATIVE_PATH,
+    "--app-id", "org.xnix.external.notepadplusplus",
+    "--display-name", "Notepad++ Portable",
+    "--window-match", NOTEPADPP_WINDOW_MATCH,
+    "--remote", remote_host,
+    "--remote-timeout-seconds", timeout_seconds.to_s,
+    "--output", output_path.to_s,
+    "--markdown-output", markdown_output_path.to_s
+  ]
+end
+
+planned_staged_command = [
   "ruby",
   "scripts/q4_staged_desktop_external_winapp_smoke.rb",
   "--execute",
   "--fixture", "external",
-  "--remote-bundle-root", remote_bundle_root,
+  "--remote-bundle-root", "#{remote_state_root}/external-apps/org.xnix.external.notepadplusplus/bundles/<verified-bundle-manifest>",
   "--executable-relative-path", NOTEPADPP_EXE_RELATIVE_PATH,
   "--app-id", "org.xnix.external.notepadplusplus",
   "--display-name", "Notepad++ Portable",
@@ -172,6 +227,9 @@ plan = {
   "status" => options.fetch(:execute) ? "running" : "planned",
   "execute" => options.fetch(:execute),
   "remote_host" => remote_host,
+  "remote_source_root" => remote_source_root,
+  "remote_build_root" => remote_build_root,
+  "remote_runtime_binary" => remote_runtime_bin,
   "source_kind" => "official-notepad-plus-plus-github-release",
   "notepadpp_version" => NOTEPADPP_VERSION,
   "notepadpp_zip" => NOTEPADPP_ZIP,
@@ -184,13 +242,21 @@ plan = {
   "notepadpp_extracted" => false,
   "notepadpp_executable_configured" => true,
   "notepadpp_executable_relative_path" => NOTEPADPP_EXE_RELATIVE_PATH,
+  "known_portable_bundle_import_planned" => true,
+  "known_portable_bundle_import_command" => known_bundle_import_command,
+  "known_portable_bundle_import_report" => remote_known_bundle_import_report,
+  "known_portable_bundle_import_recorded" => false,
+  "known_portable_bundle_import_status" => "planned",
+  "go_known_portable_bundle_import_backed" => true,
+  "remote_cache_root" => remote_cache_root,
+  "remote_state_root" => remote_state_root,
   "portable_directory_external_app" => true,
   "portable_directory_bundle_import_required" => true,
   "remote_materials_root" => remote_materials_root,
   "remote_app_root" => remote_app_root,
-  "remote_zip" => remote_zip,
-  "remote_bundle_root" => remote_bundle_root,
-  "remote_executable" => remote_executable,
+  "remote_zip" => "#{remote_cache_root}/org.xnix.external.notepadplusplus/#{NOTEPADPP_ZIP}",
+  "remote_bundle_root" => "",
+  "remote_executable" => "",
   "remote_paths_exposed_only_for_operator" => true,
   "app_id" => "org.xnix.external.notepadplusplus",
   "display_name" => "Notepad++ Portable",
@@ -198,7 +264,7 @@ plan = {
   "real_third_party_windows_app" => true,
   "single_file_windows_app" => false,
   "delegated_script" => "scripts/q4_staged_desktop_external_winapp_smoke.rb",
-  "delegated_command" => staged_command,
+  "delegated_command" => planned_staged_command,
   "output_path" => output_path.to_s,
   "markdown_output_path" => markdown_output_path.to_s,
   "runtime_owned" => true,
@@ -229,53 +295,61 @@ remote_step!(
   options.fetch(:remote_timeout_seconds),
   "q4 Notepad++ remote directory preparation failed"
 )
-remote_step!(
-  options.fetch(:local_shell),
-  remote_host,
-  shell_join(["curl", "-L", "--fail", "--show-error", "--retry", "8", "--retry-delay", "2", "--retry-all-errors", "--connect-timeout", "20", "--continue-at", "-", "--output", remote_zip, NOTEPADPP_URL]),
-  options.fetch(:remote_timeout_seconds),
-  "q4 Notepad++ Portable zip download failed"
-)
-plan["notepadpp_downloaded"] = true
-checksum_stdout = remote_step!(
-  options.fetch(:local_shell),
-  remote_host,
-  shell_join(["sha256sum", remote_zip]),
-  options.fetch(:remote_timeout_seconds),
-  "q4 Notepad++ Portable zip checksum calculation failed"
-)
-actual_sha256 = checksum_stdout.split.first.to_s
-abort "q4 Notepad++ Portable zip SHA256 mismatch" unless actual_sha256 == NOTEPADPP_SHA256
-plan["notepadpp_sha256_verified"] = true
 
-remote_step!(
+build = run_json_command(
+  options.fetch(:local_shell),
+  [
+    "ruby",
+    REMOTE_GO_BUILD.to_s,
+    "--execute",
+    "--package", "./cmd/xnix-runtime-go",
+    "--remote", remote_host,
+    "--remote-source-root", remote_source_root,
+    "--remote-build-root", remote_build_root,
+    "--remote-timeout-seconds", options.fetch(:remote_timeout_seconds).to_s
+  ],
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+abort "q4 Runtime build for known portable bundle import did not pass" unless build.fetch("status") == "passed" && bool(build, "remote_build_completed") && bool(build, "host_compilation_avoided")
+
+known_import_stdout = remote_step!(
   options.fetch(:local_shell),
   remote_host,
-  "#{shell_join(["rm", "-rf", remote_bundle_root])} && #{shell_join(["mkdir", "-p", remote_bundle_root])}",
+  "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(known_bundle_import_command)}",
   options.fetch(:remote_timeout_seconds),
-  "q4 Notepad++ Portable extraction root preparation failed"
+  "q4 Notepad++ Go Runtime known portable bundle import failed"
 )
-extract_command = [
-  "ruby", "-e",
-  "zip=ARGV.fetch(0); dest=ARGV.fetch(1); ok=system('unzip','-q','-o',zip,'-d',dest) || system('python3','-m','zipfile','-e',zip,dest); abort('zip extraction failed') unless ok",
-  remote_zip,
-  remote_bundle_root
-]
-remote_step!(
-  options.fetch(:local_shell),
+known_import = JSON.parse(known_import_stdout)
+unless known_import.fetch("status") == "passed" &&
+       known_import.fetch("request_type") == "windows-known-app-bundle-import-record" &&
+       bool(known_import, "checksum_verified") &&
+       bool(known_import, "archive_verified") &&
+       bool(known_import, "extracted") &&
+       bool(known_import, "import_recorded") &&
+       known_import.fetch("import_record_request_type") == "external-winapp-bundle-import-record" &&
+       known_import.fetch("imported_artifact_kind") == "portable-directory" &&
+       bool(known_import, "bundle_manifest_sha256_present")
+  warn JSON.pretty_generate(known_import)
+  abort "q4 Notepad++ Go Runtime known portable bundle import did not pass"
+end
+import_record = known_import.fetch("import_record")
+remote_bundle_root = "#{remote_state_root}/#{import_record.fetch("bundle_relative_path")}"
+remote_executable = "#{remote_bundle_root}/#{NOTEPADPP_EXE_RELATIVE_PATH}"
+plan["notepadpp_downloaded"] = bool(known_import, "downloaded") || known_import.fetch("fetch_cache_status", "") == "verified"
+plan["notepadpp_sha256_verified"] = bool(known_import, "checksum_verified")
+plan["notepadpp_extracted"] = bool(known_import, "extracted")
+plan["known_portable_bundle_import_recorded"] = bool(known_import, "import_recorded")
+plan["known_portable_bundle_import_status"] = known_import.fetch("status")
+plan["remote_bundle_root"] = remote_bundle_root
+plan["remote_executable"] = remote_executable
+
+staged_command = staged_command(
   remote_host,
-  shell_join(extract_command),
-  options.fetch(:remote_timeout_seconds),
-  "q4 Notepad++ Portable zip extraction failed"
+  remote_bundle_root,
+  output_path,
+  markdown_output_path,
+  options.fetch(:remote_timeout_seconds)
 )
-remote_step!(
-  options.fetch(:local_shell),
-  remote_host,
-  shell_join(["test", "-f", remote_executable]),
-  options.fetch(:remote_timeout_seconds),
-  "q4 Notepad++ Portable executable was not found after extraction"
-)
-plan["notepadpp_extracted"] = true
 
 staged_stdout, staged_stderr, staged_status = run_shell(
   options.fetch(:local_shell),
@@ -306,6 +380,18 @@ abort "q4 Notepad++ Portable staged external run did not reach accepted state" u
 
 result = plan.merge(
   "status" => "passed",
+  "remote_go_build_status" => build.fetch("status"),
+  "remote_build_completed_for_known_import" => bool(build, "remote_build_completed"),
+  "known_portable_bundle_import_status" => known_import.fetch("status"),
+  "known_portable_bundle_import_recorded" => bool(known_import, "import_recorded"),
+  "known_portable_bundle_import_request_type" => known_import.fetch("request_type"),
+  "known_portable_bundle_import_record_request_type" => known_import.fetch("import_record_request_type"),
+  "known_portable_bundle_archive_verified" => bool(known_import, "archive_verified"),
+  "known_portable_bundle_checksum_verified" => bool(known_import, "checksum_verified"),
+  "known_portable_bundle_extracted" => bool(known_import, "extracted"),
+  "known_portable_bundle_extracted_file_count" => known_import.fetch("extracted_file_count"),
+  "known_portable_bundle_manifest_sha256_present" => bool(known_import, "bundle_manifest_sha256_present"),
+  "known_portable_bundle_imported_artifact_kind" => known_import.fetch("imported_artifact_kind"),
   "delegated_status" => delegated.fetch("status"),
   "remote_build_completed" => bool(delegated, "remote_build_completed"),
   "portable_directory_external_app" => bool(delegated, "portable_directory_external_app"),

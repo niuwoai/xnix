@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc260
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc261
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc261 checkpoint makes the real q4 Notepad++ Portable smoke use the Go Runtime known bundle importer before GUI execution. The wrapper now builds `xnix-runtime-go` on q4, invokes `windows-known-app-bundle-import-record --allow-download`, consumes the Runtime-owned imported bundle path, and then runs the staged KDE/Wine GUI path. The Go fetch layer now retries transient EOF/network failures by resetting the temporary artifact before each attempt. Targeted q4 validation passed with Notepad++ 8.9.7 Portable downloaded, SHA256 verified, 219 files extracted, the portable directory imported as a Runtime external bundle, the sample document observed in the app window, and final `runtime-accepted-real-app-run` state.
 
 The v0.2.640-rc260 checkpoint moves known portable bundle import into the Go Runtime. The new `windows-known-app-bundle-import-record` command can take a known portable Windows app such as Notepad++ Portable, fetch its pinned archive when explicitly allowed, verify the SHA256, safely extract the zip with path-escape and symlink protections, and hand the extracted directory to the existing Runtime external bundle importer. The resulting record keeps raw host paths hidden, leaves launch gated, and keeps targeted Go validation on q4 so the macOS host avoids compilation.
 

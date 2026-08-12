@@ -47,6 +47,7 @@ const (
 	DefaultKnownAppGuestTimeout        = 90 * time.Second
 	KnownAppDownloadUserAgent          = "Xnix-Compatibility-Runtime/known-app-fetch"
 	defaultKnownAppDownloadLimit       = 32 << 20
+	defaultKnownAppDownloadAttempts    = 4
 )
 
 const (
@@ -804,7 +805,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc260",
+		Version:         "0.2.640-rc261",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
@@ -815,7 +816,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.messagebox",
 		DisplayName:     "Xnix MessageBox",
-		Version:         "0.2.640-rc260",
+		Version:         "0.2.640-rc261",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "xnix-messagebox-smoke.exe",
 		SourcePageURL:   "runtime-managed-external-gui-fixture",
@@ -825,7 +826,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:                       "org.xnix.sample.notepad",
 		DisplayName:              "Sample Notepad",
-		Version:                  "0.2.640-rc260",
+		Version:                  "0.2.640-rc261",
 		Architecture:             "windows-x86-gui",
 		ExecutableName:           "notepad.exe",
 		SourcePageURL:            "runtime-recipe-container-gui-fixture",
@@ -2486,10 +2487,38 @@ func sha256File(path string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-func downloadKnownPortableApp(ctx context.Context, client *http.Client, url string, writer io.Writer) (string, error) {
+func downloadKnownPortableApp(ctx context.Context, client *http.Client, url string, target *os.File) (string, error) {
 	if client == nil {
 		client = http.DefaultClient
 	}
+	var lastErr error
+	for attempt := 1; attempt <= defaultKnownAppDownloadAttempts; attempt++ {
+		if err := resetKnownAppDownloadTarget(target); err != nil {
+			return "", err
+		}
+		actual, err := downloadKnownPortableAppOnce(ctx, client, url, target)
+		if err == nil {
+			return actual, nil
+		}
+		lastErr = err
+		if ctx.Err() != nil {
+			return "", lastErr
+		}
+	}
+	return "", fmt.Errorf("download known app after %d attempts: %w", defaultKnownAppDownloadAttempts, lastErr)
+}
+
+func resetKnownAppDownloadTarget(target *os.File) error {
+	if err := target.Truncate(0); err != nil {
+		return fmt.Errorf("reset known app temporary download: %w", err)
+	}
+	if _, err := target.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("seek known app temporary download: %w", err)
+	}
+	return nil
+}
+
+func downloadKnownPortableAppOnce(ctx context.Context, client *http.Client, url string, writer io.Writer) (string, error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return "", fmt.Errorf("create known app download request: %w", err)

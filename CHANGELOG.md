@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc261] - 2026-08-13
+
+### Changed
+
+- Updated the q4 Notepad++ Portable real-app smoke to call the Go Runtime `windows-known-app-bundle-import-record` command for download, checksum verification, safe extraction, and Runtime-owned external bundle import before staged GUI execution.
+- Added retry handling to Go Runtime known Windows app downloads so transient EOF/network failures reset the temporary artifact and retry without preserving partial archives.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc261`.
+
+### Fixed
+
+- Fixed the q4 Notepad++ Portable path after GitHub returned a transient `unexpected EOF`; the real q4 smoke now passes through the Go-owned known portable bundle import path and reaches `runtime-accepted-real-app-run`.
+
 ## [0.2.640-rc260] - 2026-08-13
 
 ### Added
