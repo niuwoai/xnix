@@ -629,6 +629,8 @@ accepted_application_detail = JSON.parse(accepted_application_detail_stdout)
 unless accepted_application_detail.fetch("q4_staged_external_winapp_acceptance_consumed") == true &&
        accepted_application_detail.fetch("q4_staged_external_winapp_acceptance_ready") == true &&
        accepted_application_detail.fetch("go_owned_staged_external_winapp_acceptance_verified") == true &&
+       accepted_application_detail.fetch("compatibility_state") == "runtime-accepted-real-app-run" &&
+       accepted_application_detail.fetch("compatibility_label") == "Runtime accepted real app run" &&
        accepted_application_detail.fetch("evidence_artifact_count") == 5
   warn accepted_application_detail_stdout
   abort "q4 accepted external Windows app application detail did not consume Go-owned acceptance"
@@ -656,6 +658,8 @@ accepted_detail_card = accepted_detail_cards.fetch(0)
 unless accepted_detail_card.fetch("q4_staged_external_winapp_acceptance_consumed") == true &&
        accepted_detail_card.fetch("q4_staged_external_winapp_acceptance_ready") == true &&
        accepted_detail_card.fetch("go_owned_staged_external_winapp_acceptance_verified") == true &&
+       accepted_detail_card.fetch("compatibility_state") == "runtime-accepted-real-app-run" &&
+       accepted_detail_card.fetch("compatibility_label") == "Runtime accepted real app run" &&
        accepted_detail_card.fetch("evidence_signal_count") == 5 &&
        accepted_detail_card.fetch("backend_details_exposed") == false &&
        accepted_detail_card.fetch("raw_paths_exposed") == false &&
@@ -695,11 +699,15 @@ result["accepted_application_detail_generated"] = true
 result["accepted_application_detail_artifact_fetched"] = fetched_artifacts.fetch("accepted_application_detail_artifact_fetched")
 result["accepted_application_detail_q4_staged_acceptance_consumed"] = accepted_application_detail.fetch("q4_staged_external_winapp_acceptance_consumed")
 result["accepted_application_detail_go_owned_acceptance_verified"] = accepted_application_detail.fetch("go_owned_staged_external_winapp_acceptance_verified")
+result["accepted_application_detail_compatibility_state"] = accepted_application_detail.fetch("compatibility_state")
+result["accepted_application_detail_compatibility_label"] = accepted_application_detail.fetch("compatibility_label")
 result["accepted_application_detail_evidence_artifact_count"] = accepted_application_detail.fetch("evidence_artifact_count")
 result["kde_page_from_accepted_application_detail_generated"] = true
 result["kde_page_from_accepted_application_detail_artifact_fetched"] = fetched_artifacts.fetch("kde_page_from_accepted_application_detail_artifact_fetched")
 result["kde_page_from_accepted_application_detail_acceptance_consumed"] = accepted_detail_card.fetch("q4_staged_external_winapp_acceptance_consumed")
 result["kde_page_from_accepted_application_detail_go_owned_acceptance_verified"] = accepted_detail_card.fetch("go_owned_staged_external_winapp_acceptance_verified")
+result["kde_page_from_accepted_application_detail_compatibility_state"] = accepted_detail_card.fetch("compatibility_state")
+result["kde_page_from_accepted_application_detail_compatibility_label"] = accepted_detail_card.fetch("compatibility_label")
 result["kde_page_from_accepted_application_detail_evidence_signal_count"] = accepted_detail_card.fetch("evidence_signal_count")
 
 emit_json(result, output_path)

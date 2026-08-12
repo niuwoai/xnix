@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc249] - 2026-08-13
+
+### Changed
+
+- Promoted q4 staged external Windows app acceptance into the accepted application detail compatibility state and label.
+- Updated KDE page consumption so accepted external Windows app detail surfaces `runtime-accepted-real-app-run` / `Runtime accepted real app run` in the header, application summary, and external app card.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc249`.
+
 ## [0.2.640-rc248] - 2026-08-13
 
 ### Changed

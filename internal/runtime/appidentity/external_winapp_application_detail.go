@@ -124,6 +124,14 @@ func PreviewExternalWinAppApplicationDetail(request ExternalWinAppApplicationDet
 		evidenceArtifactCount++
 		source += "+q4-staged-external-winapp-acceptance"
 	}
+	compatibilityState := "real-app-run-verified"
+	compatibilityLabel := "Verified real app run"
+	desktopSafeSummary := "This imported Windows app has verified Runtime-owned real GUI evidence and can be shown in KDE as a reviewed compatibility application without exposing host paths or backend commands."
+	if acceptance != nil {
+		compatibilityState = "runtime-accepted-real-app-run"
+		compatibilityLabel = "Runtime accepted real app run"
+		desktopSafeSummary = "This imported Windows app has a Go-owned q4 staged acceptance artifact and can be shown in KDE as a Runtime-accepted compatibility application without exposing host paths or backend commands."
+	}
 	detail := ExternalWinAppApplicationDetail{
 		Version:                                  bundle.Version,
 		SchemaVersion:                            ExternalWinAppApplicationDetailSchemaVersion,
@@ -136,8 +144,8 @@ func PreviewExternalWinAppApplicationDetail(request ExternalWinAppApplicationDet
 		ApplicationID:                            bundle.ApplicationID,
 		DisplayName:                              bundle.DisplayName,
 		AppVersion:                               bundle.AppVersion,
-		CompatibilityState:                       "real-app-run-verified",
-		CompatibilityLabel:                       "Verified real app run",
+		CompatibilityState:                       compatibilityState,
+		CompatibilityLabel:                       compatibilityLabel,
 		PrimaryStatusTone:                        "success",
 		ExistingWindowsAppVerified:               true,
 		RealWindowsAppRunVerified:                bundle.RealWindowsAppRunVerified,
@@ -174,7 +182,7 @@ func PreviewExternalWinAppApplicationDetail(request ExternalWinAppApplicationDet
 		HostNetworkingRequired:                        false,
 		DockerSocketMounted:                           false,
 		BroadHostMountRequired:                        false,
-		DesktopSafeSummary:                            "This imported Windows app has verified Runtime-owned real GUI evidence and can be shown in KDE as a reviewed compatibility application without exposing host paths or backend commands.",
+		DesktopSafeSummary:                            desktopSafeSummary,
 	}
 	if !detail.SafeForKDE || !detail.SafeForAIDiagnostics || !detail.RuntimeOwned || !detail.GoRuntimeBacked || detail.KDEPolicyOwner {
 		return ExternalWinAppApplicationDetail{}, errors.New("external Windows app application detail failed Runtime/KDE safety invariants")

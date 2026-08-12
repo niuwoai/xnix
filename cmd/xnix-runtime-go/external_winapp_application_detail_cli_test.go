@@ -209,6 +209,8 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesQ4StagedAcceptance
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
 	if payload["source"] != "external-winapp-compatibility-evidence-bundle+q4-staged-external-winapp-acceptance" ||
+		payload["compatibility_state"] != "runtime-accepted-real-app-run" ||
+		payload["compatibility_label"] != "Runtime accepted real app run" ||
 		payload["q4_staged_external_winapp_acceptance_consumed"] != true ||
 		payload["q4_staged_external_winapp_acceptance_ready"] != true ||
 		payload["q4_staged_external_winapp_acceptance_type"] != "staged-external-winapp-desktop-real-run-acceptance" ||
@@ -238,7 +240,9 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesQ4StagedAcceptance
 		t.Fatalf("unexpected KDE external app detail cards: %#v", detailCards)
 	}
 	detailCard := detailCards[0].(map[string]any)
-	if detailCard["q4_staged_external_winapp_acceptance_consumed"] != true ||
+	if detailCard["compatibility_state"] != "runtime-accepted-real-app-run" ||
+		detailCard["compatibility_label"] != "Runtime accepted real app run" ||
+		detailCard["q4_staged_external_winapp_acceptance_consumed"] != true ||
 		detailCard["q4_staged_external_winapp_acceptance_ready"] != true ||
 		detailCard["go_owned_staged_external_winapp_acceptance_verified"] != true ||
 		detailCard["evidence_signal_count"] != float64(5) ||
@@ -246,6 +250,15 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesQ4StagedAcceptance
 		detailCard["raw_paths_exposed"] != false ||
 		detailCard["host_root_modified"] != false {
 		t.Fatalf("unexpected KDE acceptance-backed external app detail card: %#v", detailCard)
+	}
+	header := kdePage["header"].(map[string]any)
+	applicationSummary := kdePage["application_summary"].(map[string]any)
+	if header["badge"] != "Runtime accepted real app run" ||
+		header["badge_tone"] != "success" ||
+		applicationSummary["compatibility_state"] != "runtime-accepted-real-app-run" ||
+		applicationSummary["compatibility_label"] != "Runtime accepted real app run" ||
+		applicationSummary["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE acceptance-backed top-level state: header=%#v summary=%#v", header, applicationSummary)
 	}
 	for _, rendered := range []string{output.String(), kdePageOutput.String()} {
 		if strings.Contains(rendered, acceptancePath) ||
