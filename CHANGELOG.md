@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc239] - 2026-08-13
+
+### Added
+
+- Added the Go Runtime `external-winapp-application-detail-preview` command to turn an external Windows app compatibility evidence bundle into a KDE-safe app detail read model.
+- Added CLI coverage for the external app detail read model, including verified real app run signals, review cards, Runtime-owned actions, and redaction checks.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc239`.
+
 ## [0.2.640-rc238] - 2026-08-13
 
 ### Changed

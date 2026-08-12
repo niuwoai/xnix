@@ -135,6 +135,8 @@ func run(args []string, stdout io.Writer) error {
 		return runExternalWinAppImportAndRun(args[1:], stdout)
 	case "external-winapp-compatibility-evidence-bundle-preview":
 		return runExternalWinAppCompatibilityEvidenceBundlePreview(args[1:], stdout)
+	case "external-winapp-application-detail-preview":
+		return runExternalWinAppApplicationDetailPreview(args[1:], stdout)
 	case "windows-external-app-run":
 		return runExternalWinAppRun(args[1:], stdout)
 	case "execution-ledger-record":
