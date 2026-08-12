@@ -286,6 +286,7 @@ REQUIRED_FILES = %w[
   scripts/q4_messagebox_smoke.rb
   scripts/q4_external_winapp_run.rb
   scripts/q4_putty_external_winapp_smoke.rb
+  scripts/q4_notepadpp_portable_winapp_smoke.rb
   scripts/q4_dbus_controlled_launch_owner_fixture_smoke.rb
   scripts/q4_runtime_run_plan_execution_smoke.rb
   scripts/q4_full_smoke.rb
@@ -294,6 +295,7 @@ REQUIRED_FILES = %w[
   test/test_q4_messagebox_smoke_script.rb
   test/test_q4_external_winapp_run_script.rb
   test/test_q4_putty_external_winapp_smoke_script.rb
+  test/test_q4_notepadpp_portable_winapp_smoke_script.rb
   test/test_q4_dbus_controlled_launch_owner_fixture_smoke_script.rb
   test/test_q4_runtime_run_plan_execution_smoke_script.rb
   test/test_q4_full_smoke_script.rb
@@ -1092,6 +1094,13 @@ q4_putty_external_winapp_smoke = read_project_file("scripts/q4_putty_external_wi
                                 read_project_file("test/test_q4_putty_external_winapp_smoke_script.rb")
 %w[xnix.scripts.q4_putty_external_winapp_smoke.v1 q4-putty-external-winapp-smoke https://the.earth.li/~sgtatham/putty/0.84/w32/putty.exe d5a83cd1233f6da38fa82b14d970dbb2c2705769b5ebabb464918b9b57180bc4 curl --retry-all-errors --continue-at sha256sum putty.exe scripts/q4_staged_desktop_external_winapp_smoke.rb org.xnix.external.putty PuTTY real_third_party_windows_app single_file_windows_app putty_download_planned putty_downloaded putty_sha256_verified external_file_bridge_ready windows_process_file_argument_window_observed accepted_application_detail_state kde_accepted_page_state runtime-accepted-real-app-run host_download_avoided host_compilation_avoided q4_download_required q4_compile_required full_smoke_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
   assert(q4_putty_external_winapp_smoke.include?(token.gsub("\\ ", " ")), "q4 PuTTY external Windows app smoke script must include #{token}")
+end
+q4_notepadpp_portable_winapp_smoke = read_project_file("scripts/q4_notepadpp_portable_winapp_smoke.rb") +
+                                    read_project_file("test/test_q4_notepadpp_portable_winapp_smoke_script.rb") +
+                                    read_project_file("scripts/q4_staged_desktop_external_winapp_smoke.rb") +
+                                    read_project_file("scripts/staged_desktop_external_winapp_smoke.rb")
+%w[xnix.scripts.q4_notepadpp_portable_winapp_smoke.v1 q4-notepadpp-portable-winapp-smoke https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.9.7/npp.8.9.7.portable.zip ce0690fac91c1fc5d61dcdf5b09733ff0d143a61d0a27c6cb9f4003ea92765bb curl --retry-all-errors --continue-at sha256sum unzip python3 notepad++.exe scripts/q4_staged_desktop_external_winapp_smoke.rb --remote-bundle-root --bundle-root --executable-relative-path external-winapp-bundle-import-record external-winapp-import-stage-and-launch org.xnix.external.notepadplusplus Notepad++\ Portable portable_directory_external_app portable_directory_bundle_import_required portable-directory bundle_manifest_sha256 application_workspace_copied application_workspace_mode /app/ real_third_party_windows_app single_file_windows_app notepadpp_download_planned notepadpp_downloaded notepadpp_sha256_verified notepadpp_extracted external_file_bridge_ready windows_process_file_argument_window_observed accepted_application_detail_state kde_accepted_page_state runtime-accepted-real-app-run host_download_avoided host_compilation_avoided q4_download_required q4_extract_required q4_compile_required full_smoke_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
+  assert(q4_notepadpp_portable_winapp_smoke.include?(token.gsub("\\ ", " ")), "q4 Notepad++ Portable Windows app smoke script must include #{token}")
 end
 q4_dbus_controlled_launch_owner_fixture_smoke = read_project_file("scripts/q4_dbus_controlled_launch_owner_fixture_smoke.rb") +
                                                 read_project_file("test/test_q4_dbus_controlled_launch_owner_fixture_smoke_script.rb")

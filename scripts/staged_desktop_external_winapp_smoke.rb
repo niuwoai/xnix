@@ -52,6 +52,8 @@ options = {
   runtime_packet_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-real-gui-packet.json").to_s,
   kde_page_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-kde-page.json").to_s,
   executable: "",
+  bundle_root: "",
+  executable_relative_path: "",
   app_id: "",
   display_name: "",
   window_match: "",
@@ -75,6 +77,8 @@ OptionParser.new do |parser|
   parser.on("--runtime-packet-output PATH", "Go Runtime real Windows GUI packet output path") { |value| options[:runtime_packet_output] = value }
   parser.on("--kde-page-output PATH", "KDE center page JSON output path") { |value| options[:kde_page_output] = value }
   parser.on("--executable PATH", "Optional existing Windows GUI executable; defaults to Wine Notepad from the local image") { |value| options[:executable] = value }
+  parser.on("--bundle-root PATH", "Optional portable Windows app directory to import for the external fixture") { |value| options[:bundle_root] = value }
+  parser.on("--executable-relative-path PATH", "Portable bundle relative path to the Windows .exe") { |value| options[:executable_relative_path] = value }
   parser.on("--app-id ID", "Application id for an operator-supplied external executable") { |value| options[:app_id] = value }
   parser.on("--display-name NAME", "Display name for an operator-supplied external executable") { |value| options[:display_name] = value }
   parser.on("--window-match TEXT", "Optional observed-window text required for the external executable") { |value| options[:window_match] = value }
@@ -326,23 +330,35 @@ sample_document_uri = "file://#{sample_document_path}"
 launcher_bin = build_root.join("xnix-compat-launch")
 staged_launcher = stage_root.join("usr/local/bin/xnix-compat-launch")
 fixture = options.fetch(:fixture).to_s.strip
+bundle_root_option = options.fetch(:bundle_root).to_s.strip
+executable_relative_path = options.fetch(:executable_relative_path).to_s.strip
+bundle_mode = !bundle_root_option.empty? || !executable_relative_path.empty?
 app_id = DEFAULT_APP_ID
 app_name = DEFAULT_APP_NAME
 window_match = ""
 case fixture
 when "notepad"
+  abort "notepad fixture does not accept --bundle-root" if bundle_mode
+
   executable_path = options.fetch(:executable).to_s.strip.empty? ? run_root.join("notepad.exe") : absolute_path(options.fetch(:executable))
 when "notepad-file-argument"
+  abort "notepad-file-argument fixture does not accept --bundle-root" if bundle_mode
+
   app_id = NOTEPAD_FILE_ARGUMENT_APP_ID
   app_name = NOTEPAD_FILE_ARGUMENT_APP_NAME
   window_match = NOTEPAD_FILE_ARGUMENT_WINDOW_MATCH
   executable_path = options.fetch(:executable).to_s.strip.empty? ? run_root.join("notepad.exe") : absolute_path(options.fetch(:executable))
 when "external"
-  abort "external fixture requires --executable" if options.fetch(:executable).to_s.strip.empty?
+  executable_supplied = !options.fetch(:executable).to_s.strip.empty?
+  abort "external fixture accepts either --executable or --bundle-root with --executable-relative-path, not both" if executable_supplied && bundle_mode
+  abort "external fixture requires --executable or --bundle-root with --executable-relative-path" unless executable_supplied || bundle_mode
+  abort "external fixture portable bundle import requires --bundle-root" if bundle_mode && bundle_root_option.empty?
+  abort "external fixture portable bundle import requires --executable-relative-path" if bundle_mode && executable_relative_path.empty?
 
   app_id = DEFAULT_OPERATOR_APP_ID
   app_name = DEFAULT_OPERATOR_APP_NAME
-  executable_path = absolute_path(options.fetch(:executable))
+  bundle_root_path = absolute_path(bundle_root_option) if bundle_mode
+  executable_path = bundle_mode ? bundle_root_path.join(executable_relative_path).cleanpath : absolute_path(options.fetch(:executable))
 else
   abort "unsupported fixture #{fixture.inspect}; expected notepad, notepad-file-argument, or external"
 end
@@ -441,21 +457,42 @@ if options.fetch(:executable).to_s.strip.empty? && %w[notepad notepad-file-argum
 end
 
 assert(executable_path.file?, "external Windows executable must exist")
+if bundle_mode
+  assert(bundle_root_path.directory?, "external Windows portable bundle root must exist")
+  assert(executable_path.to_s.start_with?("#{bundle_root_path}/"), "external Windows portable executable must stay inside the bundle root")
+end
 
-import_record, import_stdout = run_json(
-  go_env,
+import_command = [
   *runtime_command,
-  "external-winapp-import-record",
-  "--state-root", state_root.to_s,
-  "--executable", executable_path.to_s,
+  bundle_mode ? "external-winapp-bundle-import-record" : "external-winapp-import-record",
+  "--state-root", state_root.to_s
+]
+if bundle_mode
+  import_command.concat([
+    "--bundle-root", bundle_root_path.to_s,
+    "--executable-relative-path", executable_relative_path
+  ])
+else
+  import_command.concat(["--executable", executable_path.to_s])
+end
+import_command.concat([
   "--app-id", app_id,
   "--display-name", app_name
-)
+])
+import_record, import_stdout = run_json(go_env, *import_command)
 assert(import_record.fetch("import_recorded") == true, "external app import record must be persisted")
 assert(import_record.fetch("artifact_copied") == true, "external app import must copy the artifact")
 assert(import_record.fetch("windows_executable_validated") == true, "external app import must validate an MZ executable")
+if bundle_mode
+  assert(import_record.fetch("request_type") == "external-winapp-bundle-import-record", "external portable bundle import must use the bundle import record request type")
+  assert(import_record.fetch("artifact_kind") == "portable-directory", "external portable bundle import must record portable-directory artifact kind")
+  assert(import_record.fetch("bundle_manifest_sha256").to_s.match?(/\A[0-9a-f]{64}\z/), "external portable bundle import must record the bundle manifest digest")
+  assert(import_record.fetch("executable_relative_path") == executable_relative_path, "external portable bundle import must preserve the executable relative path")
+else
+  assert(import_record.fetch("request_type") == "external-winapp-import-record", "external single executable import must use the executable import record request type")
+end
 assert(import_record.fetch("host_root_modified") == false, "external app import must not mutate the host root")
-assert_no_forbidden(import_stdout, [state_root.to_s, executable_path.to_s], "external import output")
+assert_no_forbidden(import_stdout, [state_root.to_s, executable_path.to_s, bundle_mode ? bundle_root_path.to_s : ""], "external import output")
 
 import_record_path = state_root.join(import_record.fetch("record_relative_path"))
 stage, stage_stdout = run_json(
@@ -480,7 +517,7 @@ assert(stage.fetch("desktop_exec_uses_state_root") == false, "desktop activation
 assert(stage.fetch("launch_enabled") == false, "desktop activation stage must keep launch gated")
 assert(stage.fetch("execution_started") == false, "desktop activation stage must not start execution")
 assert(stage.fetch("host_root_modified") == false, "desktop activation stage must not mutate the host root")
-assert_no_forbidden(stage_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s], "desktop activation stage output")
+assert_no_forbidden(stage_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, bundle_mode ? bundle_root_path.to_s : ""], "desktop activation stage output")
 
 activation_status, status_stdout = run_json(
   go_env,
@@ -499,7 +536,7 @@ assert(receipt_evidence.fetch("desktop_exec_uses_raw_import_record") == false, "
 assert(receipt_evidence.fetch("desktop_exec_uses_state_root") == false, "activation receipt evidence must not persist state-root Exec routing")
 assert(receipt_evidence.fetch("safe_for_kde") == true, "activation receipt evidence must stay safe for KDE consumption")
 assert(activation_status_output.file?, "activation status file must be written")
-assert_no_forbidden(status_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s], "desktop activation status output")
+assert_no_forbidden(status_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, bundle_mode ? bundle_root_path.to_s : ""], "desktop activation status output")
 
 desktop_artifact = stage.fetch("written_files").find { |entry| entry.fetch("id") == "desktop-entry" }
 desktop_path = stage_root.join(desktop_artifact.fetch("relative_path"))
@@ -551,6 +588,16 @@ assert(payload.fetch("external_file_bridge_ready") == true, "launcher smoke must
 assert(payload.fetch("external_file_bridge_mount_enabled") == false, "launcher smoke must keep file bridge mounts disabled before policy")
 assert(payload.fetch("raw_file_uri_arguments_exposed") == false, "launcher smoke must not expose raw file URI arguments")
 assert(payload.fetch("imported_artifact_digest_verified") == true, "launcher smoke must verify the imported artifact digest")
+if bundle_mode
+  runtime_payload = payload.fetch("runtime_payload")
+  assert(payload.fetch("artifact_kind") == "portable-directory", "launcher smoke must preserve portable-directory artifact kind")
+  assert(payload.fetch("executable_relative_path") == executable_relative_path, "launcher smoke must preserve the portable executable relative path")
+  assert(payload.fetch("application_workspace_copied") == true, "launcher smoke must copy the portable workspace into the container")
+  assert(payload.fetch("application_workspace_mode") == "portable-directory", "launcher smoke must record portable-directory workspace mode")
+  assert(runtime_payload.fetch("application_name") == "/app/#{executable_relative_path}", "launcher smoke must launch the portable executable from /app")
+  assert(runtime_payload.fetch("application_workspace_copied") == true, "runtime payload must copy the portable workspace")
+  assert(runtime_payload.fetch("application_workspace_mode") == "portable-directory", "runtime payload must record portable-directory workspace mode")
+end
 assert(payload.fetch("x_window_observed") == true, "launcher smoke must observe a Windows GUI X window")
 assert(payload.fetch("window_observed") == true, "launcher smoke must expose generic observed-window evidence")
 if !window_match.empty?
@@ -564,7 +611,7 @@ assert(payload.fetch("docker_socket_mounted") == false, "launcher smoke must not
 assert(payload.fetch("host_networking_required") == false, "launcher smoke must not require host networking")
 assert(payload.fetch("broad_host_mount_required") == false, "launcher smoke must not require broad host mounts")
 assert(payload.fetch("host_root_modified") == false, "launcher smoke must not mutate the host root")
-assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, sample_document_path.to_s, sample_document_uri, docker_bin], "staged launcher output")
+assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, bundle_mode ? bundle_root_path.to_s : "", sample_document_path.to_s, sample_document_uri, docker_bin], "staged launcher output")
 
 assert(launch_packet_output.file?, "staged launcher must write the desktop launch packet sidecar")
 launch_packet_text = launch_packet_output.read
@@ -613,13 +660,22 @@ assert(launch_packet.fetch("raw_executable_path_exposed") == false, "desktop lau
 assert(launch_packet.fetch("host_root_modified") == false, "desktop launch packet must not mutate the host root")
 assert(launch_packet.fetch("docker_socket_mounted") == false, "desktop launch packet must not mount the Docker socket")
 assert(launch_packet.fetch("broad_host_mount_required") == false, "desktop launch packet must not require broad host mounts")
-assert_no_forbidden(launch_packet_text, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, delegated_output.to_s, executable_path.to_s, sample_document_path.to_s, sample_document_uri, docker_bin, "notepad.exe", "wine ", "docker run", "/var/run/docker.sock"], "desktop launch packet output")
+assert_no_forbidden(launch_packet_text, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, delegated_output.to_s, executable_path.to_s, bundle_mode ? bundle_root_path.to_s : "", sample_document_path.to_s, sample_document_uri, docker_bin, "notepad.exe", "wine ", "docker run", "/var/run/docker.sock"], "desktop launch packet output")
 
 one_shot_command = [
   *runtime_command,
   "external-winapp-import-stage-and-launch",
   "--state-root", one_shot_state_root.to_s,
-  "--executable", executable_path.to_s,
+]
+if bundle_mode
+  one_shot_command.concat([
+    "--bundle-root", bundle_root_path.to_s,
+    "--executable-relative-path", executable_relative_path
+  ])
+else
+  one_shot_command.concat(["--executable", executable_path.to_s])
+end
+one_shot_command.concat([
   "--app-id", app_id,
   "--display-name", app_name,
   "--mode", "development",
@@ -629,7 +685,7 @@ one_shot_command = [
   "--image", options.fetch(:image),
   "--docker", docker_bin,
   "--timeout", options.fetch(:timeout)
-]
+])
 one_shot_command.concat(["--window-match", window_match]) unless window_match.empty?
 one_shot_command << sample_document_uri
 one_shot, one_shot_stdout = run_json(go_env, *one_shot_command)
@@ -655,6 +711,11 @@ assert(one_shot.fetch("external_desktop_argument_count") == 1, "one-shot Runtime
 assert(one_shot.fetch("external_file_uri_arguments_accepted") == true, "one-shot Runtime command must accept KDE file URI arguments")
 assert(one_shot.fetch("external_file_bridge_ready") == true, "one-shot Runtime command must prove copied, translated, and passed file bridging")
 assert(one_shot.fetch("imported_artifact_digest_verified") == true, "one-shot Runtime command must verify the imported artifact digest")
+if bundle_mode
+  assert(one_shot.fetch("launcher_result").fetch("artifact_kind") == "portable-directory", "one-shot Runtime command must preserve portable-directory artifact kind")
+  assert(one_shot.fetch("launcher_result").fetch("application_workspace_copied") == true, "one-shot Runtime command must copy the portable workspace")
+  assert(one_shot.fetch("launcher_result").fetch("application_workspace_mode") == "portable-directory", "one-shot Runtime command must preserve portable-directory workspace mode")
+end
 assert(one_shot.fetch("runtime_launch_executed") == true, "one-shot Runtime command must execute the Runtime launch path")
 assert(one_shot.fetch("window_observed") == true, "one-shot Runtime command must observe a Windows GUI window")
 assert(one_shot.fetch("x_window_observed") == true, "one-shot Runtime command must preserve X window evidence")
@@ -671,7 +732,7 @@ assert(one_shot.fetch("raw_launcher_path_exposed") == false, "one-shot Runtime c
 assert(one_shot.fetch("raw_launcher_output_exposed") == false, "one-shot Runtime command must not expose raw launcher output")
 assert(one_shot_output.file?, "one-shot Runtime command output file must be written")
 assert(one_shot_launch_packet_output.file?, "one-shot Runtime command desktop launch packet must be written")
-assert_no_forbidden(one_shot_stdout, [PROJECT_ROOT.to_s, one_shot_stage_root.to_s, one_shot_state_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, sample_document_path.to_s, sample_document_uri, docker_bin, "docker run", "/var/run/docker.sock"], "one-shot Runtime command output")
+assert_no_forbidden(one_shot_stdout, [PROJECT_ROOT.to_s, one_shot_stage_root.to_s, one_shot_state_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, bundle_mode ? bundle_root_path.to_s : "", sample_document_path.to_s, sample_document_uri, docker_bin, "docker run", "/var/run/docker.sock"], "one-shot Runtime command output")
 
 runtime_packet, = run_json(
   go_env,
@@ -717,7 +778,7 @@ assert(cards.first.fetch("backend_launch_enabled") == false, "KDE GUI evidence c
 assert(cards.first.fetch("backend_details_exposed") == false, "KDE GUI evidence card must not expose backend details")
 assert(cards.first.fetch("host_root_modified") == false, "KDE GUI evidence card must not mutate the host root")
 assert(kde_page_output.file?, "KDE page file must be written")
-assert_no_forbidden(kde_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s], "KDE page output")
+assert_no_forbidden(kde_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, bundle_mode ? bundle_root_path.to_s : ""], "KDE page output")
 
 packet = {
   "schema_version" => SCHEMA_VERSION,
@@ -726,6 +787,13 @@ packet = {
   "app_id" => app_id,
   "display_name" => app_name,
   "version" => VERSION,
+  "portable_directory_external_app" => bundle_mode,
+  "portable_directory_bundle_import_recorded" => bundle_mode && import_record.fetch("request_type") == "external-winapp-bundle-import-record",
+  "artifact_kind" => import_record.fetch("artifact_kind", ""),
+  "bundle_manifest_sha256_present" => bundle_mode && import_record.fetch("bundle_manifest_sha256", "").to_s.match?(/\A[0-9a-f]{64}\z/),
+  "executable_relative_path" => import_record.fetch("executable_relative_path", ""),
+  "application_workspace_copied" => payload.fetch("application_workspace_copied", false),
+  "application_workspace_mode" => payload.fetch("application_workspace_mode", ""),
   "desktop_exec_uses_external_app_handle" => stage.fetch("desktop_exec_uses_external_app_handle"),
   "external_app_desktop_handle_ready" => stage.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_external_app_desktop_handle_ready" => receipt_evidence.fetch("external_app_desktop_handle_ready"),

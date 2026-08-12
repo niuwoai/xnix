@@ -353,6 +353,8 @@ func runExternalWinAppImportStageAndLaunch(args []string, stdout io.Writer) erro
 	flags.SetOutput(io.Discard)
 	stateRoot := flags.String("state-root", "", "controlled Runtime state root for imported external Windows apps")
 	executablePath := flags.String("executable", "", "local Windows .exe file to import, stage, and launch")
+	bundleRoot := flags.String("bundle-root", "", "local portable Windows app directory to import, stage, and launch")
+	executableRelativePath := flags.String("executable-relative-path", "", "portable bundle relative path to the Windows .exe")
 	appID := flags.String("app-id", "", "application id for the imported external Windows app")
 	displayName := flags.String("display-name", "", "display name for the imported external Windows app")
 	appVersion := flags.String("app-version", "", "optional imported app version; defaults to the project version")
@@ -383,14 +385,35 @@ func runExternalWinAppImportStageAndLaunch(args []string, stdout io.Writer) erro
 	if err != nil {
 		return fmt.Errorf("parse timeout: %w", err)
 	}
-	record, err := appidentity.RecordExternalWinAppImport(appidentity.ExternalWinAppImportRequest{
-		Version:        version,
-		StateRoot:      *stateRoot,
-		ExecutablePath: *executablePath,
-		AppID:          *appID,
-		DisplayName:    *displayName,
-		AppVersion:     *appVersion,
-	})
+	executableSupplied := strings.TrimSpace(*executablePath) != ""
+	bundleSupplied := strings.TrimSpace(*bundleRoot) != "" || strings.TrimSpace(*executableRelativePath) != ""
+	if executableSupplied && bundleSupplied {
+		return errors.New("external-winapp-import-stage-and-launch accepts either --executable or --bundle-root with --executable-relative-path, not both")
+	}
+	if !executableSupplied && !bundleSupplied {
+		return errors.New("external-winapp-import-stage-and-launch requires --executable or --bundle-root with --executable-relative-path")
+	}
+	var record appidentity.ExternalWinAppImportRecord
+	if bundleSupplied {
+		record, err = appidentity.RecordExternalWinAppBundleImport(appidentity.ExternalWinAppBundleImportRequest{
+			Version:                version,
+			StateRoot:              *stateRoot,
+			BundleRoot:             *bundleRoot,
+			ExecutableRelativePath: *executableRelativePath,
+			AppID:                  *appID,
+			DisplayName:            *displayName,
+			AppVersion:             *appVersion,
+		})
+	} else {
+		record, err = appidentity.RecordExternalWinAppImport(appidentity.ExternalWinAppImportRequest{
+			Version:        version,
+			StateRoot:      *stateRoot,
+			ExecutablePath: *executablePath,
+			AppID:          *appID,
+			DisplayName:    *displayName,
+			AppVersion:     *appVersion,
+		})
+	}
 	if err != nil {
 		return err
 	}

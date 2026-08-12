@@ -4,6 +4,20 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc258] - 2026-08-13
+
+### Added
+
+- Added `scripts/q4_notepadpp_portable_winapp_smoke.rb` to download, verify, extract, and run the official Notepad++ 8.9.7 Portable Windows GUI app on q4.
+- Added q4 staged external smoke support for portable-directory inputs via `--remote-bundle-root` and `--executable-relative-path`.
+- Added `external-winapp-import-stage-and-launch` support for portable-directory imports so the one-shot Runtime path can import, stage, and launch bundled apps without changing the downstream evidence request type.
+- Added targeted script and Go CLI coverage for q4-only download/extraction, portable bundle import, workspace copying, and host download/compilation avoidance.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc258`.
+- Kept the Notepad++ real-app smoke q4-bound so the macOS host only performs source edits, lightweight checks, Git operations, and report fetching.
+
 ## [0.2.640-rc257] - 2026-08-13
 
 ### Added

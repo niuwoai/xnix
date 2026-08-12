@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc257
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc258
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc258 checkpoint adds an operator-facing q4 Notepad++ Portable smoke for real bundled Windows desktop apps. The new script downloads the official Notepad++ 8.9.7 Portable zip on q4, verifies the pinned SHA256, extracts the portable directory on q4, and delegates to the staged external Runtime/KDE path using `--remote-bundle-root` plus `--executable-relative-path notepad++.exe`. The smoke requires q4 download, extraction, compilation, and GUI execution while keeping the macOS host limited to source editing, lightweight checks, Git, and fetched reports.
 
 The v0.2.640-rc257 checkpoint moves portable-directory external Windows app support into the executable Runtime path. The new `external-winapp-bundle-import-record` command imports a validated portable app directory into the Runtime state root, records the selected executable relative path, bundle manifest digest, and sidecar counts, and lets `windows-external-app-run` copy the whole imported workspace into the restricted Wine/Xvfb container at `/app` before launching the selected `.exe`. This keeps single-file PuTTY-style imports compatible while unblocking real bundled apps that require sibling DLLs, plugins, localization files, or config files. Targeted Go validation ran on q4 and preserved closed network, Docker socket, broad host mount, host-root mutation, and raw path exposure gates.
 

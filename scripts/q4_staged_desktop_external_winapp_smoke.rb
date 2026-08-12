@@ -36,6 +36,8 @@ options = {
   remote_timeout_seconds: DEFAULT_REMOTE_TIMEOUT_SECONDS,
   fixture: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_FIXTURE", "notepad-file-argument"),
   remote_executable: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_REMOTE_EXECUTABLE", ""),
+  remote_bundle_root: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_REMOTE_BUNDLE_ROOT", ""),
+  executable_relative_path: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_EXECUTABLE_RELATIVE_PATH", ""),
   app_id: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_APP_ID", ""),
   display_name: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_DISPLAY_NAME", ""),
   window_match: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_WINDOW_MATCH", ""),
@@ -53,6 +55,8 @@ OptionParser.new do |parser|
   parser.on("--remote-run-root PATH", "Remote smoke run root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_run_root] = value }
   parser.on("--fixture NAME", "Delegated fixture, default: notepad-file-argument.") { |value| options[:fixture] = value }
   parser.on("--remote-executable PATH", "Optional Windows executable already staged on q4 under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_executable] = value }
+  parser.on("--remote-bundle-root PATH", "Optional portable Windows app directory already staged on q4 under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_bundle_root] = value }
+  parser.on("--executable-relative-path PATH", "Portable bundle relative path to the Windows .exe.") { |value| options[:executable_relative_path] = value }
   parser.on("--app-id ID", "Application id for an operator-supplied external executable.") { |value| options[:app_id] = value }
   parser.on("--display-name NAME", "Display name for an operator-supplied external executable.") { |value| options[:display_name] = value }
   parser.on("--window-match TEXT", "Optional observed-window text required for the external executable.") { |value| options[:window_match] = value }
@@ -204,6 +208,12 @@ remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(
 remote_run_root = ensure_remote_xnix_path!("remote run root", options.fetch(:remote_run_root))
 remote_executable = options.fetch(:remote_executable).to_s.strip
 remote_executable = ensure_remote_xnix_path!("remote executable", remote_executable) unless remote_executable.empty?
+remote_bundle_root = options.fetch(:remote_bundle_root).to_s.strip
+remote_bundle_root = ensure_remote_xnix_path!("remote bundle root", remote_bundle_root) unless remote_bundle_root.empty?
+executable_relative_path = options.fetch(:executable_relative_path).to_s.strip
+abort "use either --remote-executable or --remote-bundle-root, not both" if !remote_executable.empty? && !remote_bundle_root.empty?
+abort "--executable-relative-path requires --remote-bundle-root" if remote_bundle_root.empty? && !executable_relative_path.empty?
+abort "--remote-bundle-root requires --executable-relative-path" if !remote_bundle_root.empty? && executable_relative_path.empty?
 output_path = ensure_local_output_path!("output path", options.fetch(:output))
 markdown_output_path = ensure_local_output_path!("markdown output path", options.fetch(:markdown_output))
 artifact_output_root = output_path.dirname.join("artifacts")
@@ -250,6 +260,12 @@ delegated_command = [
   "--timeout", options.fetch(:timeout)
 ]
 delegated_command.concat(["--executable", remote_executable]) unless remote_executable.empty?
+unless remote_bundle_root.empty?
+  delegated_command.concat([
+    "--bundle-root", remote_bundle_root,
+    "--executable-relative-path", executable_relative_path
+  ])
+end
 delegated_command.concat(["--app-id", options.fetch(:app_id).to_s.strip]) unless options.fetch(:app_id).to_s.strip.empty?
 delegated_command.concat(["--display-name", options.fetch(:display_name).to_s.strip]) unless options.fetch(:display_name).to_s.strip.empty?
 delegated_command.concat(["--window-match", options.fetch(:window_match).to_s.strip]) unless options.fetch(:window_match).to_s.strip.empty?
@@ -272,6 +288,10 @@ plan = {
   "fixture" => options.fetch(:fixture),
   "remote_executable_supplied" => !remote_executable.empty?,
   "remote_executable_path_exposed_only_for_operator" => !remote_executable.empty?,
+  "remote_bundle_root_supplied" => !remote_bundle_root.empty?,
+  "remote_bundle_root_path_exposed_only_for_operator" => !remote_bundle_root.empty?,
+  "executable_relative_path_supplied" => !executable_relative_path.empty?,
+  "portable_directory_external_app" => !remote_bundle_root.empty?,
   "operator_app_id_supplied" => !options.fetch(:app_id).to_s.strip.empty?,
   "operator_display_name_supplied" => !options.fetch(:display_name).to_s.strip.empty?,
   "operator_window_match_supplied" => !options.fetch(:window_match).to_s.strip.empty?,
@@ -498,6 +518,13 @@ result = plan.merge(
   "delegated_status" => delegated.fetch("status"),
   "app_id" => delegated.fetch("app_id"),
   "display_name" => delegated.fetch("display_name"),
+  "portable_directory_external_app" => delegated.fetch("portable_directory_external_app", false),
+  "portable_directory_bundle_import_recorded" => delegated.fetch("portable_directory_bundle_import_recorded", false),
+  "artifact_kind" => delegated.fetch("artifact_kind", ""),
+  "bundle_manifest_sha256_present" => delegated.fetch("bundle_manifest_sha256_present", false),
+  "executable_relative_path" => delegated.fetch("executable_relative_path", ""),
+  "application_workspace_copied" => delegated.fetch("application_workspace_copied", false),
+  "application_workspace_mode" => delegated.fetch("application_workspace_mode", ""),
   "desktop_exec_uses_external_app_handle" => delegated.fetch("desktop_exec_uses_external_app_handle"),
   "external_app_desktop_handle_ready" => delegated.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_external_app_desktop_handle_ready" => delegated.fetch("activation_receipt_external_app_desktop_handle_ready"),
