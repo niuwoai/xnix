@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc235] - 2026-08-13
+
+### Changed
+
+- Extended the Go Runtime real Windows app GUI evidence packet to consume `external-winapp-import-stage-and-launch` one-shot records directly.
+- Added CLI coverage proving one-shot external app launch evidence can become a desktop-safe evidence packet and KDE external app page card without exposing host paths or backend commands.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc235`.
+
 ## [0.2.640-rc234] - 2026-08-13
 
 ### Changed

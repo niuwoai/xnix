@@ -447,6 +447,82 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesExternalAppRunRecord(t
 	}
 }
 
+func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesExternalAppOneShotLaunchRecord(t *testing.T) {
+	tempDir := t.TempDir()
+	reportPath := filepath.Join(tempDir, "external-notepad-one-shot.json")
+	outputPath := filepath.Join(tempDir, "packet", "external-notepad-one-shot-packet.json")
+	if err := os.WriteFile(reportPath, []byte(rawExternalWinAppOneShotLaunchPayloadCLIFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile report returned error: %v", err)
+	}
+	var output bytes.Buffer
+	if err := run([]string{
+		"real-winapp-gui-evidence-packet-preview",
+		"--gui-smoke-report", reportPath,
+		"--output", outputPath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.real_winapp_gui_evidence_packet.v1" ||
+		payload["request_type"] != "real-winapp-gui-evidence-packet-preview" ||
+		payload["app_id"] != "org.xnix.external.notepad-file" ||
+		payload["display_name"] != "External Notepad File" ||
+		payload["external_app_run_record_consumed"] != true ||
+		payload["external_app_handle_consumed"] != true ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["imported_artifact_digest_verified"] != true ||
+		payload["known_app_gui_evidence_verified_count"] != float64(1) ||
+		payload["container_runtime_used"] != true ||
+		payload["container_network_mode"] != "none" ||
+		payload["container_host_mount_count"] != float64(0) ||
+		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["docker_socket_mounted"] != false {
+		t.Fatalf("unexpected one-shot external app real GUI packet: %#v", payload)
+	}
+	var externalPageOutput bytes.Buffer
+	if err := run([]string{"kde-center-page-preview", "--external-app-evidence-file", outputPath, "--decision", "approved"}, &externalPageOutput); err != nil {
+		t.Fatalf("external app KDE page returned error: %v", err)
+	}
+	var externalPage map[string]any
+	if err := json.Unmarshal(externalPageOutput.Bytes(), &externalPage); err != nil {
+		t.Fatalf("Unmarshal external app KDE output returned error: %v", err)
+	}
+	cards := externalPage["known_app_gui_evidence_cards"].([]any)
+	if len(cards) != 1 {
+		t.Fatalf("unexpected external app KDE cards: %#v", cards)
+	}
+	card := cards[0].(map[string]any)
+	if card["external_app_run_record_consumed"] != true ||
+		card["external_app_handle_consumed"] != true ||
+		card["external_app_import_record_consumed"] != true ||
+		card["imported_artifact_digest_verified"] != true ||
+		card["x_window_observed"] != true ||
+		card["window_observed"] != true ||
+		card["desktop_launch_enabled"] != false ||
+		card["backend_launch_enabled"] != false ||
+		card["host_root_modified"] != false {
+		t.Fatalf("unexpected one-shot external app KDE card: %#v", card)
+	}
+	if strings.Contains(output.String(), reportPath) ||
+		strings.Contains(output.String(), outputPath) ||
+		strings.Contains(externalPageOutput.String(), reportPath) ||
+		strings.Contains(externalPageOutput.String(), outputPath) ||
+		strings.Contains(output.String(), "docker run") ||
+		strings.Contains(externalPageOutput.String(), "docker run") ||
+		strings.Contains(output.String(), "/var/run/docker.sock") ||
+		strings.Contains(externalPageOutput.String(), "/var/run/docker.sock") {
+		t.Fatalf("one-shot external app packet exposed unsafe details: packet=%s page=%s", output.String(), externalPageOutput.String())
+	}
+}
+
 func rawContainerXGUIRuntimePayloadCLIFixture() string {
 	return `{
   "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",
@@ -608,5 +684,51 @@ func rawExternalWinAppRunPayloadCLIFixture() string {
   "docker_socket_mounted": false,
   "broad_host_mount_required": false,
   "desktop_safe_summary": "External Notepad File was run by the Runtime from a digest-verified imported Windows app artifact in an isolated container GUI session."
+}`
+}
+
+func rawExternalWinAppOneShotLaunchPayloadCLIFixture() string {
+	run := rawExternalWinAppRunPayloadCLIFixture()
+	return `{
+  "schema_version": "xnix.runtime.external_winapp_import_stage_launch.v1",
+  "request_type": "external-winapp-import-stage-and-launch",
+  "status": "passed",
+  "application_id": "org.xnix.external.notepad-file",
+  "display_name": "External Notepad File",
+  "external_app_handle": "org.xnix.external.notepad-file",
+  "import_recorded": true,
+  "desktop_activation_staged": true,
+  "staged_launcher_invoked": true,
+  "staged_launcher_from_activation_root": true,
+  "managed_launcher_executable_staged": true,
+  "desktop_exec_uses_external_app_handle": true,
+  "external_app_desktop_handle_ready": true,
+  "desktop_launch_packet_requested": true,
+  "desktop_launch_packet_written": true,
+  "launcher_request_type": "windows-external-app-run",
+  "launcher_status": "passed",
+  "external_app_import_record_consumed": true,
+  "external_app_handle_consumed": true,
+  "external_file_bridge_ready": true,
+  "imported_artifact_digest_verified": true,
+  "runtime_launch_executed": true,
+  "window_observed": true,
+  "x_window_observed": true,
+  "runtime_owned": true,
+  "go_runtime_backed": true,
+  "kde_policy_owner": false,
+  "launch_enabled": false,
+  "backend_launch_enabled": false,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "raw_import_record_path_exposed": false,
+  "raw_state_root_path_exposed": false,
+  "raw_executable_path_exposed": false,
+  "raw_launcher_path_exposed": false,
+  "raw_launcher_output_exposed": false,
+  "launcher_result": ` + run + `
 }`
 }

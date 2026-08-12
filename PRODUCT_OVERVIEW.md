@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc234
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc235
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc235 checkpoint connects one-shot imported external app launch evidence to the desktop evidence surface. The real Windows app GUI evidence packet now unwraps `external-winapp-import-stage-and-launch` records, validates the nested Runtime launch result and safety flags, and feeds KDE external app page cards without exposing raw host paths, launcher output, or backend commands.
 
 The v0.2.640-rc234 checkpoint closes the q4 evidence loop around the one-shot imported external app command. The staged desktop external Windows app smoke now also runs `xnix-runtime-go external-winapp-import-stage-and-launch` on q4 against the real Wine/Xvfb Notepad file-open path, proving the one-shot Go Runtime product entrypoint in addition to the older split import/stage/launcher sequence.
 

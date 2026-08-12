@@ -174,6 +174,22 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		if err != nil {
 			return RealWinAppGUIEvidencePacket{}, fmt.Errorf("encode wrapped external Windows app run payload: %w", err)
 		}
+	} else if report.SchemaVersion == "xnix.runtime.external_winapp_import_stage_launch.v1" {
+		runContent, err := unwrapExternalWinAppImportStageLaunchPayload(content)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, err
+		}
+		payload, wrapped, err := wrapExternalWinAppRunPayload(runContent)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, err
+		}
+		rawRuntimePayload = true
+		runtimePayload = payload
+		report = wrapped
+		projectionContent, err = json.Marshal(wrapped)
+		if err != nil {
+			return RealWinAppGUIEvidencePacket{}, fmt.Errorf("encode wrapped one-shot external Windows app run payload: %w", err)
+		}
 	}
 	projectionRequest := GUISmokeEvidencePreviewRequest{
 		AppID:       request.AppID,
@@ -297,6 +313,83 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		BroadHostMountRequired:             projection.BroadHostMountRequired,
 		DesktopSafeSummary:                 projection.DesktopSafeSummary,
 	}, nil
+}
+
+type externalWinAppImportStageLaunchPayload struct {
+	SchemaVersion                    string          `json:"schema_version"`
+	RequestType                      string          `json:"request_type"`
+	Status                           string          `json:"status"`
+	ApplicationID                    string          `json:"application_id"`
+	ExternalAppHandle                string          `json:"external_app_handle"`
+	ImportRecorded                   bool            `json:"import_recorded"`
+	DesktopActivationStaged          bool            `json:"desktop_activation_staged"`
+	StagedLauncherInvoked            bool            `json:"staged_launcher_invoked"`
+	StagedLauncherFromActivationRoot bool            `json:"staged_launcher_from_activation_root"`
+	ManagedLauncherExecutableStaged  bool            `json:"managed_launcher_executable_staged"`
+	DesktopExecUsesExternalAppHandle bool            `json:"desktop_exec_uses_external_app_handle"`
+	ExternalAppDesktopHandleReady    bool            `json:"external_app_desktop_handle_ready"`
+	DesktopLaunchPacketWritten       bool            `json:"desktop_launch_packet_written"`
+	LauncherRequestType              string          `json:"launcher_request_type"`
+	LauncherStatus                   string          `json:"launcher_status"`
+	ExternalAppImportRecordConsumed  bool            `json:"external_app_import_record_consumed"`
+	ExternalAppHandleConsumed        bool            `json:"external_app_handle_consumed"`
+	ExternalFileBridgeReady          bool            `json:"external_file_bridge_ready"`
+	ImportedArtifactDigestVerified   bool            `json:"imported_artifact_digest_verified"`
+	RuntimeLaunchExecuted            bool            `json:"runtime_launch_executed"`
+	WindowObserved                   bool            `json:"window_observed"`
+	XWindowObserved                  bool            `json:"x_window_observed"`
+	RuntimeOwned                     bool            `json:"runtime_owned"`
+	GoRuntimeBacked                  bool            `json:"go_runtime_backed"`
+	KDEPolicyOwner                   bool            `json:"kde_policy_owner"`
+	LaunchEnabled                    bool            `json:"launch_enabled"`
+	BackendLaunchEnabled             bool            `json:"backend_launch_enabled"`
+	HostRootModified                 bool            `json:"host_root_modified"`
+	PrivilegedContainerRequired      bool            `json:"privileged_container_required"`
+	HostNetworkingRequired           bool            `json:"host_networking_required"`
+	DockerSocketMounted              bool            `json:"docker_socket_mounted"`
+	BroadHostMountRequired           bool            `json:"broad_host_mount_required"`
+	RawImportRecordPathExposed       bool            `json:"raw_import_record_path_exposed"`
+	RawStateRootPathExposed          bool            `json:"raw_state_root_path_exposed"`
+	RawExecutablePathExposed         bool            `json:"raw_executable_path_exposed"`
+	RawLauncherPathExposed           bool            `json:"raw_launcher_path_exposed"`
+	RawLauncherOutputExposed         bool            `json:"raw_launcher_output_exposed"`
+	LauncherResult                   json.RawMessage `json:"launcher_result"`
+}
+
+func unwrapExternalWinAppImportStageLaunchPayload(content []byte) ([]byte, error) {
+	var payload externalWinAppImportStageLaunchPayload
+	if err := json.Unmarshal(content, &payload); err != nil {
+		return nil, fmt.Errorf("parse one-shot external Windows app launch payload: %w", err)
+	}
+	switch {
+	case payload.SchemaVersion != "xnix.runtime.external_winapp_import_stage_launch.v1":
+		return nil, fmt.Errorf("one-shot external Windows app launch payload has unsupported schema %q", payload.SchemaVersion)
+	case payload.RequestType != "external-winapp-import-stage-and-launch":
+		return nil, errors.New("one-shot external Windows app launch payload has invalid request type")
+	case payload.Status != "passed" || payload.LauncherStatus != "passed" || payload.LauncherRequestType != ExternalWinAppRunRequestType:
+		return nil, errors.New("one-shot external Windows app launch payload requires a passed launcher result")
+	case strings.TrimSpace(payload.ApplicationID) == "" || strings.TrimSpace(payload.ExternalAppHandle) == "":
+		return nil, errors.New("one-shot external Windows app launch payload requires application and handle evidence")
+	case !payload.ImportRecorded || !payload.DesktopActivationStaged || !payload.StagedLauncherInvoked || !payload.StagedLauncherFromActivationRoot:
+		return nil, errors.New("one-shot external Windows app launch payload requires import, staging, and staged launcher evidence")
+	case !payload.ManagedLauncherExecutableStaged || !payload.DesktopExecUsesExternalAppHandle || !payload.ExternalAppDesktopHandleReady || !payload.DesktopLaunchPacketWritten:
+		return nil, errors.New("one-shot external Windows app launch payload requires safe desktop activation evidence")
+	case !payload.ExternalAppImportRecordConsumed || !payload.ExternalAppHandleConsumed || !payload.ExternalFileBridgeReady || !payload.ImportedArtifactDigestVerified:
+		return nil, errors.New("one-shot external Windows app launch payload requires imported app run evidence")
+	case !payload.RuntimeLaunchExecuted || !payload.WindowObserved || !payload.XWindowObserved:
+		return nil, errors.New("one-shot external Windows app launch payload requires observed Runtime launch evidence")
+	case !payload.RuntimeOwned || !payload.GoRuntimeBacked || payload.KDEPolicyOwner:
+		return nil, errors.New("one-shot external Windows app launch payload has invalid ownership flags")
+	case payload.LaunchEnabled || payload.BackendLaunchEnabled || payload.HostRootModified:
+		return nil, errors.New("one-shot external Windows app launch payload exposes unsafe launch or host mutation")
+	case payload.PrivilegedContainerRequired || payload.HostNetworkingRequired || payload.DockerSocketMounted || payload.BroadHostMountRequired:
+		return nil, errors.New("one-shot external Windows app launch payload requires unsafe container privileges")
+	case payload.RawImportRecordPathExposed || payload.RawStateRootPathExposed || payload.RawExecutablePathExposed || payload.RawLauncherPathExposed || payload.RawLauncherOutputExposed:
+		return nil, errors.New("one-shot external Windows app launch payload exposes unsafe paths or launcher output")
+	case len(payload.LauncherResult) == 0:
+		return nil, errors.New("one-shot external Windows app launch payload requires nested launcher result")
+	}
+	return payload.LauncherResult, nil
 }
 
 func wrapContainerXGUIRuntimePayload(content []byte) (containerXGUIRuntimePayload, guiSmokeReport, error) {
