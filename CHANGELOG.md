@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc243] - 2026-08-13
+
+### Changed
+
+- Added optional `--output` support to `kde-center-page-preview` so Runtime-owned KDE page JSON can be written without shell redirection.
+- Extended the q4 staged desktop external Windows app smoke to generate and fetch `kde-page-from-application-detail.json` after the Runtime application detail is produced.
+- Made the q4 staged desktop external Windows app smoke clean its validated remote run root before execution so repeated targeted runs remain idempotent.
+- Validated the targeted q4 external Windows app smoke with ten fetched artifacts, including the KDE page rendered from the Runtime application detail.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc243`.
+
 ## [0.2.640-rc242] - 2026-08-13
 
 ### Added

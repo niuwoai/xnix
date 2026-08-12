@@ -98,12 +98,21 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesCompatibilityBundl
 	}
 
 	var kdePageOutput bytes.Buffer
+	kdePageOutputPath := filepath.Join(tempDir, "kde", "external-winapp-page-from-detail.json")
 	if err := run([]string{
 		"kde-center-page-preview",
 		"--external-app-application-detail", outputPath,
 		"--decision", "approved",
+		"--output", kdePageOutputPath,
 	}, &kdePageOutput); err != nil {
 		t.Fatalf("kde-center-page-preview returned error: %v", err)
+	}
+	writtenKDEPage, err := os.ReadFile(kdePageOutputPath)
+	if err != nil {
+		t.Fatalf("ReadFile KDE page output returned error: %v", err)
+	}
+	if string(writtenKDEPage) != kdePageOutput.String() {
+		t.Fatalf("written KDE page must match stdout\nstdout=%s\nwritten=%s", kdePageOutput.String(), string(writtenKDEPage))
 	}
 	var kdePage map[string]any
 	if err := json.Unmarshal(kdePageOutput.Bytes(), &kdePage); err != nil {
@@ -151,6 +160,7 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesCompatibilityBundl
 		t.Fatalf("unexpected KDE external app detail card: %#v", detailCard)
 	}
 	if strings.Contains(kdePageOutput.String(), outputPath) ||
+		strings.Contains(kdePageOutput.String(), kdePageOutputPath) ||
 		strings.Contains(kdePageOutput.String(), bundlePath) ||
 		strings.Contains(kdePageOutput.String(), "docker run") ||
 		strings.Contains(kdePageOutput.String(), "/var/run/docker.sock") ||

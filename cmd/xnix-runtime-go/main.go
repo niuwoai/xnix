@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
@@ -1586,7 +1587,7 @@ func runKDEJourneyEvidencePreview(args []string, stdout io.Writer) error {
 }
 
 func runKDECenterPagePreview(args []string, stdout io.Writer) error {
-	recipe, provenance, decision, fileURIs, options, err := parseKDECenterPagePreviewSource(args)
+	recipe, provenance, decision, fileURIs, options, outputPath, err := parseKDECenterPagePreviewSource(args)
 	if err != nil {
 		return err
 	}
@@ -1595,9 +1596,25 @@ func runKDECenterPagePreview(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	encoder := json.NewEncoder(stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(preview)
+	content, err := json.MarshalIndent(preview, "", "  ")
+	if err != nil {
+		return err
+	}
+	content = append(content, '\n')
+	if _, err := stdout.Write(content); err != nil {
+		return err
+	}
+	if strings.TrimSpace(outputPath) == "" {
+		return nil
+	}
+	cleanOutput := filepath.Clean(outputPath)
+	if err := os.MkdirAll(filepath.Dir(cleanOutput), 0o700); err != nil {
+		return fmt.Errorf("prepare KDE center page output directory: %w", err)
+	}
+	if err := os.WriteFile(cleanOutput, content, 0o600); err != nil {
+		return fmt.Errorf("write KDE center page output: %w", err)
+	}
+	return nil
 }
 
 func runKDECenterPageSectionsPreview(args []string, stdout io.Writer) error {
@@ -2850,7 +2867,7 @@ func parseKDEJourneyEvidencePreviewSource(args []string) (appidentity.Recipe, ap
 	return recipe, provenance, *decision, flags.Args(), appidentity.KDEJourneyEvidenceOptions{RuntimeRoot: *runtimeRoot}, err
 }
 
-func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.KDECenterPageOptions, error) {
+func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.KDECenterPageOptions, string, error) {
 	flags := flag.NewFlagSet("kde-center-page-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	applicationID := flags.String("app", "", "application id to load from the recipe registry")
@@ -2861,6 +2878,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	externalAppEvidenceFile := flags.String("external-app-evidence-file", "", "real GUI evidence packet for a non-recipe external Windows application")
 	externalAppImportRecord := flags.String("external-app-import-record", "", "Runtime external Windows app import record")
 	externalAppApplicationDetail := flags.String("external-app-application-detail", "", "Runtime external Windows app application detail JSON")
+	outputPath := flags.String("output", "", "optional JSON output path for the KDE center page")
 	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
 	sessionRoot := flags.String("session-root", "", "read execution session status record evidence from this explicit root")
 	sessionRequestID := flags.String("session-request-id", "", "execution session request id to read from --session-root")
@@ -2903,7 +2921,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	knownAppSessionGatedReviewReceiptID := flags.String("known-app-session-gated-review-receipt-id", "", "opaque known Windows app session-gated review receipt id")
 	knownAppLaunchGateBlockedReason := flags.String("known-app-launch-gate-blocked-reason", "", "redacted known Windows app launch gate blocked reason")
 	if err := flags.Parse(args); err != nil {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", err
 	}
 	sourceCount := 0
 	if *recipePath != "" {
@@ -2922,22 +2940,22 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 		sourceCount++
 	}
 	if sourceCount != 1 {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview requires exactly one source: --recipe, --registry, --external-app-evidence-file, --external-app-import-record, or --external-app-application-detail")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", errors.New("kde-center-page-preview requires exactly one source: --recipe, --registry, --external-app-evidence-file, --external-app-import-record, or --external-app-application-detail")
 	}
 	if *registryPath != "" && *applicationID == "" {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview requires --app when --registry is used")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", errors.New("kde-center-page-preview requires --app when --registry is used")
 	}
 	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview --recipe cannot be combined with --app or --recipe-root")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", errors.New("kde-center-page-preview --recipe cannot be combined with --app or --recipe-root")
 	}
 	if *externalAppEvidenceFile != "" && (*applicationID != "" || *recipeRoot != "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview --external-app-evidence-file cannot be combined with --app or --recipe-root")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", errors.New("kde-center-page-preview --external-app-evidence-file cannot be combined with --app or --recipe-root")
 	}
 	if *externalAppImportRecord != "" && (*applicationID != "" || *recipeRoot != "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview --external-app-import-record cannot be combined with --app or --recipe-root")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", errors.New("kde-center-page-preview --external-app-import-record cannot be combined with --app or --recipe-root")
 	}
 	if *externalAppApplicationDetail != "" && (*applicationID != "" || *recipeRoot != "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview --external-app-application-detail cannot be combined with --app or --recipe-root")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", errors.New("kde-center-page-preview --external-app-application-detail cannot be combined with --app or --recipe-root")
 	}
 	fileURIs := flags.Args()
 
@@ -2945,18 +2963,18 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	if *readinessArtifactReceipt != "" {
 		loaded, err := loadArtifactStageReceipt(*readinessArtifactReceipt)
 		if err != nil {
-			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", err
 		}
 		receipt = &loaded
 	}
 	if *externalAppEvidenceFile != "" {
 		payload, err := os.ReadFile(*externalAppEvidenceFile)
 		if err != nil {
-			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, fmt.Errorf("read external app evidence file: %w", err)
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", fmt.Errorf("read external app evidence file: %w", err)
 		}
 		recipe, provenance, evidence, err := appidentity.ExternalAppRecipeFromRealWinAppGUIEvidencePacket(payload)
 		if err != nil {
-			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", err
 		}
 		return recipe, provenance, *decision, fileURIs, appidentity.KDECenterPageOptions{
 			ActivationRoot:                      *activationRoot,
@@ -2968,16 +2986,16 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 			ApplicationReadinessPortalOperation: *readinessPortalOperation,
 			ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
 			KnownAppSmokeEvidence:               []appidentity.KnownAppSmokeEvidenceSummary{evidence},
-		}, nil
+		}, *outputPath, nil
 	}
 	if *externalAppImportRecord != "" {
 		record, err := appidentity.LoadExternalWinAppImportRecord(*externalAppImportRecord)
 		if err != nil {
-			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", err
 		}
 		recipe, provenance, err := appidentity.ExternalAppRecipeFromImportRecord(record)
 		if err != nil {
-			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", err
 		}
 		return recipe, provenance, *decision, fileURIs, appidentity.KDECenterPageOptions{
 			ActivationRoot:                      *activationRoot,
@@ -2988,16 +3006,16 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 			ApplicationReadinessArtifactReceipt: receipt,
 			ApplicationReadinessPortalOperation: *readinessPortalOperation,
 			ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
-		}, nil
+		}, *outputPath, nil
 	}
 	if *externalAppApplicationDetail != "" {
 		detail, err := appidentity.LoadExternalWinAppApplicationDetail(*externalAppApplicationDetail)
 		if err != nil {
-			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", err
 		}
 		recipe, provenance, err := appidentity.ExternalAppRecipeFromApplicationDetail(detail)
 		if err != nil {
-			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", err
 		}
 		return recipe, provenance, *decision, fileURIs, appidentity.KDECenterPageOptions{
 			ActivationRoot:                      *activationRoot,
@@ -3009,26 +3027,26 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 			ApplicationReadinessPortalOperation: *readinessPortalOperation,
 			ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
 			ExternalWinAppApplicationDetail:     &detail,
-		}, nil
+		}, *outputPath, nil
 	}
 
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
 	if err != nil {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", err
 	}
 	knownAppSmokeEvidence := []appidentity.KnownAppSmokeEvidenceSummary(nil)
 	verifiedCatalog, err := loadKnownAppVerifiedCatalogForCenter("kde-center-page-preview", *knownAppVerifiedCatalog)
 	if err != nil {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", err
 	}
 	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter("kde-center-page-preview", *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppVerifiedCatalogRunAcceptance, *knownAppGUISmokeReport, *knownAppGUISmokeApp, *knownAppGUISmokeName, *knownAppGUISmokeVersion)
 	if err != nil {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", err
 	}
 	legacyKnownAppSmoke := *knownAppSmokeApp != "" || *knownAppSmokeStatus != ""
 	if len(projectedEvidence) > 0 {
 		if legacyKnownAppSmoke {
-			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview accepts either Runtime-projected known app evidence or legacy known app smoke flags, not both")
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, "", errors.New("kde-center-page-preview accepts either Runtime-projected known app evidence or legacy known app smoke flags, not both")
 		}
 		knownAppSmokeEvidence = projectedEvidence
 	} else if legacyKnownAppSmoke {
@@ -3070,7 +3088,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 		ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
 		KnownAppSmokeEvidence:               knownAppSmokeEvidence,
 		KnownAppVerifiedCatalog:             verifiedCatalog,
-	}, nil
+	}, *outputPath, nil
 }
 
 func parseKDECenterPageSectionsPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {

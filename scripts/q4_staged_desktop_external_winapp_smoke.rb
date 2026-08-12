@@ -174,6 +174,7 @@ remote_report = "#{remote_run_root}/q4-staged-desktop-external-winapp-smoke.json
 remote_markdown = "#{remote_run_root}/q4-staged-desktop-external-winapp-smoke.md"
 remote_compatibility_bundle = "#{remote_run_root}/compatibility-evidence-bundle.json"
 remote_application_detail = "#{remote_run_root}/external-winapp-application-detail.json"
+remote_kde_page_from_detail = "#{remote_run_root}/kde-page-from-application-detail.json"
 artifact_specs = [
   ["delegated_launcher_payload", "delegated_launcher_payload_path", "delegated-launcher-payload.json"],
   ["activation_status", "activation_status_path", "activation-status.json"],
@@ -183,7 +184,8 @@ artifact_specs = [
   ["runtime_packet", "runtime_packet_path", "runtime-gui-evidence-packet.json"],
   ["kde_page", "kde_page_path", "kde-external-app-page.json"],
   ["compatibility_evidence_bundle", "compatibility_evidence_bundle_path", "compatibility-evidence-bundle.json"],
-  ["application_detail", "application_detail_path", "external-winapp-application-detail.json"]
+  ["application_detail", "application_detail_path", "external-winapp-application-detail.json"],
+  ["kde_page_from_application_detail", "kde_page_from_application_detail_path", "kde-page-from-application-detail.json"]
 ]
 planned_artifact_outputs = artifact_specs.to_h do |name, _remote_key, local_name|
   ["#{name}_artifact_output_path", artifact_output_root.join(local_name).to_s]
@@ -258,6 +260,16 @@ build = run_json_command(
 )
 unless build.fetch("status") == "passed" && bool(build, "remote_build_completed") && bool(build, "host_compilation_avoided")
   abort "q4 remote Go build did not pass"
+end
+
+cleanup_stdout, cleanup_stderr, cleanup_status = run_command(
+  ssh_command(remote_host, shell_join(["rm", "-rf", remote_run_root]) + " && " + shell_join(["mkdir", "-p", remote_run_root])),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless cleanup_status.zero?
+  warn cleanup_stdout unless cleanup_stdout.empty?
+  warn cleanup_stderr unless cleanup_stderr.empty?
+  abort "q4 staged desktop external Windows app smoke could not clean its remote run root"
 end
 
 remote_env = {
@@ -360,6 +372,37 @@ unless application_detail.fetch("request_type") == "external-winapp-application-
 end
 delegated["application_detail_path"] = remote_application_detail
 
+kde_page_from_detail_command = [
+  remote_runtime_bin,
+  "kde-center-page-preview",
+  "--external-app-application-detail", remote_application_detail,
+  "--decision", "approved",
+  "--output", remote_kde_page_from_detail
+]
+kde_page_from_detail_stdout, kde_page_from_detail_stderr, kde_page_from_detail_status = run_command(
+  ssh_command(remote_host, "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(kde_page_from_detail_command)}"),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless kde_page_from_detail_status.zero?
+  warn kde_page_from_detail_stdout unless kde_page_from_detail_stdout.empty?
+  warn kde_page_from_detail_stderr unless kde_page_from_detail_stderr.empty?
+  abort "q4 KDE page from external Windows app application detail generation failed"
+end
+kde_page_from_detail = JSON.parse(kde_page_from_detail_stdout)
+unless kde_page_from_detail.fetch("request_type") == "kde-center-page-preview" &&
+       kde_page_from_detail.fetch("external_winapp_application_detail_consumed") == true &&
+       kde_page_from_detail.fetch("external_winapp_application_detail_count") == 1 &&
+       kde_page_from_detail.fetch("safe_for_ai_diagnostics") == true &&
+       kde_page_from_detail.fetch("runtime_owned") == true &&
+       kde_page_from_detail.fetch("go_runtime_backed") == true &&
+       kde_page_from_detail.fetch("kde_policy_owner") == false &&
+       kde_page_from_detail.fetch("launch_enabled") == false &&
+       kde_page_from_detail.fetch("backend_details_exposed") == false
+  warn kde_page_from_detail_stdout
+  abort "q4 KDE page from external Windows app application detail did not prove desktop consumption"
+end
+delegated["kde_page_from_application_detail_path"] = remote_kde_page_from_detail
+
 fetched_artifacts = {}
 artifact_specs.each do |name, remote_key, local_name|
   remote_path = delegated.fetch(remote_key)
@@ -377,6 +420,7 @@ result = plan.merge(
   "status" => "passed",
   "remote_go_build_status" => build.fetch("status"),
   "remote_build_completed" => bool(build, "remote_build_completed"),
+  "remote_run_root_cleaned" => true,
   "built_binary_count" => build.fetch("built_binary_count"),
   "delegated_schema_version" => delegated.fetch("schema_version"),
   "delegated_status" => delegated.fetch("status"),
@@ -459,6 +503,14 @@ result = plan.merge(
   "application_detail_runtime_owned" => application_detail.fetch("runtime_owned"),
   "application_detail_go_runtime_backed" => application_detail.fetch("go_runtime_backed"),
   "application_detail_kde_policy_owner" => application_detail.fetch("kde_policy_owner"),
+  "kde_page_from_application_detail_generated" => true,
+  "kde_page_from_application_detail_request_type" => kde_page_from_detail.fetch("request_type"),
+  "kde_page_from_application_detail_consumed" => kde_page_from_detail.fetch("external_winapp_application_detail_consumed"),
+  "kde_page_from_application_detail_count" => kde_page_from_detail.fetch("external_winapp_application_detail_count"),
+  "kde_page_from_application_detail_safe_for_ai_diagnostics" => kde_page_from_detail.fetch("safe_for_ai_diagnostics"),
+  "kde_page_from_application_detail_runtime_owned" => kde_page_from_detail.fetch("runtime_owned"),
+  "kde_page_from_application_detail_go_runtime_backed" => kde_page_from_detail.fetch("go_runtime_backed"),
+  "kde_page_from_application_detail_kde_policy_owner" => kde_page_from_detail.fetch("kde_policy_owner"),
   "artifact_fetch_count" => fetched_artifacts.count { |key, value| key.end_with?("_artifact_fetched") && value == true },
   "artifacts_fetched" => fetched_artifacts,
   "markdown_output_written" => markdown_output_path.file?,
