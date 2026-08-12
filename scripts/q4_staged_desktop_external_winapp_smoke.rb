@@ -35,6 +35,10 @@ options = {
   markdown_output: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_MARKDOWN_OUTPUT", DEFAULT_LOCAL_OUTPUT_ROOT.join("q4-staged-desktop-external-winapp-smoke.md").to_s),
   remote_timeout_seconds: DEFAULT_REMOTE_TIMEOUT_SECONDS,
   fixture: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_FIXTURE", "notepad-file-argument"),
+  remote_executable: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_REMOTE_EXECUTABLE", ""),
+  app_id: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_APP_ID", ""),
+  display_name: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_DISPLAY_NAME", ""),
+  window_match: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_WINDOW_MATCH", ""),
   image: DEFAULT_IMAGE,
   timeout: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_GUI_TIMEOUT", "120s")
 }
@@ -48,6 +52,10 @@ OptionParser.new do |parser|
   parser.on("--remote-build-root PATH", "Remote build/cache root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_build_root] = value }
   parser.on("--remote-run-root PATH", "Remote smoke run root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_run_root] = value }
   parser.on("--fixture NAME", "Delegated fixture, default: notepad-file-argument.") { |value| options[:fixture] = value }
+  parser.on("--remote-executable PATH", "Optional Windows executable already staged on q4 under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_executable] = value }
+  parser.on("--app-id ID", "Application id for an operator-supplied external executable.") { |value| options[:app_id] = value }
+  parser.on("--display-name NAME", "Display name for an operator-supplied external executable.") { |value| options[:display_name] = value }
+  parser.on("--window-match TEXT", "Optional observed-window text required for the external executable.") { |value| options[:window_match] = value }
   parser.on("--image IMAGE", "q4-local Wine GUI smoke image, default: #{DEFAULT_IMAGE}.") { |value| options[:image] = value }
   parser.on("--timeout DURATION", "Delegated GUI timeout, default: #{options.fetch(:timeout)}.") { |value| options[:timeout] = value }
   parser.on("--remote-timeout-seconds SECONDS", Integer, "Timeout for q4 build, remote smoke, and report fetch.") { |value| options[:remote_timeout_seconds] = value }
@@ -194,6 +202,8 @@ remote_host = options.fetch(:remote_host)
 remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetch(:remote_source_root))
 remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
 remote_run_root = ensure_remote_xnix_path!("remote run root", options.fetch(:remote_run_root))
+remote_executable = options.fetch(:remote_executable).to_s.strip
+remote_executable = ensure_remote_xnix_path!("remote executable", remote_executable) unless remote_executable.empty?
 output_path = ensure_local_output_path!("output path", options.fetch(:output))
 markdown_output_path = ensure_local_output_path!("markdown output path", options.fetch(:markdown_output))
 artifact_output_root = output_path.dirname.join("artifacts")
@@ -239,6 +249,10 @@ delegated_command = [
   "--image", options.fetch(:image),
   "--timeout", options.fetch(:timeout)
 ]
+delegated_command.concat(["--executable", remote_executable]) unless remote_executable.empty?
+delegated_command.concat(["--app-id", options.fetch(:app_id).to_s.strip]) unless options.fetch(:app_id).to_s.strip.empty?
+delegated_command.concat(["--display-name", options.fetch(:display_name).to_s.strip]) unless options.fetch(:display_name).to_s.strip.empty?
+delegated_command.concat(["--window-match", options.fetch(:window_match).to_s.strip]) unless options.fetch(:window_match).to_s.strip.empty?
 
 plan = {
   "schema_version" => SCHEMA_VERSION,
@@ -256,6 +270,11 @@ plan = {
   "delegated_script" => "scripts/staged_desktop_external_winapp_smoke.rb",
   "delegated_command" => delegated_command,
   "fixture" => options.fetch(:fixture),
+  "remote_executable_supplied" => !remote_executable.empty?,
+  "remote_executable_path_exposed_only_for_operator" => !remote_executable.empty?,
+  "operator_app_id_supplied" => !options.fetch(:app_id).to_s.strip.empty?,
+  "operator_display_name_supplied" => !options.fetch(:display_name).to_s.strip.empty?,
+  "operator_window_match_supplied" => !options.fetch(:window_match).to_s.strip.empty?,
   "image" => options.fetch(:image),
   "output_path" => output_path.to_s,
   "markdown_output_path" => markdown_output_path.to_s,

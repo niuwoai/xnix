@@ -14,6 +14,8 @@ VERSION = PROJECT_ROOT.join("VERSION").read.strip
 SCHEMA_VERSION = "xnix.scripts.staged_desktop_external_winapp_smoke.v1"
 DEFAULT_APP_ID = "org.xnix.external.desktop-notepad"
 DEFAULT_APP_NAME = "External Desktop Notepad"
+DEFAULT_OPERATOR_APP_ID = "org.xnix.external.operator-run"
+DEFAULT_OPERATOR_APP_NAME = "External Windows App"
 NOTEPAD_FILE_ARGUMENT_APP_ID = "org.xnix.external.desktop-notepad-file-argument"
 NOTEPAD_FILE_ARGUMENT_APP_NAME = "External Desktop Notepad File Argument"
 NOTEPAD_FILE_ARGUMENT_WINDOW_MATCH = "sample-document.txt"
@@ -50,6 +52,9 @@ options = {
   runtime_packet_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-real-gui-packet.json").to_s,
   kde_page_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-kde-page.json").to_s,
   executable: "",
+  app_id: "",
+  display_name: "",
+  window_match: "",
   fixture: "notepad",
   image: ENV.fetch("XNIX_WINE_IMAGE", DEFAULT_IMAGE),
   runtime_image: ENV.fetch(RUNTIME_IMAGE_ENV, "xnix-builder:#{VERSION}"),
@@ -70,7 +75,10 @@ OptionParser.new do |parser|
   parser.on("--runtime-packet-output PATH", "Go Runtime real Windows GUI packet output path") { |value| options[:runtime_packet_output] = value }
   parser.on("--kde-page-output PATH", "KDE center page JSON output path") { |value| options[:kde_page_output] = value }
   parser.on("--executable PATH", "Optional existing Windows GUI executable; defaults to Wine Notepad from the local image") { |value| options[:executable] = value }
-  parser.on("--fixture NAME", "Built-in executable fixture: notepad or notepad-file-argument") { |value| options[:fixture] = value }
+  parser.on("--app-id ID", "Application id for an operator-supplied external executable") { |value| options[:app_id] = value }
+  parser.on("--display-name NAME", "Display name for an operator-supplied external executable") { |value| options[:display_name] = value }
+  parser.on("--window-match TEXT", "Optional observed-window text required for the external executable") { |value| options[:window_match] = value }
+  parser.on("--fixture NAME", "Executable fixture: notepad, notepad-file-argument, or external") { |value| options[:fixture] = value }
   parser.on("--image IMAGE", "Local Wine GUI smoke image") { |value| options[:image] = value }
   parser.on("--runtime-image IMAGE", "Runtime image with prebuilt Xnix command binaries") { |value| options[:runtime_image] = value }
   parser.on("--docker PATH", "Docker runner path") { |value| options[:docker] = value }
@@ -329,9 +337,18 @@ when "notepad-file-argument"
   app_name = NOTEPAD_FILE_ARGUMENT_APP_NAME
   window_match = NOTEPAD_FILE_ARGUMENT_WINDOW_MATCH
   executable_path = options.fetch(:executable).to_s.strip.empty? ? run_root.join("notepad.exe") : absolute_path(options.fetch(:executable))
+when "external"
+  abort "external fixture requires --executable" if options.fetch(:executable).to_s.strip.empty?
+
+  app_id = DEFAULT_OPERATOR_APP_ID
+  app_name = DEFAULT_OPERATOR_APP_NAME
+  executable_path = absolute_path(options.fetch(:executable))
 else
-  abort "unsupported fixture #{fixture.inspect}; expected notepad or notepad-file-argument"
+  abort "unsupported fixture #{fixture.inspect}; expected notepad, notepad-file-argument, or external"
 end
+app_id = options.fetch(:app_id).to_s.strip unless options.fetch(:app_id).to_s.strip.empty?
+app_name = options.fetch(:display_name).to_s.strip unless options.fetch(:display_name).to_s.strip.empty?
+window_match = options.fetch(:window_match).to_s.strip unless options.fetch(:window_match).to_s.strip.empty?
 docker_bin = resolve_executable(options.fetch(:docker))
 
 go_env = {

@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc251] - 2026-08-13
+
+### Changed
+
+- Added an operator-facing q4 `--remote-executable` path to the staged external Windows app smoke wrapper for executables already staged under scoped q4 Xnix paths.
+- Extended the delegated staged external Windows app smoke with an `external` fixture plus app id, display name, and optional observed-window metadata.
+- Passed targeted q4 staged external Windows app validation for the Notepad file-open GUI path with q4-hosted Runtime and launcher builds, 13 fetched evidence artifacts, and accepted KDE consumption.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc251`.
+
 ## [0.2.640-rc250] - 2026-08-13
 
 ### Changed

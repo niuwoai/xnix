@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc250
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc251
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc251 checkpoint makes the real external Windows app path easier to operate on q4. The staged external app q4 wrapper now accepts an executable already placed under a scoped q4 Xnix path, forwards app identity and optional window-match metadata to the delegated runner, and drives the existing Go Runtime import, desktop activation staging, managed launcher, Wine GUI execution, compatibility evidence bundle, application detail, KDE page, and accepted-state artifact flow without compiling on the macOS host. Targeted q4 validation passed for the Notepad file-open GUI path, including remote Runtime and launcher builds, a real Wine GUI run, 13 fetched evidence artifacts, and final `runtime-accepted-real-app-run` KDE consumption.
 
 The v0.2.640-rc250 checkpoint carries Runtime-accepted imported Windows app detail into the KDE Plasma shell contract. The Compatibility Center plasmoid now declares `external_winapp_application_detail_cards` and the accepted-state fields for q4 staged acceptance consumption, Go-owned acceptance verification, evidence signal count, and closed backend/path/host gates. This keeps KDE as a replaceable desktop shell while making the Runtime's accepted real Windows app state directly visible to the shell. The checkpoint also formalizes q4 as the default compile-heavy build and validation host, keeping local macOS work limited to lightweight checks, source editing, Git operations, and dry-run plans unless a human approves a narrow local override.
 
