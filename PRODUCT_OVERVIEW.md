@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc264
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc265
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc265 checkpoint lets the Runtime compatibility evidence bundle consume the real known portable bundle staged launch directly. `external-winapp-compatibility-evidence-bundle-preview` now accepts a `windows-known-app-bundle-stage-and-launch` report as its launch source, validates it through the known bundle import and staged launch invariants, preserves `launch_source_request_type=windows-known-app-bundle-stage-and-launch`, and combines it with the desktop launch packet, Runtime GUI evidence packet, and KDE page. The q4 Notepad++ Portable smoke now generates and fetches `known-portable-bundle-kde-page.json` and `known-portable-bundle-compatibility-evidence-bundle.json` from the Go-owned direct path before continuing through the accepted Runtime/KDE chain.
 
 The v0.2.640-rc264 checkpoint makes the Go-owned known bundle staged launch directly consumable by the Runtime GUI evidence packet path. `real-winapp-gui-evidence-packet-preview` now accepts `windows-known-app-bundle-stage-and-launch` reports, unwraps the nested external app staged run only after verifying the known bundle import, record-first launch, desktop packet, file bridge, window evidence, Runtime ownership, q4 safety gates, and path redaction constraints, and emits the same desktop-safe GUI evidence packet used by KDE. The q4 Notepad++ Portable smoke now generates and fetches `known-portable-bundle-gui-evidence-packet.json` before continuing through the accepted Runtime/KDE chain.
 

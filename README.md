@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc264`.
+The project is currently at `v0.2.640-rc265`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc264`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc265 lets the Go Runtime compatibility evidence bundle consume `windows-known-app-bundle-stage-and-launch` directly. The q4 Notepad++ Portable smoke now renders a known-bundle KDE page and fetches a known-bundle compatibility evidence bundle from the Go-owned staged launch path before continuing to the existing accepted Runtime/KDE chain.
 
 v0.2.640-rc264 lets the Go Runtime `real-winapp-gui-evidence-packet-preview` consume `windows-known-app-bundle-stage-and-launch` reports directly. The q4 Notepad++ Portable smoke now generates and fetches a known bundle GUI evidence packet from the Go-owned staged launch report before continuing to the existing accepted Runtime/KDE chain.
 

@@ -21,56 +21,59 @@ type ExternalWinAppCompatibilityEvidenceBundleRequest struct {
 }
 
 type ExternalWinAppCompatibilityEvidenceBundle struct {
-	Version                          string                                               `json:"version"`
-	SchemaVersion                    string                                               `json:"schema_version"`
-	RequestType                      string                                               `json:"request_type"`
-	BundleType                       string                                               `json:"bundle_type"`
-	Source                           string                                               `json:"source"`
-	RuntimeMethod                    string                                               `json:"runtime_method"`
-	ReadMethod                       string                                               `json:"read_method"`
-	Desktop                          string                                               `json:"desktop"`
-	ApplicationID                    string                                               `json:"application_id"`
-	DisplayName                      string                                               `json:"display_name"`
-	AppVersion                       string                                               `json:"app_version,omitempty"`
-	EvidenceArtifactCount            int                                                  `json:"evidence_artifact_count"`
-	EvidenceArtifacts                []ExternalWinAppCompatibilityEvidenceArtifactSummary `json:"evidence_artifacts"`
-	OneShotRuntimeLaunchVerified     bool                                                 `json:"one_shot_runtime_launch_verified"`
-	DesktopLaunchPacketVerified      bool                                                 `json:"desktop_launch_packet_verified"`
-	RuntimeGUIEvidencePacketVerified bool                                                 `json:"runtime_gui_evidence_packet_verified"`
-	KDEExternalAppPageVerified       bool                                                 `json:"kde_external_app_page_verified"`
-	RealWindowsAppRunVerified        bool                                                 `json:"real_windows_app_run_verified"`
-	ExternalAppImportRecordConsumed  bool                                                 `json:"external_app_import_record_consumed"`
-	ExternalAppHandleConsumed        bool                                                 `json:"external_app_handle_consumed"`
-	ImportedArtifactDigestVerified   bool                                                 `json:"imported_artifact_digest_verified"`
-	ExternalFileBridgeReady          bool                                                 `json:"external_file_bridge_ready"`
-	ExternalFileOpenRequested        bool                                                 `json:"external_file_open_requested"`
-	ExternalDesktopArgumentCount     int                                                  `json:"external_desktop_argument_count"`
-	WindowObserved                   bool                                                 `json:"window_observed"`
-	XWindowObserved                  bool                                                 `json:"x_window_observed"`
-	ContainerRuntimeUsed             bool                                                 `json:"container_runtime_used"`
-	ContainerNetworkMode             string                                               `json:"container_network_mode"`
-	ContainerHostMountCount          int                                                  `json:"container_host_mount_count"`
-	KnownAppGUIEvidenceCount         int                                                  `json:"known_app_gui_evidence_count"`
-	KnownAppGUIEvidenceVerifiedCount int                                                  `json:"known_app_gui_evidence_verified_count"`
-	KDEPageKnownAppGUIEvidenceCount  int                                                  `json:"kde_page_known_app_gui_evidence_count"`
-	RuntimeOwned                     bool                                                 `json:"runtime_owned"`
-	GoRuntimeBacked                  bool                                                 `json:"go_runtime_backed"`
-	KDEPolicyOwner                   bool                                                 `json:"kde_policy_owner"`
-	SafeForKDE                       bool                                                 `json:"safe_for_kde"`
-	SafeForAIDiagnostics             bool                                                 `json:"safe_for_ai_diagnostics"`
-	DesktopLaunchEnabled             bool                                                 `json:"desktop_launch_enabled"`
-	BackendLaunchEnabled             bool                                                 `json:"backend_launch_enabled"`
-	BackendProcessStarted            bool                                                 `json:"backend_process_started"`
-	ActionExecutionEnabled           bool                                                 `json:"action_execution_enabled"`
-	BackendDetailsExposed            bool                                                 `json:"backend_details_exposed"`
-	RawPathsExposed                  bool                                                 `json:"raw_paths_exposed"`
-	RawLauncherOutputExposed         bool                                                 `json:"raw_launcher_output_exposed"`
-	HostRootModified                 bool                                                 `json:"host_root_modified"`
-	PrivilegedContainerRequired      bool                                                 `json:"privileged_container_required"`
-	HostNetworkingRequired           bool                                                 `json:"host_networking_required"`
-	DockerSocketMounted              bool                                                 `json:"docker_socket_mounted"`
-	BroadHostMountRequired           bool                                                 `json:"broad_host_mount_required"`
-	DesktopSafeSummary               string                                               `json:"desktop_safe_summary"`
+	Version                                string                                               `json:"version"`
+	SchemaVersion                          string                                               `json:"schema_version"`
+	RequestType                            string                                               `json:"request_type"`
+	BundleType                             string                                               `json:"bundle_type"`
+	Source                                 string                                               `json:"source"`
+	LaunchSourceRequestType                string                                               `json:"launch_source_request_type"`
+	RuntimeMethod                          string                                               `json:"runtime_method"`
+	ReadMethod                             string                                               `json:"read_method"`
+	Desktop                                string                                               `json:"desktop"`
+	ApplicationID                          string                                               `json:"application_id"`
+	DisplayName                            string                                               `json:"display_name"`
+	AppVersion                             string                                               `json:"app_version,omitempty"`
+	EvidenceArtifactCount                  int                                                  `json:"evidence_artifact_count"`
+	EvidenceArtifacts                      []ExternalWinAppCompatibilityEvidenceArtifactSummary `json:"evidence_artifacts"`
+	OneShotRuntimeLaunchVerified           bool                                                 `json:"one_shot_runtime_launch_verified"`
+	DesktopLaunchPacketVerified            bool                                                 `json:"desktop_launch_packet_verified"`
+	RuntimeGUIEvidencePacketVerified       bool                                                 `json:"runtime_gui_evidence_packet_verified"`
+	KDEExternalAppPageVerified             bool                                                 `json:"kde_external_app_page_verified"`
+	KnownPortableBundleStageLaunchConsumed bool                                                 `json:"known_portable_bundle_stage_launch_consumed"`
+	KnownPortableBundleStageLaunchVerified bool                                                 `json:"known_portable_bundle_stage_launch_verified"`
+	RealWindowsAppRunVerified              bool                                                 `json:"real_windows_app_run_verified"`
+	ExternalAppImportRecordConsumed        bool                                                 `json:"external_app_import_record_consumed"`
+	ExternalAppHandleConsumed              bool                                                 `json:"external_app_handle_consumed"`
+	ImportedArtifactDigestVerified         bool                                                 `json:"imported_artifact_digest_verified"`
+	ExternalFileBridgeReady                bool                                                 `json:"external_file_bridge_ready"`
+	ExternalFileOpenRequested              bool                                                 `json:"external_file_open_requested"`
+	ExternalDesktopArgumentCount           int                                                  `json:"external_desktop_argument_count"`
+	WindowObserved                         bool                                                 `json:"window_observed"`
+	XWindowObserved                        bool                                                 `json:"x_window_observed"`
+	ContainerRuntimeUsed                   bool                                                 `json:"container_runtime_used"`
+	ContainerNetworkMode                   string                                               `json:"container_network_mode"`
+	ContainerHostMountCount                int                                                  `json:"container_host_mount_count"`
+	KnownAppGUIEvidenceCount               int                                                  `json:"known_app_gui_evidence_count"`
+	KnownAppGUIEvidenceVerifiedCount       int                                                  `json:"known_app_gui_evidence_verified_count"`
+	KDEPageKnownAppGUIEvidenceCount        int                                                  `json:"kde_page_known_app_gui_evidence_count"`
+	RuntimeOwned                           bool                                                 `json:"runtime_owned"`
+	GoRuntimeBacked                        bool                                                 `json:"go_runtime_backed"`
+	KDEPolicyOwner                         bool                                                 `json:"kde_policy_owner"`
+	SafeForKDE                             bool                                                 `json:"safe_for_kde"`
+	SafeForAIDiagnostics                   bool                                                 `json:"safe_for_ai_diagnostics"`
+	DesktopLaunchEnabled                   bool                                                 `json:"desktop_launch_enabled"`
+	BackendLaunchEnabled                   bool                                                 `json:"backend_launch_enabled"`
+	BackendProcessStarted                  bool                                                 `json:"backend_process_started"`
+	ActionExecutionEnabled                 bool                                                 `json:"action_execution_enabled"`
+	BackendDetailsExposed                  bool                                                 `json:"backend_details_exposed"`
+	RawPathsExposed                        bool                                                 `json:"raw_paths_exposed"`
+	RawLauncherOutputExposed               bool                                                 `json:"raw_launcher_output_exposed"`
+	HostRootModified                       bool                                                 `json:"host_root_modified"`
+	PrivilegedContainerRequired            bool                                                 `json:"privileged_container_required"`
+	HostNetworkingRequired                 bool                                                 `json:"host_networking_required"`
+	DockerSocketMounted                    bool                                                 `json:"docker_socket_mounted"`
+	BroadHostMountRequired                 bool                                                 `json:"broad_host_mount_required"`
+	DesktopSafeSummary                     string                                               `json:"desktop_safe_summary"`
 }
 
 type ExternalWinAppCompatibilityEvidenceArtifactSummary struct {
@@ -123,7 +126,7 @@ type externalWinAppCompatibilityOneShotResult struct {
 }
 
 func PreviewExternalWinAppCompatibilityEvidenceBundle(request ExternalWinAppCompatibilityEvidenceBundleRequest) (ExternalWinAppCompatibilityEvidenceBundle, error) {
-	oneShot, err := loadExternalWinAppCompatibilityArtifact[externalWinAppCompatibilityOneShotResult](request.OneShotResultPath, "one-shot external Windows app launch result")
+	oneShot, launchSourceRequestType, knownPortableBundleStageLaunchConsumed, err := loadExternalWinAppCompatibilityLaunchSource(request.OneShotResultPath)
 	if err != nil {
 		return ExternalWinAppCompatibilityEvidenceBundle{}, err
 	}
@@ -148,6 +151,10 @@ func PreviewExternalWinAppCompatibilityEvidenceBundle(request ExternalWinAppComp
 	if err := validateExternalWinAppCompatibilityBundleInputs(appID, displayName, oneShot, launchPacket, runtimePacket, kdePage); err != nil {
 		return ExternalWinAppCompatibilityEvidenceBundle{}, err
 	}
+	source := "external-winapp-import-stage-and-launch+desktop-launch-packet+real-winapp-gui-evidence-packet+kde-center-page"
+	if knownPortableBundleStageLaunchConsumed {
+		source = "windows-known-app-bundle-stage-and-launch+desktop-launch-packet+real-winapp-gui-evidence-packet+kde-center-page"
+	}
 
 	rawPathsExposed := oneShot.RawImportRecordPathExposed || oneShot.RawStateRootPathExposed || oneShot.RawExecutablePathExposed || oneShot.RawLauncherPathExposed ||
 		launchPacket.RawImportRecordPathExposed || launchPacket.RawExternalAppHandlePathExposed || launchPacket.RawStateRootPathExposed || launchPacket.RawExecutablePathExposed
@@ -168,56 +175,59 @@ func PreviewExternalWinAppCompatibilityEvidenceBundle(request ExternalWinAppComp
 		!runtimePacket.BroadHostMountRequired
 
 	bundle := ExternalWinAppCompatibilityEvidenceBundle{
-		Version:                          firstNonEmpty(oneShot.Version, launchPacket.Version, runtimePacket.Version),
-		SchemaVersion:                    ExternalWinAppCompatibilityEvidenceBundleSchemaVersion,
-		RequestType:                      ExternalWinAppCompatibilityEvidenceBundleRequestType,
-		BundleType:                       "runtime-owned-external-windows-app-compatibility-evidence",
-		Source:                           "external-winapp-import-stage-and-launch+desktop-launch-packet+real-winapp-gui-evidence-packet+kde-center-page",
-		RuntimeMethod:                    "PreviewExternalWinAppCompatibilityEvidenceBundle",
-		ReadMethod:                       "GetExternalWinAppCompatibilityEvidenceBundle",
-		Desktop:                          "KDE Plasma",
-		ApplicationID:                    appID,
-		DisplayName:                      displayName,
-		AppVersion:                       firstNonEmpty(launchPacket.AppVersion, runtimePacket.AppVersion),
-		EvidenceArtifactCount:            4,
-		EvidenceArtifacts:                externalWinAppCompatibilityArtifactSummaries(oneShot, launchPacket, runtimePacket, kdePage),
-		OneShotRuntimeLaunchVerified:     true,
-		DesktopLaunchPacketVerified:      true,
-		RuntimeGUIEvidencePacketVerified: true,
-		KDEExternalAppPageVerified:       true,
-		RealWindowsAppRunVerified:        true,
-		ExternalAppImportRecordConsumed:  oneShot.ExternalAppImportRecordConsumed && launchPacket.ExternalAppImportRecordConsumed && runtimePacket.ExternalAppImportRecordConsumed,
-		ExternalAppHandleConsumed:        oneShot.ExternalAppHandleConsumed && launchPacket.ExternalAppHandleConsumed && runtimePacket.ExternalAppHandleConsumed,
-		ImportedArtifactDigestVerified:   oneShot.ImportedArtifactDigestVerified && launchPacket.ImportedArtifactDigestVerified && runtimePacket.ImportedArtifactDigestVerified,
-		ExternalFileBridgeReady:          oneShot.ExternalFileBridgeReady && launchPacket.ExternalFileBridgeReady,
-		ExternalFileOpenRequested:        launchPacket.ExternalFileOpenRequested,
-		ExternalDesktopArgumentCount:     launchPacket.ExternalDesktopArgumentCount,
-		WindowObserved:                   oneShot.WindowObserved && launchPacket.WindowObserved && runtimePacket.WindowObserved,
-		XWindowObserved:                  oneShot.XWindowObserved && launchPacket.XWindowObserved && runtimePacket.XWindowObserved,
-		ContainerRuntimeUsed:             launchPacket.ContainerRuntimeUsed && runtimePacket.ContainerRuntimeUsed,
-		ContainerNetworkMode:             launchPacket.ContainerNetworkMode,
-		ContainerHostMountCount:          launchPacket.ContainerHostMountCount,
-		KnownAppGUIEvidenceCount:         runtimePacket.KnownAppGUIEvidenceCount,
-		KnownAppGUIEvidenceVerifiedCount: runtimePacket.KnownAppGUIEvidenceVerifiedCount,
-		KDEPageKnownAppGUIEvidenceCount:  kdePage.KnownAppGUIEvidenceCount,
-		RuntimeOwned:                     oneShot.RuntimeOwned && launchPacket.RuntimeOwned && runtimePacket.RuntimeOwned && kdePage.RuntimeOwned,
-		GoRuntimeBacked:                  oneShot.GoRuntimeBacked && launchPacket.GoRuntimeBacked && runtimePacket.GoRuntimeBacked && kdePage.GoRuntimeBacked,
-		KDEPolicyOwner:                   oneShot.KDEPolicyOwner || launchPacket.KDEPolicyOwner || runtimePacket.KDEPolicyOwner || kdePage.KDEPolicyOwner,
-		SafeForKDE:                       safeForKDE,
-		SafeForAIDiagnostics:             safeForKDE,
-		DesktopLaunchEnabled:             oneShot.LaunchEnabled || runtimePacket.DesktopLaunchEnabled || kdePage.LaunchEnabled,
-		BackendLaunchEnabled:             oneShot.BackendLaunchEnabled || runtimePacket.BackendLaunchEnabled,
-		BackendProcessStarted:            launchPacket.BackendProcessStarted || kdePage.BackendProcessStarted,
-		ActionExecutionEnabled:           runtimePacket.ActionExecutionEnabled,
-		BackendDetailsExposed:            launchPacket.BackendDetailsExposed || runtimePacket.BackendDetailsExposed || kdePage.BackendDetailsExposed,
-		RawPathsExposed:                  rawPathsExposed,
-		RawLauncherOutputExposed:         oneShot.RawLauncherOutputExposed || runtimePacket.RawOutputExposed,
-		HostRootModified:                 oneShot.HostRootModified || launchPacket.HostRootModified || runtimePacket.HostRootModified || kdePage.HostRootModified,
-		PrivilegedContainerRequired:      oneShot.PrivilegedContainerRequired || launchPacket.PrivilegedContainerRequired || runtimePacket.PrivilegedContainerRequired,
-		HostNetworkingRequired:           oneShot.HostNetworkingRequired || launchPacket.HostNetworkingRequired || runtimePacket.HostNetworkingRequired,
-		DockerSocketMounted:              oneShot.DockerSocketMounted || launchPacket.DockerSocketMounted || runtimePacket.DockerSocketMounted,
-		BroadHostMountRequired:           oneShot.BroadHostMountRequired || launchPacket.BroadHostMountRequired || runtimePacket.BroadHostMountRequired,
-		DesktopSafeSummary:               "External Windows app compatibility evidence is Runtime-owned, verified through a real isolated GUI run, and ready for KDE display without exposing host paths or backend commands.",
+		Version:                                firstNonEmpty(oneShot.Version, launchPacket.Version, runtimePacket.Version),
+		SchemaVersion:                          ExternalWinAppCompatibilityEvidenceBundleSchemaVersion,
+		RequestType:                            ExternalWinAppCompatibilityEvidenceBundleRequestType,
+		BundleType:                             "runtime-owned-external-windows-app-compatibility-evidence",
+		Source:                                 source,
+		LaunchSourceRequestType:                launchSourceRequestType,
+		RuntimeMethod:                          "PreviewExternalWinAppCompatibilityEvidenceBundle",
+		ReadMethod:                             "GetExternalWinAppCompatibilityEvidenceBundle",
+		Desktop:                                "KDE Plasma",
+		ApplicationID:                          appID,
+		DisplayName:                            displayName,
+		AppVersion:                             firstNonEmpty(launchPacket.AppVersion, runtimePacket.AppVersion),
+		EvidenceArtifactCount:                  4,
+		EvidenceArtifacts:                      externalWinAppCompatibilityArtifactSummaries(oneShot, launchPacket, runtimePacket, kdePage, launchSourceRequestType, knownPortableBundleStageLaunchConsumed),
+		OneShotRuntimeLaunchVerified:           true,
+		DesktopLaunchPacketVerified:            true,
+		RuntimeGUIEvidencePacketVerified:       true,
+		KDEExternalAppPageVerified:             true,
+		KnownPortableBundleStageLaunchConsumed: knownPortableBundleStageLaunchConsumed,
+		KnownPortableBundleStageLaunchVerified: knownPortableBundleStageLaunchConsumed,
+		RealWindowsAppRunVerified:              true,
+		ExternalAppImportRecordConsumed:        oneShot.ExternalAppImportRecordConsumed && launchPacket.ExternalAppImportRecordConsumed && runtimePacket.ExternalAppImportRecordConsumed,
+		ExternalAppHandleConsumed:              oneShot.ExternalAppHandleConsumed && launchPacket.ExternalAppHandleConsumed && runtimePacket.ExternalAppHandleConsumed,
+		ImportedArtifactDigestVerified:         oneShot.ImportedArtifactDigestVerified && launchPacket.ImportedArtifactDigestVerified && runtimePacket.ImportedArtifactDigestVerified,
+		ExternalFileBridgeReady:                oneShot.ExternalFileBridgeReady && launchPacket.ExternalFileBridgeReady,
+		ExternalFileOpenRequested:              launchPacket.ExternalFileOpenRequested,
+		ExternalDesktopArgumentCount:           launchPacket.ExternalDesktopArgumentCount,
+		WindowObserved:                         oneShot.WindowObserved && launchPacket.WindowObserved && runtimePacket.WindowObserved,
+		XWindowObserved:                        oneShot.XWindowObserved && launchPacket.XWindowObserved && runtimePacket.XWindowObserved,
+		ContainerRuntimeUsed:                   launchPacket.ContainerRuntimeUsed && runtimePacket.ContainerRuntimeUsed,
+		ContainerNetworkMode:                   launchPacket.ContainerNetworkMode,
+		ContainerHostMountCount:                launchPacket.ContainerHostMountCount,
+		KnownAppGUIEvidenceCount:               runtimePacket.KnownAppGUIEvidenceCount,
+		KnownAppGUIEvidenceVerifiedCount:       runtimePacket.KnownAppGUIEvidenceVerifiedCount,
+		KDEPageKnownAppGUIEvidenceCount:        kdePage.KnownAppGUIEvidenceCount,
+		RuntimeOwned:                           oneShot.RuntimeOwned && launchPacket.RuntimeOwned && runtimePacket.RuntimeOwned && kdePage.RuntimeOwned,
+		GoRuntimeBacked:                        oneShot.GoRuntimeBacked && launchPacket.GoRuntimeBacked && runtimePacket.GoRuntimeBacked && kdePage.GoRuntimeBacked,
+		KDEPolicyOwner:                         oneShot.KDEPolicyOwner || launchPacket.KDEPolicyOwner || runtimePacket.KDEPolicyOwner || kdePage.KDEPolicyOwner,
+		SafeForKDE:                             safeForKDE,
+		SafeForAIDiagnostics:                   safeForKDE,
+		DesktopLaunchEnabled:                   oneShot.LaunchEnabled || runtimePacket.DesktopLaunchEnabled || kdePage.LaunchEnabled,
+		BackendLaunchEnabled:                   oneShot.BackendLaunchEnabled || runtimePacket.BackendLaunchEnabled,
+		BackendProcessStarted:                  launchPacket.BackendProcessStarted || kdePage.BackendProcessStarted,
+		ActionExecutionEnabled:                 runtimePacket.ActionExecutionEnabled,
+		BackendDetailsExposed:                  launchPacket.BackendDetailsExposed || runtimePacket.BackendDetailsExposed || kdePage.BackendDetailsExposed,
+		RawPathsExposed:                        rawPathsExposed,
+		RawLauncherOutputExposed:               oneShot.RawLauncherOutputExposed || runtimePacket.RawOutputExposed,
+		HostRootModified:                       oneShot.HostRootModified || launchPacket.HostRootModified || runtimePacket.HostRootModified || kdePage.HostRootModified,
+		PrivilegedContainerRequired:            oneShot.PrivilegedContainerRequired || launchPacket.PrivilegedContainerRequired || runtimePacket.PrivilegedContainerRequired,
+		HostNetworkingRequired:                 oneShot.HostNetworkingRequired || launchPacket.HostNetworkingRequired || runtimePacket.HostNetworkingRequired,
+		DockerSocketMounted:                    oneShot.DockerSocketMounted || launchPacket.DockerSocketMounted || runtimePacket.DockerSocketMounted,
+		BroadHostMountRequired:                 oneShot.BroadHostMountRequired || launchPacket.BroadHostMountRequired || runtimePacket.BroadHostMountRequired,
+		DesktopSafeSummary:                     "External Windows app compatibility evidence is Runtime-owned, verified through a real isolated GUI run, and ready for KDE display without exposing host paths or backend commands.",
 	}
 	if !bundle.SafeForKDE || bundle.KDEPolicyOwner || !bundle.RuntimeOwned || !bundle.GoRuntimeBacked {
 		return ExternalWinAppCompatibilityEvidenceBundle{}, errors.New("external Windows app compatibility evidence bundle failed Runtime/KDE safety invariants")
@@ -226,6 +236,44 @@ func PreviewExternalWinAppCompatibilityEvidenceBundle(request ExternalWinAppComp
 		return ExternalWinAppCompatibilityEvidenceBundle{}, err
 	}
 	return bundle, nil
+}
+
+func loadExternalWinAppCompatibilityLaunchSource(path string) (externalWinAppCompatibilityOneShotResult, string, bool, error) {
+	var payload externalWinAppCompatibilityOneShotResult
+	cleanPath := strings.TrimSpace(path)
+	if cleanPath == "" {
+		return payload, "", false, errors.New("external Windows app compatibility evidence bundle requires --one-shot-result")
+	}
+	content, err := os.ReadFile(cleanPath)
+	if err != nil {
+		return payload, "", false, fmt.Errorf("read one-shot external Windows app launch result: %w", err)
+	}
+	var envelope struct {
+		SchemaVersion string `json:"schema_version"`
+		RequestType   string `json:"request_type"`
+	}
+	if err := json.Unmarshal(content, &envelope); err != nil {
+		return payload, "", false, fmt.Errorf("parse one-shot external Windows app launch result: %w", err)
+	}
+	launchSourceRequestType := strings.TrimSpace(envelope.RequestType)
+	knownPortableBundleStageLaunchConsumed := false
+	if envelope.SchemaVersion == "xnix.runtime.known_portable_bundle_stage_launch.v1" {
+		stageLaunchContent, err := unwrapKnownPortableBundleStageLaunchPayload(content)
+		if err != nil {
+			return payload, "", false, err
+		}
+		content = stageLaunchContent
+		knownPortableBundleStageLaunchConsumed = true
+		if launchSourceRequestType == "" {
+			launchSourceRequestType = "windows-known-app-bundle-stage-and-launch"
+		}
+	} else if launchSourceRequestType == "" {
+		launchSourceRequestType = "external-winapp-import-stage-and-launch"
+	}
+	if err := json.Unmarshal(content, &payload); err != nil {
+		return payload, "", false, fmt.Errorf("parse one-shot external Windows app launch result: %w", err)
+	}
+	return payload, launchSourceRequestType, knownPortableBundleStageLaunchConsumed, nil
 }
 
 func loadExternalWinAppCompatibilityArtifact[T any](path string, label string) (T, error) {
@@ -278,9 +326,15 @@ func validateExternalWinAppCompatibilityBundleInputs(appID string, displayName s
 	return nil
 }
 
-func externalWinAppCompatibilityArtifactSummaries(oneShot externalWinAppCompatibilityOneShotResult, launchPacket DesktopExternalWinAppLaunchPacket, runtimePacket RealWinAppGUIEvidencePacket, kdePage KDECenterPagePreview) []ExternalWinAppCompatibilityEvidenceArtifactSummary {
+func externalWinAppCompatibilityArtifactSummaries(oneShot externalWinAppCompatibilityOneShotResult, launchPacket DesktopExternalWinAppLaunchPacket, runtimePacket RealWinAppGUIEvidencePacket, kdePage KDECenterPagePreview, launchSourceRequestType string, knownPortableBundleStageLaunchConsumed bool) []ExternalWinAppCompatibilityEvidenceArtifactSummary {
+	launchArtifactKind := "one-shot-runtime-launch"
+	launchArtifactRequestType := oneShot.RequestType
+	if knownPortableBundleStageLaunchConsumed {
+		launchArtifactKind = "known-portable-bundle-stage-launch"
+		launchArtifactRequestType = launchSourceRequestType
+	}
 	return []ExternalWinAppCompatibilityEvidenceArtifactSummary{
-		{ArtifactKind: "one-shot-runtime-launch", RequestType: oneShot.RequestType, Status: oneShot.Status, Consumed: true, SafeForKDE: !oneShot.RawLauncherOutputExposed},
+		{ArtifactKind: launchArtifactKind, RequestType: launchArtifactRequestType, Status: oneShot.Status, Consumed: true, SafeForKDE: !oneShot.RawLauncherOutputExposed},
 		{ArtifactKind: "desktop-launch-packet", RequestType: launchPacket.RequestType, Status: launchPacket.Status, Consumed: true, SafeForKDE: launchPacket.SafeForKDE},
 		{ArtifactKind: "runtime-gui-evidence-packet", RequestType: runtimePacket.RequestType, Status: runtimePacket.ReportStatus, Consumed: runtimePacket.ReportConsumed, SafeForKDE: !runtimePacket.BackendDetailsExposed},
 		{ArtifactKind: "kde-external-app-page", RequestType: kdePage.RequestType, Status: "rendered", Consumed: true, SafeForKDE: !kdePage.BackendDetailsExposed},

@@ -102,6 +102,86 @@ func TestExternalWinAppCompatibilityEvidenceBundlePreviewCommandConsumesDesktopA
 	}
 }
 
+func TestExternalWinAppCompatibilityEvidenceBundlePreviewCommandConsumesKnownPortableBundleStageLaunch(t *testing.T) {
+	tempDir := t.TempDir()
+	knownStageLaunchPath := filepath.Join(tempDir, "known-portable-bundle-stage-launch.json")
+	desktopPacketPath := filepath.Join(tempDir, "desktop-launch-packet.json")
+	runtimePacketPath := filepath.Join(tempDir, "runtime-gui-evidence-packet.json")
+	kdePagePath := filepath.Join(tempDir, "kde-page.json")
+	outputPath := filepath.Join(tempDir, "bundle", "known-portable-bundle-compatibility-evidence-bundle.json")
+	writeTextFile(t, knownStageLaunchPath, rawKnownPortableBundleStageLaunchPayloadCLIFixture())
+	writeTextFile(t, desktopPacketPath, externalWinAppBundleKnownPortableFixture(externalWinAppBundleDesktopLaunchPacketFixture()))
+	writeTextFile(t, runtimePacketPath, externalWinAppBundleKnownPortableFixture(externalWinAppBundleRuntimePacketFixture()))
+	writeTextFile(t, kdePagePath, externalWinAppBundleKnownPortableFixture(externalWinAppBundleKDEPageFixture()))
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"external-winapp-compatibility-evidence-bundle-preview",
+		"--one-shot-result", knownStageLaunchPath,
+		"--desktop-launch-packet", desktopPacketPath,
+		"--runtime-gui-evidence-packet", runtimePacketPath,
+		"--kde-page", kdePagePath,
+		"--output", outputPath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	written, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile output returned error: %v", err)
+	}
+	if string(written) != output.String() {
+		t.Fatalf("written bundle must match stdout\nstdout=%s\nwritten=%s", output.String(), string(written))
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.external_winapp_compatibility_evidence_bundle.v1" ||
+		payload["request_type"] != "external-winapp-compatibility-evidence-bundle-preview" ||
+		payload["source"] != "windows-known-app-bundle-stage-and-launch+desktop-launch-packet+real-winapp-gui-evidence-packet+kde-center-page" ||
+		payload["launch_source_request_type"] != "windows-known-app-bundle-stage-and-launch" ||
+		payload["application_id"] != "org.xnix.external.notepad-file" ||
+		payload["display_name"] != "External Notepad File" ||
+		payload["known_portable_bundle_stage_launch_consumed"] != true ||
+		payload["known_portable_bundle_stage_launch_verified"] != true ||
+		payload["one_shot_runtime_launch_verified"] != true ||
+		payload["runtime_gui_evidence_packet_verified"] != true ||
+		payload["kde_external_app_page_verified"] != true ||
+		payload["real_windows_app_run_verified"] != true ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["external_app_handle_consumed"] != true ||
+		payload["imported_artifact_digest_verified"] != true ||
+		payload["safe_for_kde"] != true ||
+		payload["safe_for_ai_diagnostics"] != true ||
+		payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["raw_paths_exposed"] != false ||
+		payload["raw_launcher_output_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected known portable bundle compatibility evidence bundle: %#v", payload)
+	}
+	artifacts := payload["evidence_artifacts"].([]any)
+	if len(artifacts) != 4 {
+		t.Fatalf("unexpected evidence artifacts: %#v", artifacts)
+	}
+	firstArtifact := artifacts[0].(map[string]any)
+	if firstArtifact["artifact_kind"] != "known-portable-bundle-stage-launch" ||
+		firstArtifact["request_type"] != "windows-known-app-bundle-stage-and-launch" ||
+		firstArtifact["consumed"] != true {
+		t.Fatalf("known portable bundle launch source was not preserved: %#v", firstArtifact)
+	}
+	if strings.Contains(output.String(), knownStageLaunchPath) ||
+		strings.Contains(output.String(), desktopPacketPath) ||
+		strings.Contains(output.String(), runtimePacketPath) ||
+		strings.Contains(output.String(), kdePagePath) ||
+		strings.Contains(output.String(), "docker run") ||
+		strings.Contains(output.String(), "/var/run/docker.sock") {
+		t.Fatalf("known portable bundle compatibility evidence bundle exposed unsafe details: %s", output.String())
+	}
+}
+
 func writeTextFile(t *testing.T, path string, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
@@ -110,6 +190,14 @@ func writeTextFile(t *testing.T, path string, content string) {
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatalf("WriteFile returned error: %v", err)
 	}
+}
+
+func externalWinAppBundleKnownPortableFixture(content string) string {
+	replacer := strings.NewReplacer(
+		"org.xnix.external.desktop-notepad-file-argument", "org.xnix.external.notepad-file",
+		"External Desktop Notepad File Argument", "External Notepad File",
+	)
+	return replacer.Replace(content)
 }
 
 func externalWinAppBundleOneShotFixture() string {

@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc265] - 2026-08-13
+
+### Added
+
+- Added direct `windows-known-app-bundle-stage-and-launch` consumption to `external-winapp-compatibility-evidence-bundle-preview`, preserving the known portable bundle launch source while reusing the verified nested Runtime launch evidence.
+- Added q4 Notepad++ Portable smoke coverage that renders a KDE page and produces a Runtime compatibility evidence bundle directly from the known bundle staged launch, GUI evidence packet, and desktop launch packet artifacts.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc265`.
+
 ## [0.2.640-rc264] - 2026-08-13
 
 ### Added

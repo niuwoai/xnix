@@ -187,7 +187,10 @@ remote_staging_root = "#{remote_app_root}/runtime-staging"
 remote_document = "#{remote_app_root}/sample-document.txt"
 remote_known_bundle_import_report = "#{remote_app_root}/known-portable-bundle-import-record.json"
 remote_known_bundle_stage_launch_report = "#{remote_app_root}/known-portable-bundle-stage-launch.json"
+remote_known_bundle_desktop_launch_packet = "#{remote_app_root}/known-portable-bundle-stage-launch-desktop-packet.json"
 remote_known_bundle_gui_evidence_packet = "#{remote_app_root}/known-portable-bundle-gui-evidence-packet.json"
+remote_known_bundle_kde_page = "#{remote_app_root}/known-portable-bundle-kde-page.json"
+remote_known_bundle_compatibility_bundle = "#{remote_app_root}/known-portable-bundle-compatibility-evidence-bundle.json"
 remote_binary_root = "#{remote_build_root}/bin/linux-amd64"
 remote_runtime_bin = "#{remote_binary_root}/xnix-runtime-go"
 remote_launcher_bin = "#{remote_binary_root}/xnix-compat-launch"
@@ -228,6 +231,24 @@ known_bundle_gui_evidence_packet_command = [
   "real-winapp-gui-evidence-packet-preview",
   "--gui-smoke-report", remote_known_bundle_stage_launch_report,
   "--output", remote_known_bundle_gui_evidence_packet
+]
+
+known_bundle_kde_page_command = [
+  remote_runtime_bin,
+  "kde-center-page-preview",
+  "--external-app-evidence-file", remote_known_bundle_gui_evidence_packet,
+  "--decision", "approved",
+  "--output", remote_known_bundle_kde_page
+]
+
+known_bundle_compatibility_bundle_command = [
+  remote_runtime_bin,
+  "external-winapp-compatibility-evidence-bundle-preview",
+  "--one-shot-result", remote_known_bundle_stage_launch_report,
+  "--desktop-launch-packet", remote_known_bundle_desktop_launch_packet,
+  "--runtime-gui-evidence-packet", remote_known_bundle_gui_evidence_packet,
+  "--kde-page", remote_known_bundle_kde_page,
+  "--output", remote_known_bundle_compatibility_bundle
 ]
 
 def staged_command(remote_host, remote_import_record, output_path, markdown_output_path, timeout_seconds)
@@ -299,6 +320,14 @@ plan = {
   "known_portable_bundle_gui_evidence_packet_command" => known_bundle_gui_evidence_packet_command,
   "known_portable_bundle_gui_evidence_packet_report" => remote_known_bundle_gui_evidence_packet,
   "known_portable_bundle_gui_evidence_packet_status" => "planned",
+  "known_portable_bundle_kde_page_planned" => true,
+  "known_portable_bundle_kde_page_command" => known_bundle_kde_page_command,
+  "known_portable_bundle_kde_page_report" => remote_known_bundle_kde_page,
+  "known_portable_bundle_kde_page_status" => "planned",
+  "known_portable_bundle_compatibility_bundle_planned" => true,
+  "known_portable_bundle_compatibility_bundle_command" => known_bundle_compatibility_bundle_command,
+  "known_portable_bundle_compatibility_bundle_report" => remote_known_bundle_compatibility_bundle,
+  "known_portable_bundle_compatibility_bundle_status" => "planned",
   "record_first_launch_path" => true,
   "remote_cache_root" => remote_cache_root,
   "remote_state_root" => remote_state_root,
@@ -438,6 +467,68 @@ known_bundle_gui_packet_fetched = fetch_remote_artifact(
   known_bundle_gui_packet_local_path,
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
+known_bundle_kde_page_stdout = remote_step!(
+  options.fetch(:local_shell),
+  remote_host,
+  "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(known_bundle_kde_page_command)}",
+  options.fetch(:remote_timeout_seconds),
+  "q4 Notepad++ Go Runtime known portable bundle KDE page failed"
+)
+known_bundle_kde_page = JSON.parse(known_bundle_kde_page_stdout)
+unless known_bundle_kde_page.fetch("request_type") == "kde-center-page-preview" &&
+       known_bundle_kde_page.fetch("application_id") == "org.xnix.external.notepadplusplus" &&
+       known_bundle_kde_page.fetch("application_name") == "Notepad++ Portable" &&
+       known_bundle_kde_page.fetch("known_app_gui_evidence_count") == 1 &&
+       bool(known_bundle_kde_page, "runtime_owned") &&
+       bool(known_bundle_kde_page, "go_runtime_backed") &&
+       !bool(known_bundle_kde_page, "kde_policy_owner") &&
+       !bool(known_bundle_kde_page, "backend_details_exposed") &&
+       !bool(known_bundle_kde_page, "host_root_modified")
+  warn JSON.pretty_generate(known_bundle_kde_page)
+  abort "q4 Notepad++ Go Runtime known portable bundle KDE page did not pass"
+end
+known_bundle_compatibility_bundle_stdout = remote_step!(
+  options.fetch(:local_shell),
+  remote_host,
+  "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(known_bundle_compatibility_bundle_command)}",
+  options.fetch(:remote_timeout_seconds),
+  "q4 Notepad++ Go Runtime known portable bundle compatibility evidence bundle failed"
+)
+known_bundle_compatibility_bundle = JSON.parse(known_bundle_compatibility_bundle_stdout)
+unless known_bundle_compatibility_bundle.fetch("request_type") == "external-winapp-compatibility-evidence-bundle-preview" &&
+       known_bundle_compatibility_bundle.fetch("application_id") == "org.xnix.external.notepadplusplus" &&
+       known_bundle_compatibility_bundle.fetch("display_name") == "Notepad++ Portable" &&
+       known_bundle_compatibility_bundle.fetch("launch_source_request_type") == "windows-known-app-bundle-stage-and-launch" &&
+       bool(known_bundle_compatibility_bundle, "known_portable_bundle_stage_launch_consumed") &&
+       bool(known_bundle_compatibility_bundle, "known_portable_bundle_stage_launch_verified") &&
+       bool(known_bundle_compatibility_bundle, "runtime_gui_evidence_packet_verified") &&
+       bool(known_bundle_compatibility_bundle, "kde_external_app_page_verified") &&
+       bool(known_bundle_compatibility_bundle, "real_windows_app_run_verified") &&
+       bool(known_bundle_compatibility_bundle, "external_app_import_record_consumed") &&
+       bool(known_bundle_compatibility_bundle, "imported_artifact_digest_verified") &&
+       bool(known_bundle_compatibility_bundle, "safe_for_kde") &&
+       bool(known_bundle_compatibility_bundle, "safe_for_ai_diagnostics") &&
+       !bool(known_bundle_compatibility_bundle, "raw_paths_exposed") &&
+       !bool(known_bundle_compatibility_bundle, "host_root_modified")
+  warn JSON.pretty_generate(known_bundle_compatibility_bundle)
+  abort "q4 Notepad++ Go Runtime known portable bundle compatibility evidence bundle did not pass"
+end
+known_bundle_kde_page_local_path = artifact_output_root.join("known-portable-bundle-kde-page.json")
+known_bundle_kde_page_fetched = fetch_remote_artifact(
+  options.fetch(:local_shell),
+  remote_host,
+  remote_known_bundle_kde_page,
+  known_bundle_kde_page_local_path,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+known_bundle_compatibility_bundle_local_path = artifact_output_root.join("known-portable-bundle-compatibility-evidence-bundle.json")
+known_bundle_compatibility_bundle_fetched = fetch_remote_artifact(
+  options.fetch(:local_shell),
+  remote_host,
+  remote_known_bundle_compatibility_bundle,
+  known_bundle_compatibility_bundle_local_path,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
 remote_bundle_root = "#{remote_state_root}/#{known_stage_launch.fetch("known_portable_bundle_bundle_relative_path")}"
 remote_executable = "#{remote_bundle_root}/#{NOTEPADPP_EXE_RELATIVE_PATH}"
 remote_import_record = "#{remote_state_root}/#{known_stage_launch.fetch("known_portable_bundle_record_relative_path")}"
@@ -448,6 +539,8 @@ plan["known_portable_bundle_import_recorded"] = bool(known_import, "import_recor
 plan["known_portable_bundle_import_status"] = known_import.fetch("status")
 plan["known_portable_bundle_stage_launch_status"] = known_stage_launch.fetch("status")
 plan["known_portable_bundle_gui_evidence_packet_status"] = known_bundle_gui_packet.fetch("report_status")
+plan["known_portable_bundle_kde_page_status"] = "passed"
+plan["known_portable_bundle_compatibility_bundle_status"] = "passed"
 plan["remote_bundle_root"] = remote_bundle_root
 plan["remote_executable"] = remote_executable
 plan["remote_import_record"] = remote_import_record
@@ -508,6 +601,20 @@ result = plan.merge(
   "known_portable_bundle_gui_evidence_packet_window_observed" => bool(known_bundle_gui_packet, "window_observed"),
   "known_portable_bundle_gui_evidence_packet_artifact_fetched" => known_bundle_gui_packet_fetched,
   "known_portable_bundle_gui_evidence_packet_artifact_output_path" => known_bundle_gui_packet_local_path.to_s,
+  "known_portable_bundle_kde_page_status" => "passed",
+  "known_portable_bundle_kde_page_request_type" => known_bundle_kde_page.fetch("request_type"),
+  "known_portable_bundle_kde_page_known_app_gui_evidence_count" => known_bundle_kde_page.fetch("known_app_gui_evidence_count"),
+  "known_portable_bundle_kde_page_artifact_fetched" => known_bundle_kde_page_fetched,
+  "known_portable_bundle_kde_page_artifact_output_path" => known_bundle_kde_page_local_path.to_s,
+  "known_portable_bundle_compatibility_bundle_status" => "passed",
+  "known_portable_bundle_compatibility_bundle_request_type" => known_bundle_compatibility_bundle.fetch("request_type"),
+  "known_portable_bundle_compatibility_bundle_launch_source_request_type" => known_bundle_compatibility_bundle.fetch("launch_source_request_type"),
+  "known_portable_bundle_compatibility_bundle_stage_launch_consumed" => bool(known_bundle_compatibility_bundle, "known_portable_bundle_stage_launch_consumed"),
+  "known_portable_bundle_compatibility_bundle_runtime_gui_evidence_packet_verified" => bool(known_bundle_compatibility_bundle, "runtime_gui_evidence_packet_verified"),
+  "known_portable_bundle_compatibility_bundle_kde_external_app_page_verified" => bool(known_bundle_compatibility_bundle, "kde_external_app_page_verified"),
+  "known_portable_bundle_compatibility_bundle_real_windows_app_run_verified" => bool(known_bundle_compatibility_bundle, "real_windows_app_run_verified"),
+  "known_portable_bundle_compatibility_bundle_artifact_fetched" => known_bundle_compatibility_bundle_fetched,
+  "known_portable_bundle_compatibility_bundle_artifact_output_path" => known_bundle_compatibility_bundle_local_path.to_s,
   "known_portable_bundle_import_status" => known_import.fetch("status"),
   "known_portable_bundle_import_recorded" => bool(known_import, "import_recorded"),
   "known_portable_bundle_import_request_type" => known_import.fetch("request_type"),
