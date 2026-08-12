@@ -41,6 +41,8 @@ type ContainerRequest struct {
 
 type ContainerXGUIRequest struct {
 	ExecutablePath                  string
+	WorkspacePath                   string
+	ExecutableRelativePath          string
 	FileArgumentPaths               []string
 	ApplicationName                 string
 	WindowMatch                     string
@@ -100,6 +102,8 @@ type ContainerXGUIResult struct {
 	RecipeBacked                      bool   `json:"recipe_backed"`
 	ExecutableName                    string `json:"executable_name,omitempty"`
 	LocalExecutableCopied             bool   `json:"local_executable_copied"`
+	ApplicationWorkspaceCopied        bool   `json:"application_workspace_copied"`
+	ApplicationWorkspaceMode          string `json:"application_workspace_mode,omitempty"`
 	FileBridgeCopyEnabled             bool   `json:"file_bridge_copy_enabled"`
 	FileBridgeCopiedCount             int    `json:"file_bridge_copied_count"`
 	FileBridgeArgumentsPassed         bool   `json:"file_bridge_arguments_passed"`
@@ -242,6 +246,8 @@ func RunContainerSmoke(ctx context.Context, request ContainerRequest) (Container
 func RunContainerXGUISmoke(ctx context.Context, request ContainerXGUIRequest) (ContainerXGUIResult, error) {
 	result := baseContainerXGUIResult(request)
 	executablePath := strings.TrimSpace(request.ExecutablePath)
+	workspacePath := strings.TrimSpace(request.WorkspacePath)
+	executableRelativePath := strings.TrimSpace(request.ExecutableRelativePath)
 	if executablePath != "" {
 		validatedExecutablePath, err := validateExecutable(executablePath)
 		if err != nil {
@@ -250,6 +256,15 @@ func RunContainerXGUISmoke(ctx context.Context, request ContainerXGUIRequest) (C
 		executablePath = validatedExecutablePath
 		result.ExecutableName = filepath.Base(executablePath)
 		result.LocalExecutableCopied = true
+	}
+	if workspacePath != "" {
+		validatedWorkspacePath, validatedExecutableRelativePath, err := validateXGUIWorkspace(workspacePath, executableRelativePath, executablePath)
+		if err != nil {
+			return result, err
+		}
+		workspacePath = validatedWorkspacePath
+		executableRelativePath = validatedExecutableRelativePath
+		result.ApplicationWorkspaceMode = "portable-directory"
 	}
 
 	dockerPath, err := resolveDocker(request.DockerPath)
@@ -291,7 +306,7 @@ func RunContainerXGUISmoke(ctx context.Context, request ContainerXGUIRequest) (C
 		command.Stderr = &stderr
 		err = command.Run()
 	} else {
-		err = runContainerXGUIWithCopiedExecutable(runCtx, dockerPath, executablePath, request.FileArgumentPaths, &result, &stdout, &stderr)
+		err = runContainerXGUIWithCopiedExecutable(runCtx, dockerPath, executablePath, workspacePath, request.FileArgumentPaths, &result, &stdout, &stderr)
 	}
 	result.DurationMillis = time.Since(startedAt).Milliseconds()
 	output := stdout.String() + "\n" + stderr.String()
@@ -446,7 +461,7 @@ func inspectLocalImagePlatform(ctx context.Context, dockerPath string, image str
 	return strings.TrimSpace(string(output)), nil
 }
 
-func runContainerXGUIWithCopiedExecutable(ctx context.Context, dockerPath string, executablePath string, fileArgumentPaths []string, result *ContainerXGUIResult, stdout *bytes.Buffer, stderr *bytes.Buffer) error {
+func runContainerXGUIWithCopiedExecutable(ctx context.Context, dockerPath string, executablePath string, workspacePath string, fileArgumentPaths []string, result *ContainerXGUIResult, stdout *bytes.Buffer, stderr *bytes.Buffer) error {
 	copiedFileArgs, err := containerXGUIFileArgumentPaths(fileArgumentPaths)
 	if err != nil {
 		return err
@@ -463,10 +478,19 @@ func runContainerXGUIWithCopiedExecutable(ctx context.Context, dockerPath string
 	}
 	defer exec.CommandContext(context.Background(), dockerPath, "rm", "-f", containerID).Run()
 
-	_, copyError, err := runDockerCapture(ctx, dockerPath, []string{"cp", executablePath, containerID + ":/" + filepath.Base(executablePath)})
-	stderr.Write(copyError.Bytes())
-	if err != nil {
-		return err
+	if strings.TrimSpace(workspacePath) != "" {
+		_, copyError, err := runDockerCapture(ctx, dockerPath, []string{"cp", workspacePath + "/.", containerID + ":/app"})
+		stderr.Write(copyError.Bytes())
+		if err != nil {
+			return err
+		}
+		result.ApplicationWorkspaceCopied = true
+	} else {
+		_, copyError, err := runDockerCapture(ctx, dockerPath, []string{"cp", executablePath, containerID + ":/" + filepath.Base(executablePath)})
+		stderr.Write(copyError.Bytes())
+		if err != nil {
+			return err
+		}
 	}
 	for index, filePath := range fileArgumentPaths {
 		containerPath := copiedFileArgs[index]
@@ -502,6 +526,58 @@ func containerXGUIFileArgumentPaths(fileArgumentPaths []string) ([]string, error
 		copiedFileArgs = append(copiedFileArgs, fmt.Sprintf("/file-%d-%s", index+1, filepath.Base(trimmed)))
 	}
 	return copiedFileArgs, nil
+}
+
+func validateXGUIWorkspace(workspacePath string, executableRelativePath string, executablePath string) (string, string, error) {
+	workspacePath = strings.TrimSpace(workspacePath)
+	if workspacePath == "" {
+		return "", "", errors.New("X GUI workspace path is required")
+	}
+	absoluteWorkspacePath, err := filepath.Abs(workspacePath)
+	if err != nil {
+		return "", "", fmt.Errorf("resolve X GUI workspace path: %w", err)
+	}
+	workspaceInfo, err := os.Stat(absoluteWorkspacePath)
+	if err != nil {
+		return "", "", fmt.Errorf("validate X GUI workspace path: %w", err)
+	}
+	if !workspaceInfo.IsDir() {
+		return "", "", errors.New("X GUI workspace path must be a directory")
+	}
+	cleanRelativePath := filepath.ToSlash(strings.TrimSpace(executableRelativePath))
+	if cleanRelativePath == "" {
+		if strings.TrimSpace(executablePath) == "" {
+			return "", "", errors.New("X GUI workspace executable relative path is required")
+		}
+		relative, err := filepath.Rel(absoluteWorkspacePath, executablePath)
+		if err != nil {
+			return "", "", fmt.Errorf("resolve X GUI workspace executable relative path: %w", err)
+		}
+		cleanRelativePath = filepath.ToSlash(relative)
+	}
+	if filepath.IsAbs(cleanRelativePath) || cleanRelativePath == "." || cleanRelativePath == ".." || strings.HasPrefix(cleanRelativePath, "../") || strings.Contains(cleanRelativePath, "\x00") {
+		return "", "", errors.New("X GUI workspace executable relative path is unsafe")
+	}
+	cleanRelativePath = filepath.ToSlash(filepath.Clean(filepath.FromSlash(cleanRelativePath)))
+	workspaceExecutablePath := filepath.Join(absoluteWorkspacePath, filepath.FromSlash(cleanRelativePath))
+	relativeExecutablePath, err := filepath.Rel(absoluteWorkspacePath, workspaceExecutablePath)
+	if err != nil {
+		return "", "", fmt.Errorf("resolve X GUI workspace executable path: %w", err)
+	}
+	if relativeExecutablePath == ".." || strings.HasPrefix(filepath.ToSlash(relativeExecutablePath), "../") {
+		return "", "", errors.New("X GUI workspace executable path escaped workspace")
+	}
+	workspaceExecutableInfo, err := os.Stat(workspaceExecutablePath)
+	if err != nil {
+		return "", "", fmt.Errorf("validate X GUI workspace executable: %w", err)
+	}
+	if workspaceExecutableInfo.IsDir() {
+		return "", "", errors.New("X GUI workspace executable must be a file")
+	}
+	if strings.TrimSpace(executablePath) != "" && filepath.Clean(executablePath) != filepath.Clean(workspaceExecutablePath) {
+		return "", "", errors.New("X GUI workspace executable path does not match validated executable")
+	}
+	return absoluteWorkspacePath, cleanRelativePath, nil
 }
 
 func runDockerCapture(ctx context.Context, dockerPath string, args []string) (*bytes.Buffer, *bytes.Buffer, error) {

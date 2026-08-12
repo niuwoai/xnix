@@ -326,6 +326,76 @@ func TestRunContainerXGUISmokeMountsExternalExecutableReadOnly(t *testing.T) {
 	}
 }
 
+func TestRunContainerXGUISmokeCopiesPortableWorkspace(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell docker fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	workspacePath := filepath.Join(tempDir, "portable")
+	executablePath := filepath.Join(workspacePath, "bin", "PortableGui.exe")
+	if err := os.MkdirAll(filepath.Dir(executablePath), 0o700); err != nil {
+		t.Fatalf("MkdirAll workspace executable directory returned error: %v", err)
+	}
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile workspace executable returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workspacePath, "settings.ini"), []byte("sidecar"), 0o600); err != nil {
+		t.Fatalf("WriteFile workspace sidecar returned error: %v", err)
+	}
+	logPath := filepath.Join(tempDir, "docker-x-gui-workspace.log")
+	dockerPath := writeFakeXGUIDocker(t, tempDir, logPath)
+
+	result, err := RunContainerXGUISmoke(context.Background(), ContainerXGUIRequest{
+		ExecutablePath:         executablePath,
+		WorkspacePath:          workspacePath,
+		ExecutableRelativePath: filepath.ToSlash(filepath.Join("bin", "PortableGui.exe")),
+		ApplicationName:        "/app/bin/PortableGui.exe",
+		WindowMatch:            "Xnix Windows GUI Smoke",
+		Image:                  "local/wine-x-gui:test",
+		Platform:               "linux/amd64",
+		DockerPath:             dockerPath,
+		Timeout:                5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunContainerXGUISmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.ExecutableName != "PortableGui.exe" ||
+		!result.LocalExecutableCopied ||
+		!result.ApplicationWorkspaceCopied ||
+		result.ApplicationWorkspaceMode != "portable-directory" ||
+		result.ApplicationName != "/app/bin/PortableGui.exe" ||
+		result.HostRootModified ||
+		result.PrivilegedContainerRequired ||
+		result.HostNetworkingRequired ||
+		result.DockerSocketMounted ||
+		result.BroadHostMountRequired ||
+		result.HostMountCount != 0 {
+		t.Fatalf("unexpected portable workspace X GUI result: %#v", result)
+	}
+
+	logBytes, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("ReadFile log returned error: %v", err)
+	}
+	log := string(logBytes)
+	for _, token := range []string{
+		"create --pull never --network none",
+		"--env XNIX_GUI_APP=/app/bin/PortableGui.exe",
+		"cp " + workspacePath + "/.",
+		"fake-x-gui-container:/app",
+		"start -a",
+	} {
+		if !strings.Contains(log, token) {
+			t.Fatalf("fake X GUI docker log missing %q: %s", token, log)
+		}
+	}
+	if strings.Contains(log, "docker.sock") || strings.Contains(log, "--privileged") || strings.Contains(log, "--network host") || strings.Contains(log, "--volume") || strings.Contains(log, "--mount") {
+		t.Fatalf("portable workspace X GUI docker log contains unsafe host access: %s", log)
+	}
+}
+
 func writeFakeDocker(t *testing.T, tempDir string, logPath string) string {
 	t.Helper()
 	path := filepath.Join(tempDir, "fake-docker")

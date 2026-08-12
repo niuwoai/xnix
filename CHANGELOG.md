@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc257] - 2026-08-13
+
+### Added
+
+- Added `external-winapp-bundle-import-record` to import portable-directory external Windows apps into the Runtime-managed state root with selected executable relative path, bundle manifest digest, and sidecar counts.
+- Added Runtime/container coverage proving bundle workspaces are copied into the restricted Wine/Xvfb container at `/app` before launching the selected relative `.exe`.
+
+### Changed
+
+- Updated `windows-external-app-run` to resolve both single-executable and portable-directory import records while preserving digest verification, file-open bridging, closed backend/path exposure gates, and q4-preferred targeted validation.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc257`.
+
 ## [0.2.640-rc256] - 2026-08-13
 
 ### Added

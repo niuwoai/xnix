@@ -245,6 +245,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/windows_compatibility_cli_test.go
   cmd/xnix-runtime-go/known_app_matrix_evidence_commands.go
   cmd/xnix-runtime-go/known_app_matrix_evidence_cli_test.go
+  cmd/xnix-runtime-go/external_winapp_import_commands.go
+  cmd/xnix-runtime-go/external_winapp_import_cli_test.go
   cmd/xnix-runtime-go/external_winapp_bundle_import_plan_commands.go
   cmd/xnix-runtime-go/external_winapp_bundle_import_plan_cli_test.go
   internal/runtime/winapp/smoke.go
@@ -263,6 +265,9 @@ REQUIRED_FILES = %w[
   internal/runtime/winapp/known_portable_test.go
   internal/runtime/appidentity/known_app_matrix_evidence.go
   internal/runtime/appidentity/known_app_matrix_evidence_test.go
+  internal/runtime/appidentity/external_winapp_import.go
+  internal/runtime/appidentity/external_winapp_import_test.go
+  internal/runtime/appidentity/external_winapp_run.go
   internal/runtime/appidentity/external_winapp_bundle_import_plan.go
   internal/runtime/appidentity/external_winapp_bundle_import_plan_test.go
   scripts/build_wine_smoke_image.rb
@@ -931,6 +936,18 @@ external_winapp_bundle_import_plan_test = read_project_file("internal/runtime/ap
 %w[TestPreviewExternalWinAppBundleImportPlanAccountsForPortableSidecars TestPreviewExternalWinAppBundleImportPlanRejectsSymlinkSidecar TestExternalWinAppBundleImportPlanPreviewCommand external-winapp-bundle-import-plan-preview currentProjectVersion notepad++.exe plugins localization bundle_manifest_sha256 sidecar_directory_supported single_executable_import_compatible rejects\ symlink].each do |token|
   assert(external_winapp_bundle_import_plan_test.include?(token.gsub("\\ ", " ")), "External Windows app bundle import plan test must include #{token}")
 end
+external_winapp_import_go = read_project_file("internal/runtime/appidentity/external_winapp_import.go") +
+                            read_project_file("internal/runtime/appidentity/external_winapp_run.go") +
+                            read_project_file("cmd/xnix-runtime-go/external_winapp_import_commands.go") +
+                            read_project_file("cmd/xnix-runtime-go/main.go")
+%w[external-winapp-bundle-import-record RecordExternalWinAppBundleImport ResolveExternalWinAppImportedArtifactLocation portable-directory bundle_manifest_sha256 bundle_file_count sidecar_file_count bundle_relative_path executable_relative_path WorkspacePath ExecutableRelativePath /app/ imported\ bundle\ manifest\ digest\ mismatch].each do |token|
+  assert(external_winapp_import_go.include?(token.gsub("\\ ", " ")), "External Windows app bundle import/run path must include #{token}")
+end
+external_winapp_import_test = read_project_file("internal/runtime/appidentity/external_winapp_import_test.go") +
+                              read_project_file("cmd/xnix-runtime-go/external_winapp_import_cli_test.go")
+%w[TestRecordExternalWinAppBundleImportCopiesPortableDirectoryIntoStateRoot TestExternalWinAppBundleImportRecordCommandPersistsRuntimeManagedPortableDirectory external-winapp-bundle-import-record PortableGui.exe portable-directory bundle_manifest_sha256 sidecar_file_count application_workspace_copied application_workspace_mode fake-x-gui-container:/app].each do |token|
+  assert(external_winapp_import_test.include?(token), "External Windows app bundle import/run tests must include #{token}")
+end
 windows_app_smoke_profile_template_test = read_project_file("test/test_winapp_smoke_profile_template.rb")
 %w[windows-app-smoke-profile.template.json ruby\ scripts/winapp_smoke.rb\ --format\ json\ --profile go\ run\ ./cmd/xnix-runtime-go\ windows-app-run-smoke\ --profile redacted\ output].each do |token|
   assert(windows_app_smoke_profile_template_test.include?(token.gsub("\\ ", " ")), "Windows app smoke profile template test must include #{token}")
@@ -952,13 +969,16 @@ known_windows_app_cli_test = read_project_file("cmd/xnix-runtime-go/windows_comp
   assert(known_windows_app_cli_test.include?(token), "Known Windows app materializer CLI test must include #{token}")
 end
 windows_app_container_smoke_go = read_project_file("internal/runtime/winapp/container_smoke.go")
-%w[xnix.runtime.windows_app_container_smoke.v1 windows-app-container-run-smoke xnix-wine-smoke:local linux/amd64 --platform --pull never --network none --cpus 2 --memory 2g --security-opt no-new-privileges --cap-drop ALL --tmpfs /state:rw,nosuid,nodev,size=768m WINEPREFIX=/state/wineprefix WINEARCH=win64 WINEDEBUG=-all WINEDLLOVERRIDES=winemenubuilder.exe=d,mscoree=d,mshtml=d XNIX_WINE_BOOTSTRAP_EXIT WineBootstrapTimedOut ContainerStateMode HostMountCount DockerSocketMounted BroadHostMountRequired RecipeBacked ApplicationID].each do |token|
+%w[xnix.runtime.windows_app_container_smoke.v1 windows-app-container-run-smoke xnix-wine-smoke:local linux/amd64 --platform --pull never --network none --cpus 2 --memory 2g --security-opt no-new-privileges --cap-drop ALL --tmpfs /state:rw,nosuid,nodev,size=768m WINEPREFIX=/state/wineprefix WINEARCH=win64 WINEDEBUG=-all WINEDLLOVERRIDES=winemenubuilder.exe=d,mscoree=d,mshtml=d XNIX_WINE_BOOTSTRAP_EXIT WineBootstrapTimedOut ContainerStateMode HostMountCount DockerSocketMounted BroadHostMountRequired RecipeBacked ApplicationID WorkspacePath ExecutableRelativePath ApplicationWorkspaceCopied application_workspace_mode portable-directory validateXGUIWorkspace].each do |token|
   assert(windows_app_container_smoke_go.include?(token), "Go Windows app container smoke runner must include #{token}")
 end
 windows_app_container_smoke_test = read_project_file("internal/runtime/winapp/container_smoke_test.go")
 [
   "TestRunContainerSmokeUsesRestrictedDockerRunner",
+  "TestRunContainerXGUISmokeCopiesPortableWorkspace",
   "local/wine-smoke:test",
+  "/app/bin/PortableGui.exe",
+  "fake-x-gui-container:/app",
   "XNIX_WINAPP_SMOKE_OK",
   "image inspect",
   "run --rm --platform linux/amd64 --pull never --network none",

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc256
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc257
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc257 checkpoint moves portable-directory external Windows app support into the executable Runtime path. The new `external-winapp-bundle-import-record` command imports a validated portable app directory into the Runtime state root, records the selected executable relative path, bundle manifest digest, and sidecar counts, and lets `windows-external-app-run` copy the whole imported workspace into the restricted Wine/Xvfb container at `/app` before launching the selected `.exe`. This keeps single-file PuTTY-style imports compatible while unblocking real bundled apps that require sibling DLLs, plugins, localization files, or config files. Targeted Go validation ran on q4 and preserved closed network, Docker socket, broad host mount, host-root mutation, and raw path exposure gates.
 
 The v0.2.640-rc256 checkpoint starts closing the portable-directory gap exposed by real Windows desktop apps such as Notepad++ Portable. The Go Runtime now has `external-winapp-bundle-import-plan-preview`, which scans a bundle root, validates the selected `.exe` MZ header, rejects symlink/path escape layouts, accounts for sidecar files and directories, and computes a deterministic bundle manifest digest without enabling launch, backend execution, network, Docker socket mounts, broad host mounts, or host-root mutation. Targeted Go validation ran on q4 to keep compilation off the macOS host.
 

@@ -107,6 +107,145 @@ func TestExternalWinAppImportRecordCommandPersistsRuntimeManagedExecutable(t *te
 	}
 }
 
+func TestExternalWinAppBundleImportRecordCommandPersistsRuntimeManagedPortableDirectory(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	bundleRoot := filepath.Join(tempDir, "portable")
+	writeExternalWinAppBundleCLIFile(t, bundleRoot, filepath.Join("bin", "PortableGui.exe"), []byte{'M', 'Z', 0x90, 0x00, 'p', 'o', 'r', 't'})
+	writeExternalWinAppBundleCLIFile(t, bundleRoot, "settings.ini", []byte("settings"))
+	writeExternalWinAppBundleCLIFile(t, bundleRoot, filepath.Join("plugins", "sidecar.dll"), []byte("plugin"))
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"external-winapp-bundle-import-record",
+		"--state-root", stateRoot,
+		"--bundle-root", bundleRoot,
+		"--executable-relative-path", filepath.ToSlash(filepath.Join("bin", "PortableGui.exe")),
+		"--app-id", "org.xnix.external.portablegui",
+		"--display-name", "Portable GUI",
+		"--app-version", "1.2.3",
+	}, &output); err != nil {
+		t.Fatalf("bundle import run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal bundle import output returned error: %v\n%s", err, output.String())
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.external_winapp_import_record.v1" ||
+		payload["request_type"] != "external-winapp-bundle-import-record" ||
+		payload["source"] != "go-runtime-external-winapp-bundle-import" ||
+		payload["runtime_method"] != "RecordExternalWinAppBundleImport" ||
+		payload["application_id"] != "org.xnix.external.portablegui" ||
+		payload["display_name"] != "Portable GUI" ||
+		payload["app_version"] != "1.2.3" ||
+		payload["executable_name"] != "PortableGui.exe" ||
+		payload["artifact_kind"] != "portable-directory" ||
+		payload["executable_relative_path"] != filepath.ToSlash(filepath.Join("bin", "PortableGui.exe")) ||
+		payload["bundle_file_count"] != float64(3) ||
+		payload["sidecar_file_count"] != float64(2) ||
+		payload["windows_executable_validated"] != true ||
+		payload["artifact_copied"] != true ||
+		payload["import_recorded"] != true ||
+		payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["raw_executable_path_exposed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false {
+		t.Fatalf("unexpected external bundle import output: %#v", payload)
+	}
+	if strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), bundleRoot) ||
+		strings.Contains(output.String(), "docker run") ||
+		strings.Contains(output.String(), "/var/run/docker.sock") {
+		t.Fatalf("external bundle import output exposed unsafe details: %s", output.String())
+	}
+	recordPath := filepath.Join(stateRoot, filepath.FromSlash(payload["record_relative_path"].(string)))
+	dockerLog := filepath.Join(tempDir, "fake-docker.log")
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
+		"if test \"$1 $2\" = 'image inspect'; then printf 'linux/amd64\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'create'; then printf 'fake-x-gui-container\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'cp'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'start -a'; then " +
+		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_FILE_ARGS_PASSED=0\\n'\n" +
+		"printf 'XNIX_X_GUI_FILE_ARGS_WINEPATH_TRANSLATED=0\\n'\n" +
+		"printf '0x700001 \"Portable GUI\": (\"PortableGui.exe\" \"PortableGui.exe\") 320x160+20+20 +20+20\\n'\n" +
+		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'rm'; then exit 0; fi\n" +
+		"exit 2\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+	var runOutput bytes.Buffer
+	if err := run([]string{
+		"windows-external-app-run",
+		"--external-app-import-record", recordPath,
+		"--window-match", "Portable GUI",
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+	}, &runOutput); err != nil {
+		t.Fatalf("external bundle app run returned error: %v", err)
+	}
+	var runPayload map[string]any
+	if err := json.Unmarshal(runOutput.Bytes(), &runPayload); err != nil {
+		t.Fatalf("Unmarshal bundle run output returned error: %v\n%s", err, runOutput.String())
+	}
+	if runPayload["status"] != "passed" ||
+		runPayload["application_id"] != "org.xnix.external.portablegui" ||
+		runPayload["artifact_kind"] != "portable-directory" ||
+		runPayload["executable_relative_path"] != filepath.ToSlash(filepath.Join("bin", "PortableGui.exe")) ||
+		runPayload["bundle_manifest_sha256"] != payload["bundle_manifest_sha256"] ||
+		runPayload["bundle_file_count"] != float64(3) ||
+		runPayload["sidecar_file_count"] != float64(2) ||
+		runPayload["imported_artifact_digest_verified"] != true ||
+		runPayload["runtime_run_executed"] != true ||
+		runPayload["x_window_observed"] != true ||
+		runPayload["raw_import_record_path_exposed"] != false ||
+		runPayload["raw_state_root_path_exposed"] != false ||
+		runPayload["raw_executable_path_exposed"] != false ||
+		runPayload["host_root_modified"] != false ||
+		runPayload["docker_socket_mounted"] != false {
+		t.Fatalf("unexpected external bundle run payload: %#v", runPayload)
+	}
+	runtimePayload := runPayload["runtime_payload"].(map[string]any)
+	if runtimePayload["application_name"] != "/app/bin/PortableGui.exe" ||
+		runtimePayload["application_workspace_copied"] != true ||
+		runtimePayload["application_workspace_mode"] != "portable-directory" {
+		t.Fatalf("unexpected nested bundle runtime payload: %#v", runtimePayload)
+	}
+	dockerInvocation, err := os.ReadFile(dockerLog)
+	if err != nil {
+		t.Fatalf("ReadFile docker log returned error: %v", err)
+	}
+	bundleRelativePath := payload["bundle_relative_path"].(string)
+	importedWorkspacePath := filepath.Join(stateRoot, filepath.FromSlash(bundleRelativePath))
+	if !strings.Contains(string(dockerInvocation), "cp") ||
+		!strings.Contains(string(dockerInvocation), importedWorkspacePath+"/.") ||
+		!strings.Contains(string(dockerInvocation), "fake-x-gui-container:/app") ||
+		!strings.Contains(string(dockerInvocation), "XNIX_GUI_APP=/app/bin/PortableGui.exe") {
+		t.Fatalf("fake Docker did not receive copied portable workspace flow: %s", string(dockerInvocation))
+	}
+	if strings.Contains(runOutput.String(), recordPath) ||
+		strings.Contains(runOutput.String(), stateRoot) ||
+		strings.Contains(runOutput.String(), bundleRoot) ||
+		strings.Contains(runOutput.String(), dockerPath) ||
+		strings.Contains(runOutput.String(), "docker run") ||
+		strings.Contains(runOutput.String(), "/var/run/docker.sock") ||
+		strings.Contains(runOutput.String(), "--network host") ||
+		strings.Contains(runOutput.String(), "--privileged") {
+		t.Fatalf("external bundle app run output exposed unsafe details: %s", runOutput.String())
+	}
+}
+
 func TestExternalWinAppImportRecordCommandRejectsNonPEExecutable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "ExternalTool.exe")

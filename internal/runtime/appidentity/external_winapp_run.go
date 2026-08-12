@@ -42,6 +42,11 @@ type ExternalWinAppRunResult struct {
 	DisplayName                               string                     `json:"display_name"`
 	AppVersion                                string                     `json:"app_version"`
 	ExecutableName                            string                     `json:"executable_name"`
+	ArtifactKind                              string                     `json:"artifact_kind,omitempty"`
+	ExecutableRelativePath                    string                     `json:"executable_relative_path,omitempty"`
+	BundleManifestSHA256                      string                     `json:"bundle_manifest_sha256,omitempty"`
+	BundleFileCount                           int                        `json:"bundle_file_count,omitempty"`
+	SidecarFileCount                          int                        `json:"sidecar_file_count,omitempty"`
 	ExternalAppImportRecordConsumed           bool                       `json:"external_app_import_record_consumed"`
 	ExternalAppHandleConsumed                 bool                       `json:"external_app_handle_consumed"`
 	ExternalAppHandle                         string                     `json:"external_app_handle,omitempty"`
@@ -111,18 +116,26 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 	}
 	var record ExternalWinAppImportRecord
 	var importedExecutablePath string
+	var importedWorkspacePath string
+	var importedExecutableRelativePath string
 	if importRecordPath != "" {
-		record, importedExecutablePath, err = ResolveExternalWinAppImportedArtifact(importRecordPath)
+		record, importedExecutablePath, importedWorkspacePath, importedExecutableRelativePath, err = ResolveExternalWinAppImportedArtifactLocation(importRecordPath)
 	} else {
-		record, importedExecutablePath, err = ResolveExternalWinAppImportedArtifactByHandle(stateRoot, externalAppHandle)
+		record, importedExecutablePath, importedWorkspacePath, importedExecutableRelativePath, err = ResolveExternalWinAppImportedArtifactLocationByHandle(stateRoot, externalAppHandle)
 	}
 	if err != nil {
 		return ExternalWinAppRunResult{}, err
 	}
 	windowMatch := externalWinAppWindowMatch(request.WindowMatch, fileArgumentPaths, record.ExecutableName)
+	applicationName := "/" + record.ExecutableName
+	if record.ArtifactKind == ExternalWinAppArtifactKindPortableDirectory {
+		applicationName = "/app/" + filepath.ToSlash(importedExecutableRelativePath)
+	}
 	runtimePayload, err := winapp.RunContainerXGUISmoke(ctx, winapp.ContainerXGUIRequest{
 		ExecutablePath:                  importedExecutablePath,
-		ApplicationName:                 "/" + record.ExecutableName,
+		WorkspacePath:                   importedWorkspacePath,
+		ExecutableRelativePath:          importedExecutableRelativePath,
+		ApplicationName:                 applicationName,
 		FileArgumentPaths:               fileArgumentPaths,
 		WindowMatch:                     windowMatch,
 		ApplicationID:                   record.ApplicationID,
@@ -152,6 +165,11 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 		DisplayName:                             record.DisplayName,
 		AppVersion:                              record.AppVersion,
 		ExecutableName:                          record.ExecutableName,
+		ArtifactKind:                            record.ArtifactKind,
+		ExecutableRelativePath:                  record.ExecutableRelativePath,
+		BundleManifestSHA256:                    record.BundleManifestSHA256,
+		BundleFileCount:                         record.BundleFileCount,
+		SidecarFileCount:                        record.SidecarFileCount,
 		ExternalAppImportRecordConsumed:         true,
 		ExternalAppHandleConsumed:               externalAppHandle != "",
 		ExternalAppHandle:                       externalAppHandle,

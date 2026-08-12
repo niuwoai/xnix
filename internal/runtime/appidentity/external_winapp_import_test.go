@@ -123,6 +123,87 @@ func TestRecordExternalWinAppImportCopiesExecutableIntoStateRoot(t *testing.T) {
 	}
 }
 
+func TestRecordExternalWinAppBundleImportCopiesPortableDirectoryIntoStateRoot(t *testing.T) {
+	tempDir := t.TempDir()
+	bundleRoot := filepath.Join(tempDir, "NotepadPlusPlusPortable")
+	writeBundleFile(t, bundleRoot, "notepad++.exe", []byte{'M', 'Z', 0x90, 0x00, 'n', 'p', 'p'})
+	writeBundleFile(t, bundleRoot, "config.xml", []byte("<config/>"))
+	writeBundleFile(t, bundleRoot, filepath.Join("plugins", "mimeTools.dll"), []byte("plugin"))
+	stateRoot := filepath.Join(tempDir, "state")
+
+	record, err := RecordExternalWinAppBundleImport(ExternalWinAppBundleImportRequest{
+		Version:                "0.2.640-test",
+		StateRoot:              stateRoot,
+		BundleRoot:             bundleRoot,
+		ExecutableRelativePath: "notepad++.exe",
+		AppID:                  "org.xnix.external.notepadplusplus",
+		DisplayName:            "Notepad++ Portable",
+		AppVersion:             "8.9.7",
+	})
+	if err != nil {
+		t.Fatalf("RecordExternalWinAppBundleImport returned error: %v", err)
+	}
+	if record.SchemaVersion != ExternalWinAppImportRecordSchemaVersion ||
+		record.RequestType != ExternalWinAppBundleImportRecordRequestType ||
+		record.RecordType != "external-windows-app-import-record" ||
+		record.Source != "go-runtime-external-winapp-bundle-import" ||
+		record.RuntimeMethod != "RecordExternalWinAppBundleImport" ||
+		record.ArtifactKind != ExternalWinAppArtifactKindPortableDirectory ||
+		record.ExecutableName != "notepad++.exe" ||
+		record.ExecutableRelativePath != "notepad++.exe" ||
+		record.BundleManifestSHA256 == "" ||
+		record.BundleFileCount != 3 ||
+		record.SidecarFileCount != 2 ||
+		record.BundleDirectoryCount != 1 ||
+		record.SidecarDirectoryCount != 1 ||
+		!strings.HasPrefix(record.BundleRelativePath, "external-apps/org.xnix.external.notepadplusplus/bundles/") ||
+		record.ArtifactRelativePath != record.BundleRelativePath+"/notepad++.exe" ||
+		!record.WindowsExecutableValidated ||
+		!record.ArtifactCopied ||
+		!record.ImportRecorded ||
+		!record.RuntimeOwned ||
+		!record.GoRuntimeBacked ||
+		record.KDEPolicyOwner ||
+		record.LaunchEnabled ||
+		record.BackendLaunchEnabled ||
+		record.ActionExecutionEnabled ||
+		record.StateRootPathExposed ||
+		record.RawExecutablePathExposed ||
+		record.HostRootModified ||
+		record.NetworkRequired ||
+		record.PrivilegedContainerRequired ||
+		record.DockerSocketMounted ||
+		record.BroadHostMountRequired {
+		t.Fatalf("unexpected bundle import record: %#v", record)
+	}
+	if reasons := ValidateExternalWinAppImportRecord(record); len(reasons) != 0 {
+		t.Fatalf("ValidateExternalWinAppImportRecord returned reasons: %v", reasons)
+	}
+	recordPath := filepath.Join(stateRoot, filepath.FromSlash(record.RecordRelativePath))
+	resolvedRecord, artifactPath, workspacePath, executableRelativePath, err := ResolveExternalWinAppImportedArtifactLocation(recordPath)
+	if err != nil {
+		t.Fatalf("ResolveExternalWinAppImportedArtifactLocation returned error: %v", err)
+	}
+	if resolvedRecord.RecordSHA256 != record.RecordSHA256 ||
+		artifactPath != filepath.Join(stateRoot, filepath.FromSlash(record.ArtifactRelativePath)) ||
+		workspacePath != filepath.Join(stateRoot, filepath.FromSlash(record.BundleRelativePath)) ||
+		executableRelativePath != "notepad++.exe" {
+		t.Fatalf("unexpected resolved bundle import location: record=%#v artifact=%s workspace=%s exe=%s", resolvedRecord, artifactPath, workspacePath, executableRelativePath)
+	}
+	for _, relativePath := range []string{"notepad++.exe", "config.xml", filepath.ToSlash(filepath.Join("plugins", "mimeTools.dll"))} {
+		if _, err := os.Stat(filepath.Join(workspacePath, filepath.FromSlash(relativePath))); err != nil {
+			t.Fatalf("imported bundle missing %s: %v", relativePath, err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(workspacePath, "config.xml"), []byte("<tampered/>"), 0o600); err != nil {
+		t.Fatalf("WriteFile tampered bundle sidecar returned error: %v", err)
+	}
+	if _, _, _, _, err := ResolveExternalWinAppImportedArtifactLocation(recordPath); err == nil ||
+		!strings.Contains(err.Error(), "bundle manifest digest mismatch") {
+		t.Fatalf("expected bundle manifest mismatch after tampering, got %v", err)
+	}
+}
+
 func TestResolveExternalWinAppImportedArtifactRejectsTamperedArtifact(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "ExternalTool.exe")

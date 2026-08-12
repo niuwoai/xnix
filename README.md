@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc256`.
+The project is currently at `v0.2.640-rc257`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc256`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc257 moves portable-directory external Windows apps from planning into the executable Runtime import/run path. `external-winapp-bundle-import-record` now copies a validated portable app directory into the Runtime-managed state root, records the bundle manifest digest and sidecar counts, and `windows-external-app-run` copies that workspace into the Wine/Xvfb container at `/app` before launching the selected relative `.exe`. Targeted Go validation ran on q4 so the macOS host avoided compilation.
 
 v0.2.640-rc256 adds a Go Runtime portable-directory import plan for external Windows apps that ship as bundles instead of single `.exe` files. `external-winapp-bundle-import-plan-preview` scans a local bundle root, validates the selected Windows executable's MZ header, rejects unsafe symlink/path layouts, computes a deterministic manifest digest over sidecar files, and keeps launch/backend/path exposure gates closed. Targeted Go validation ran on q4 so the macOS host avoided compilation.
 
