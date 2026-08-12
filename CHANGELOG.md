@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc255] - 2026-08-13
+
+### Added
+
+- Added `scripts/q4_putty_external_winapp_smoke.rb` to download, verify, and run the official PuTTY standalone Windows GUI app on q4.
+- Added targeted script coverage and layout guards for q4-only download, SHA256 verification, staged Runtime/KDE execution, real third-party app evidence, and host download/compilation avoidance.
+- Passed targeted q4 PuTTY validation with file-argument bridging, 13 fetched artifacts, Go-owned staged acceptance, and `runtime-accepted-real-app-run` accepted Runtime/KDE state.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc255`.
+
 ## [0.2.640-rc254] - 2026-08-13
 
 ### Added

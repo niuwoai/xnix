@@ -276,6 +276,7 @@ REQUIRED_FILES = %w[
   scripts/q4_winapp_smoke.rb
   scripts/q4_messagebox_smoke.rb
   scripts/q4_external_winapp_run.rb
+  scripts/q4_putty_external_winapp_smoke.rb
   scripts/q4_dbus_controlled_launch_owner_fixture_smoke.rb
   scripts/q4_runtime_run_plan_execution_smoke.rb
   scripts/q4_full_smoke.rb
@@ -283,6 +284,7 @@ REQUIRED_FILES = %w[
   test/test_q4_winapp_smoke_script.rb
   test/test_q4_messagebox_smoke_script.rb
   test/test_q4_external_winapp_run_script.rb
+  test/test_q4_putty_external_winapp_smoke_script.rb
   test/test_q4_dbus_controlled_launch_owner_fixture_smoke_script.rb
   test/test_q4_runtime_run_plan_execution_smoke_script.rb
   test/test_q4_full_smoke_script.rb
@@ -1050,6 +1052,11 @@ q4_external_winapp_run = read_project_file("scripts/q4_external_winapp_run.rb") 
                          read_project_file("test/test_q4_external_winapp_run_script.rb")
 %w[xnix.scripts.q4_external_winapp_run.v1 q4-external-winapp-run scripts/q4_staged_desktop_external_winapp_smoke.rb --executable --window-match --remote-materials-root scp Digest::SHA256.file local\ executable\ must\ have\ an\ MZ\ header local_executable_path_exposed local_executable_sha256 local_executable_mz_header_checked remote_upload_planned remote_upload_completed remote_executable_path_exposed_only_for_operator windows_process_file_argument_window_observed runtime-accepted-real-app-run accepted_application_detail_state kde_accepted_page_state host_compilation_avoided q4_compile_required full_smoke_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
   assert(q4_external_winapp_run.include?(token.gsub("\\ ", " ")), "q4 external Windows app run script must include #{token}")
+end
+q4_putty_external_winapp_smoke = read_project_file("scripts/q4_putty_external_winapp_smoke.rb") +
+                                read_project_file("test/test_q4_putty_external_winapp_smoke_script.rb")
+%w[xnix.scripts.q4_putty_external_winapp_smoke.v1 q4-putty-external-winapp-smoke https://the.earth.li/~sgtatham/putty/0.84/w32/putty.exe d5a83cd1233f6da38fa82b14d970dbb2c2705769b5ebabb464918b9b57180bc4 curl --retry-all-errors --continue-at sha256sum putty.exe scripts/q4_staged_desktop_external_winapp_smoke.rb org.xnix.external.putty PuTTY real_third_party_windows_app single_file_windows_app putty_download_planned putty_downloaded putty_sha256_verified external_file_bridge_ready windows_process_file_argument_window_observed accepted_application_detail_state kde_accepted_page_state runtime-accepted-real-app-run host_download_avoided host_compilation_avoided q4_download_required q4_compile_required full_smoke_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
+  assert(q4_putty_external_winapp_smoke.include?(token.gsub("\\ ", " ")), "q4 PuTTY external Windows app smoke script must include #{token}")
 end
 q4_dbus_controlled_launch_owner_fixture_smoke = read_project_file("scripts/q4_dbus_controlled_launch_owner_fixture_smoke.rb") +
                                                 read_project_file("test/test_q4_dbus_controlled_launch_owner_fixture_smoke_script.rb")

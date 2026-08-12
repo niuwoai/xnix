@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc254`.
+The project is currently at `v0.2.640-rc255`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc254`.
 
 ## Current Checkpoint
 
-v0.2.640-rc254 adds a Go Runtime q4 external Windows app run-plan preview. `xnix-runtime-go q4-external-winapp-run-plan-preview --executable /tmp/xnix-.../app.exe --window-match TEXT` now records the q4-only materialization route, the scoped upload harness command, required MZ/SHA256 validation, observed-window evidence, and accepted Runtime/KDE state gates before a real external app run is executed. The local host remains limited to scoped upload orchestration; q4 remains the preferred build/materialization and execution target.
+v0.2.640-rc255 adds a q4 PuTTY external Windows app smoke. `scripts/q4_putty_external_winapp_smoke.rb --execute` downloads the official PuTTY 0.84 standalone `putty.exe` on q4, verifies the pinned SHA256, and runs the real third-party GUI app through the staged external Runtime/KDE path without host-side download or compilation.
 
 v0.2.640-rc252 makes the q4-built MessageBox Windows GUI fixture reusable through the staged external desktop path with one targeted command. `scripts/q4_messagebox_smoke.rb --execute --direct --staged-external` now builds the real Windows `.exe` on q4, verifies the generic q4 GUI run, then sends that same executable through `scripts/q4_staged_desktop_external_winapp_smoke.rb --fixture external` so the Go Runtime import, KDE desktop activation staging, managed launcher, file-open bridge, evidence bundle, application detail, and accepted KDE page are proven together.
 
