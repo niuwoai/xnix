@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc242] - 2026-08-13
+
+### Added
+
+- Added `kde-center-page-preview --external-app-application-detail` so KDE Center pages can consume the Go Runtime external Windows app detail artifact directly.
+- Added a KDE external Windows app detail card with verified real GUI run, file-open, Runtime GUI evidence, desktop evidence, KDE page evidence, and closed launch/backend/path gates.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc242`.
+
 ## [0.2.640-rc241] - 2026-08-13
 
 ### Changed

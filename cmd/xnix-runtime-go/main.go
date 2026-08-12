@@ -2860,6 +2860,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
 	externalAppEvidenceFile := flags.String("external-app-evidence-file", "", "real GUI evidence packet for a non-recipe external Windows application")
 	externalAppImportRecord := flags.String("external-app-import-record", "", "Runtime external Windows app import record")
+	externalAppApplicationDetail := flags.String("external-app-application-detail", "", "Runtime external Windows app application detail JSON")
 	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
 	sessionRoot := flags.String("session-root", "", "read execution session status record evidence from this explicit root")
 	sessionRequestID := flags.String("session-request-id", "", "execution session request id to read from --session-root")
@@ -2917,8 +2918,11 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	if *externalAppImportRecord != "" {
 		sourceCount++
 	}
+	if *externalAppApplicationDetail != "" {
+		sourceCount++
+	}
 	if sourceCount != 1 {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview requires exactly one source: --recipe, --registry, --external-app-evidence-file, or --external-app-import-record")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview requires exactly one source: --recipe, --registry, --external-app-evidence-file, --external-app-import-record, or --external-app-application-detail")
 	}
 	if *registryPath != "" && *applicationID == "" {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview requires --app when --registry is used")
@@ -2931,6 +2935,9 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	}
 	if *externalAppImportRecord != "" && (*applicationID != "" || *recipeRoot != "") {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview --external-app-import-record cannot be combined with --app or --recipe-root")
+	}
+	if *externalAppApplicationDetail != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview --external-app-application-detail cannot be combined with --app or --recipe-root")
 	}
 	fileURIs := flags.Args()
 
@@ -2981,6 +2988,27 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 			ApplicationReadinessArtifactReceipt: receipt,
 			ApplicationReadinessPortalOperation: *readinessPortalOperation,
 			ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
+		}, nil
+	}
+	if *externalAppApplicationDetail != "" {
+		detail, err := appidentity.LoadExternalWinAppApplicationDetail(*externalAppApplicationDetail)
+		if err != nil {
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+		}
+		recipe, provenance, err := appidentity.ExternalAppRecipeFromApplicationDetail(detail)
+		if err != nil {
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+		}
+		return recipe, provenance, *decision, fileURIs, appidentity.KDECenterPageOptions{
+			ActivationRoot:                      *activationRoot,
+			ExecutionSessionRoot:                *sessionRoot,
+			ExecutionSessionRequestID:           *sessionRequestID,
+			ApplicationReadinessRoot:            *readinessRoot,
+			ApplicationReadinessStateRoot:       *readinessStateRoot,
+			ApplicationReadinessArtifactReceipt: receipt,
+			ApplicationReadinessPortalOperation: *readinessPortalOperation,
+			ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
+			ExternalWinAppApplicationDetail:     &detail,
 		}, nil
 	}
 

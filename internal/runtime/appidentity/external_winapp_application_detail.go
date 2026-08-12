@@ -177,6 +177,78 @@ func loadExternalWinAppApplicationDetailBundle(path string) (ExternalWinAppCompa
 	return bundle, nil
 }
 
+func LoadExternalWinAppApplicationDetail(path string) (ExternalWinAppApplicationDetail, error) {
+	cleanPath := strings.TrimSpace(path)
+	if cleanPath == "" {
+		return ExternalWinAppApplicationDetail{}, errors.New("external Windows app application detail path is required")
+	}
+	content, err := os.ReadFile(cleanPath)
+	if err != nil {
+		return ExternalWinAppApplicationDetail{}, fmt.Errorf("read external Windows app application detail: %w", err)
+	}
+	detail, err := ExternalWinAppApplicationDetailFromJSON(content)
+	if err != nil {
+		return ExternalWinAppApplicationDetail{}, err
+	}
+	return detail, nil
+}
+
+func ExternalWinAppApplicationDetailFromJSON(content []byte) (ExternalWinAppApplicationDetail, error) {
+	var detail ExternalWinAppApplicationDetail
+	if err := json.Unmarshal(content, &detail); err != nil {
+		return ExternalWinAppApplicationDetail{}, fmt.Errorf("parse external Windows app application detail: %w", err)
+	}
+	if err := validateExternalWinAppApplicationDetail(detail); err != nil {
+		return ExternalWinAppApplicationDetail{}, err
+	}
+	return detail, nil
+}
+
+func ExternalAppRecipeFromApplicationDetail(detail ExternalWinAppApplicationDetail) (Recipe, Provenance, error) {
+	if err := validateExternalWinAppApplicationDetail(detail); err != nil {
+		return Recipe{}, Provenance{}, err
+	}
+	recipe := Recipe{
+		ID:                  detail.ApplicationID,
+		Name:                detail.DisplayName,
+		Version:             detail.AppVersion,
+		Icon:                "application-x-executable",
+		Mode:                "automatic",
+		SupportedExtensions: []string{},
+	}
+	if err := recipe.Validate(); err != nil {
+		return Recipe{}, Provenance{}, err
+	}
+	return recipe, Provenance{
+		Source:          "external-winapp-application-detail",
+		RegistryName:    "runtime-observed-external-app",
+		DigestVerified:  true,
+		SignatureStatus: "observed-runtime-application-detail",
+	}, nil
+}
+
+func validateExternalWinAppApplicationDetail(detail ExternalWinAppApplicationDetail) error {
+	switch {
+	case detail.SchemaVersion != ExternalWinAppApplicationDetailSchemaVersion || detail.RequestType != ExternalWinAppApplicationDetailRequestType:
+		return errors.New("external Windows app application detail requires a Runtime application detail payload")
+	case strings.TrimSpace(detail.ApplicationID) == "" || strings.TrimSpace(detail.DisplayName) == "":
+		return errors.New("external Windows app application detail requires application identity")
+	case !detail.EvidenceBundleConsumed || !detail.ExistingWindowsAppVerified || !detail.RealWindowsAppRunVerified || !detail.FileOpenVerified:
+		return errors.New("external Windows app application detail requires verified existing app evidence")
+	case !detail.RuntimeGUIEvidenceVerified || !detail.DesktopEvidenceVerified || !detail.KDEPageEvidenceVerified:
+		return errors.New("external Windows app application detail requires complete Runtime and desktop evidence")
+	case !detail.SafeForKDE || !detail.SafeForAIDiagnostics || !detail.RuntimeOwned || !detail.GoRuntimeBacked || detail.KDEPolicyOwner:
+		return errors.New("external Windows app application detail requires Runtime-owned KDE-safe evidence")
+	case detail.LaunchEnabled || detail.BackendLaunchEnabled || detail.ActionExecutionEnabled || detail.BackendProcessStarted:
+		return errors.New("external Windows app application detail must remain read-only for KDE consumption")
+	case detail.BackendDetailsExposed || detail.RawPathsExposed || detail.RawLauncherOutputExposed || detail.HostRootModified:
+		return errors.New("external Windows app application detail requires redacted host-safe evidence")
+	case detail.PrivilegedContainerRequired || detail.HostNetworkingRequired || detail.DockerSocketMounted || detail.BroadHostMountRequired:
+		return errors.New("external Windows app application detail requires non-privileged isolated evidence")
+	}
+	return nil
+}
+
 func validateExternalWinAppApplicationDetailBundle(bundle ExternalWinAppCompatibilityEvidenceBundle) error {
 	switch {
 	case bundle.SchemaVersion != ExternalWinAppCompatibilityEvidenceBundleSchemaVersion || bundle.RequestType != ExternalWinAppCompatibilityEvidenceBundleRequestType:

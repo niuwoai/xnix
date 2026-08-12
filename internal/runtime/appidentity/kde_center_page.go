@@ -43,6 +43,9 @@ type KDECenterPagePreview struct {
 	KnownAppOwnerFileOpenVerifiedCount         int                                    `json:"known_app_owner_file_open_verified_count"`
 	KnownAppOwnerFileOpenEntrypointCount       int                                    `json:"known_app_owner_file_open_entrypoint_count"`
 	KnownAppGUIEvidenceCards                   []KDECenterPageKnownAppMatrixCard      `json:"known_app_gui_evidence_cards"`
+	ExternalWinAppApplicationDetailConsumed    bool                                   `json:"external_winapp_application_detail_consumed"`
+	ExternalWinAppApplicationDetailCount       int                                    `json:"external_winapp_application_detail_count"`
+	ExternalWinAppApplicationDetailCards       []KDECenterPageExternalWinAppCard      `json:"external_winapp_application_detail_cards"`
 	BackendSelectionSnapshot                   KDECenterPageBackend                   `json:"backend_selection_snapshot"`
 	ActivationStatusSnapshot                   KDECenterPageActivation                `json:"activation_status_snapshot"`
 	ExecutionReadinessSnapshot                 KDECenterPageExecution                 `json:"execution_readiness_snapshot"`
@@ -230,6 +233,36 @@ type KDECenterPageKnownAppMatrixCard struct {
 	Summary                                           string   `json:"summary"`
 }
 
+type KDECenterPageExternalWinAppCard struct {
+	AppID                      string `json:"app_id"`
+	DisplayName                string `json:"display_name"`
+	AppVersion                 string `json:"app_version"`
+	CompatibilityState         string `json:"compatibility_state"`
+	CompatibilityLabel         string `json:"compatibility_label"`
+	PrimaryStatusTone          string `json:"primary_status_tone"`
+	RealWindowsAppRunVerified  bool   `json:"real_windows_app_run_verified"`
+	FileOpenVerified           bool   `json:"file_open_verified"`
+	RuntimeGUIEvidenceVerified bool   `json:"runtime_gui_evidence_verified"`
+	DesktopEvidenceVerified    bool   `json:"desktop_evidence_verified"`
+	KDEPageEvidenceVerified    bool   `json:"kde_page_evidence_verified"`
+	EvidenceSignalCount        int    `json:"evidence_signal_count"`
+	EvidenceArtifactCount      int    `json:"evidence_artifact_count"`
+	PrimaryActionID            string `json:"primary_action_id"`
+	PrimaryActionLabel         string `json:"primary_action_label"`
+	PrimaryActionEnabled       bool   `json:"primary_action_enabled"`
+	RuntimeOwned               bool   `json:"runtime_owned"`
+	GoRuntimeBacked            bool   `json:"go_runtime_backed"`
+	KDEPolicyOwner             bool   `json:"kde_policy_owner"`
+	SafeForKDE                 bool   `json:"safe_for_kde"`
+	SafeForAIDiagnostics       bool   `json:"safe_for_ai_diagnostics"`
+	LaunchEnabled              bool   `json:"launch_enabled"`
+	BackendLaunchEnabled       bool   `json:"backend_launch_enabled"`
+	BackendDetailsExposed      bool   `json:"backend_details_exposed"`
+	RawPathsExposed            bool   `json:"raw_paths_exposed"`
+	HostRootModified           bool   `json:"host_root_modified"`
+	Summary                    string `json:"summary"`
+}
+
 type KDECenterPageBackend struct {
 	RequestType                 string `json:"request_type"`
 	PlanType                    string `json:"plan_type"`
@@ -284,6 +317,7 @@ type KDECenterPageOptions struct {
 	ApplicationReadinessSnapshotReason  string
 	KnownAppSmokeEvidence               []KnownAppSmokeEvidenceSummary
 	KnownAppVerifiedCatalog             *KnownAppVerifiedCatalogPreview
+	ExternalWinAppApplicationDetail     *ExternalWinAppApplicationDetail
 }
 
 type KDECenterPageExecution struct {
@@ -848,6 +882,7 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	knownAppOwnerManagedCopyVerifiedCount := countOwnerManagedCopyVerifiedKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
 	knownAppOwnerFileOpenVerifiedCount := countOwnerFileOpenVerifiedKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
 	knownAppOwnerFileOpenEntrypointCount := countOwnerFileOpenEntrypointKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
+	externalWinAppDetailCards := kdeCenterPageExternalWinAppApplicationDetailCards(options.ExternalWinAppApplicationDetail)
 	source := "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview"
 	if options.ExecutionSessionRoot != "" {
 		source += "+execution-session-record"
@@ -869,6 +904,9 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	}
 	if len(knownAppGUICards) > 0 {
 		source += "+known-app-gui-smoke-evidence"
+	}
+	if len(externalWinAppDetailCards) > 0 {
+		source += "+external-winapp-application-detail"
 	}
 	if knownAppOwnerControlledGUICount > 0 {
 		source += "+owner-controlled-gui-evidence"
@@ -933,6 +971,9 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 		KnownAppOwnerFileOpenVerifiedCount:         knownAppOwnerFileOpenVerifiedCount,
 		KnownAppOwnerFileOpenEntrypointCount:       knownAppOwnerFileOpenEntrypointCount,
 		KnownAppGUIEvidenceCards:                   knownAppGUICards,
+		ExternalWinAppApplicationDetailConsumed:    len(externalWinAppDetailCards) > 0,
+		ExternalWinAppApplicationDetailCount:       len(externalWinAppDetailCards),
+		ExternalWinAppApplicationDetailCards:       externalWinAppDetailCards,
 		BackendSelectionSnapshot: KDECenterPageBackend{
 			RequestType:                 backendSelection.RequestType,
 			PlanType:                    backendSelection.PlanType,
@@ -1425,6 +1466,44 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 		})
 	}
 	return cards
+}
+
+func kdeCenterPageExternalWinAppApplicationDetailCards(detail *ExternalWinAppApplicationDetail) []KDECenterPageExternalWinAppCard {
+	if detail == nil {
+		return nil
+	}
+	if err := validateExternalWinAppApplicationDetail(*detail); err != nil {
+		return nil
+	}
+	return []KDECenterPageExternalWinAppCard{{
+		AppID:                      detail.ApplicationID,
+		DisplayName:                detail.DisplayName,
+		AppVersion:                 detail.AppVersion,
+		CompatibilityState:         detail.CompatibilityState,
+		CompatibilityLabel:         detail.CompatibilityLabel,
+		PrimaryStatusTone:          detail.PrimaryStatusTone,
+		RealWindowsAppRunVerified:  detail.RealWindowsAppRunVerified,
+		FileOpenVerified:           detail.FileOpenVerified,
+		RuntimeGUIEvidenceVerified: detail.RuntimeGUIEvidenceVerified,
+		DesktopEvidenceVerified:    detail.DesktopEvidenceVerified,
+		KDEPageEvidenceVerified:    detail.KDEPageEvidenceVerified,
+		EvidenceSignalCount:        len(detail.EvidenceSignals),
+		EvidenceArtifactCount:      detail.EvidenceArtifactCount,
+		PrimaryActionID:            detail.PrimaryAction.ID,
+		PrimaryActionLabel:         detail.PrimaryAction.Label,
+		PrimaryActionEnabled:       detail.PrimaryAction.Enabled,
+		RuntimeOwned:               detail.RuntimeOwned,
+		GoRuntimeBacked:            detail.GoRuntimeBacked,
+		KDEPolicyOwner:             detail.KDEPolicyOwner,
+		SafeForKDE:                 detail.SafeForKDE,
+		SafeForAIDiagnostics:       detail.SafeForAIDiagnostics,
+		LaunchEnabled:              false,
+		BackendLaunchEnabled:       false,
+		BackendDetailsExposed:      false,
+		RawPathsExposed:            false,
+		HostRootModified:           false,
+		Summary:                    detail.DesktopSafeSummary,
+	}}
 }
 
 func kdeCenterPageOwnerGUIRouteReady(item KnownAppSmokeEvidenceSummary) bool {

@@ -96,6 +96,68 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesCompatibilityBundl
 		strings.Contains(strings.ToLower(output.String()), "wine ") {
 		t.Fatalf("external Windows app detail exposed unsafe details: %s", output.String())
 	}
+
+	var kdePageOutput bytes.Buffer
+	if err := run([]string{
+		"kde-center-page-preview",
+		"--external-app-application-detail", outputPath,
+		"--decision", "approved",
+	}, &kdePageOutput); err != nil {
+		t.Fatalf("kde-center-page-preview returned error: %v", err)
+	}
+	var kdePage map[string]any
+	if err := json.Unmarshal(kdePageOutput.Bytes(), &kdePage); err != nil {
+		t.Fatalf("Unmarshal KDE page output returned error: %v", err)
+	}
+	if kdePage["request_type"] != "kde-center-page-preview" ||
+		kdePage["application_id"] != "org.xnix.external.desktop-notepad-file-argument" ||
+		kdePage["application_name"] != "External Desktop Notepad File Argument" ||
+		kdePage["external_winapp_application_detail_consumed"] != true ||
+		kdePage["external_winapp_application_detail_count"] != float64(1) ||
+		kdePage["runtime_owned"] != true ||
+		kdePage["go_runtime_backed"] != true ||
+		kdePage["kde_policy_owner"] != false ||
+		kdePage["safe_for_ai_diagnostics"] != true ||
+		kdePage["launch_enabled"] != false ||
+		kdePage["backend_process_started"] != false ||
+		kdePage["backend_details_exposed"] != false ||
+		kdePage["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE page from external app detail: %#v", kdePage)
+	}
+	detailCards := kdePage["external_winapp_application_detail_cards"].([]any)
+	if len(detailCards) != 1 {
+		t.Fatalf("unexpected KDE external app detail cards: %#v", detailCards)
+	}
+	detailCard := detailCards[0].(map[string]any)
+	if detailCard["app_id"] != kdePage["application_id"] ||
+		detailCard["real_windows_app_run_verified"] != true ||
+		detailCard["file_open_verified"] != true ||
+		detailCard["runtime_gui_evidence_verified"] != true ||
+		detailCard["desktop_evidence_verified"] != true ||
+		detailCard["kde_page_evidence_verified"] != true ||
+		detailCard["evidence_signal_count"] != float64(4) ||
+		detailCard["primary_action_id"] != "review-compatibility-evidence" ||
+		detailCard["primary_action_enabled"] != true ||
+		detailCard["runtime_owned"] != true ||
+		detailCard["go_runtime_backed"] != true ||
+		detailCard["kde_policy_owner"] != false ||
+		detailCard["safe_for_kde"] != true ||
+		detailCard["safe_for_ai_diagnostics"] != true ||
+		detailCard["launch_enabled"] != false ||
+		detailCard["backend_launch_enabled"] != false ||
+		detailCard["backend_details_exposed"] != false ||
+		detailCard["raw_paths_exposed"] != false ||
+		detailCard["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE external app detail card: %#v", detailCard)
+	}
+	if strings.Contains(kdePageOutput.String(), outputPath) ||
+		strings.Contains(kdePageOutput.String(), bundlePath) ||
+		strings.Contains(kdePageOutput.String(), "docker run") ||
+		strings.Contains(kdePageOutput.String(), "/var/run/docker.sock") ||
+		strings.Contains(kdePageOutput.String(), ".exe") ||
+		strings.Contains(strings.ToLower(kdePageOutput.String()), "wine ") {
+		t.Fatalf("KDE page from external Windows app detail exposed unsafe details: %s", kdePageOutput.String())
+	}
 }
 
 func externalWinAppApplicationDetailBundleFixture() string {
