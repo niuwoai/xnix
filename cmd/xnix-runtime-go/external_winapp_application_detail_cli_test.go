@@ -133,6 +133,23 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesCompatibilityBundl
 		kdePage["host_root_modified"] != false {
 		t.Fatalf("unexpected KDE page from external app detail: %#v", kdePage)
 	}
+	header := kdePage["header"].(map[string]any)
+	if header["badge"] != "Verified real app run" ||
+		header["badge_tone"] != "success" ||
+		header["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE page header from external app detail: %#v", header)
+	}
+	applicationSummary := kdePage["application_summary"].(map[string]any)
+	if applicationSummary["compatibility_state"] != "real-app-run-verified" ||
+		applicationSummary["compatibility_label"] != "Verified real app run" ||
+		applicationSummary["diagnostics_state"] != "real-app-run-verified" ||
+		applicationSummary["backend_launch_enabled"] != false ||
+		applicationSummary["action_execution_enabled"] != false ||
+		applicationSummary["settings_persistence_enabled"] != false ||
+		applicationSummary["backend_details_exposed"] != false ||
+		applicationSummary["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE application summary from external app detail: %#v", applicationSummary)
+	}
 	detailCards := kdePage["external_winapp_application_detail_cards"].([]any)
 	if len(detailCards) != 1 {
 		t.Fatalf("unexpected KDE external app detail cards: %#v", detailCards)

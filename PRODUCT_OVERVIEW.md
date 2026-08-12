@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc243
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc244
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc244 checkpoint makes the KDE Center page top-level state match the Runtime external Windows app detail. When `kde-center-page-preview --external-app-application-detail` consumes the real imported Notepad detail, the header badge and application summary now surface `Verified real app run` / `real-app-run-verified` while execution, backend launch, settings persistence, host mutation, and backend detail exposure remain disabled.
 
 The v0.2.640-rc243 checkpoint closes the q4 artifact loop for the Runtime external Windows app application detail. `kde-center-page-preview` can now write an optional JSON output file, and the q4 real imported Notepad smoke generates and fetches `kde-page-from-application-detail.json` so the validated app detail is proven consumable by the KDE Center page in the same q4 run. The targeted q4 smoke passed with ten fetched artifacts and now cleans its validated remote run root before execution so repeated runs stay idempotent.
 

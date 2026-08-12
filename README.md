@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc243`.
+The project is currently at `v0.2.640-rc244`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc243`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc244 makes KDE Center page headers and application summaries reflect Runtime-verified external Windows app detail. When a page consumes `--external-app-application-detail`, the top-level app state now shows `real-app-run-verified` instead of a generic registered state while launch and backend gates remain closed.
 
 v0.2.640-rc243 makes the q4 real external Windows app smoke fetch the KDE page rendered from the Runtime application detail. `kde-center-page-preview` now supports `--output`, and the q4 wrapper generates `kde-page-from-application-detail.json` after the real imported Notepad detail is produced.
 

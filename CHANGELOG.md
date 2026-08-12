@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc244] - 2026-08-13
+
+### Changed
+
+- Updated KDE Center page rendering from external Windows app application detail so the header badge and application summary show the Runtime-verified real app run state.
+- Kept launch, backend launch, settings persistence, host mutation, and backend detail exposure disabled when the verified detail updates the visible KDE page state.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc244`.
+
 ## [0.2.640-rc243] - 2026-08-13
 
 ### Changed

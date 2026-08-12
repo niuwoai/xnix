@@ -883,6 +883,13 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	knownAppOwnerFileOpenVerifiedCount := countOwnerFileOpenVerifiedKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
 	knownAppOwnerFileOpenEntrypointCount := countOwnerFileOpenEntrypointKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
 	externalWinAppDetailCards := kdeCenterPageExternalWinAppApplicationDetailCards(options.ExternalWinAppApplicationDetail)
+	applicationSummary := kdeCenterPageApplicationSummary(application, options.ExternalWinAppApplicationDetail)
+	headerBadge := kdeCenterPageBadge(deck)
+	headerBadgeTone := kdeCenterPageBadgeTone(deck)
+	if len(externalWinAppDetailCards) > 0 {
+		headerBadge = externalWinAppDetailCards[0].CompatibilityLabel
+		headerBadgeTone = externalWinAppDetailCards[0].PrimaryStatusTone
+	}
 	source := "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview"
 	if options.ExecutionSessionRoot != "" {
 		source += "+execution-session-record"
@@ -927,32 +934,14 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 		Header: KDECenterPageHeader{
 			Title:                 plan.DisplayName,
 			Subtitle:              "Compatibility Center application details",
-			Badge:                 kdeCenterPageBadge(deck),
-			BadgeTone:             kdeCenterPageBadgeTone(deck),
+			Badge:                 headerBadge,
+			BadgeTone:             headerBadgeTone,
 			PrimaryActionLabel:    "Review required gates",
 			PrimaryActionTarget:   "compatibility-center-gates",
 			PrimaryActionEnabled:  true,
 			BackendDetailsExposed: false,
 		},
-		ApplicationSummary: KDECenterPageApplication{
-			ApplicationID:              application.ApplicationID,
-			DisplayName:                application.DisplayName,
-			CompatibilityState:         application.CompatibilityState,
-			CompatibilityLabel:         application.CompatibilityLabel,
-			DiagnosticsState:           application.DiagnosticsState,
-			RuntimeMode:                application.RuntimeMode,
-			SupportedExtensions:        application.SupportedExtensions,
-			KnownIssueCount:            application.KnownIssueCount,
-			RepairRecordState:          application.RepairRecordState,
-			RepairRecordCount:          application.RepairRecordCount,
-			ActionExecutionEnabled:     application.ActionExecutionEnabled,
-			RepairExecutionEnabled:     application.RepairExecutionEnabled,
-			BackendLaunchEnabled:       application.BackendLaunchEnabled,
-			SettingsPersistenceEnabled: application.SettingsPersistenceEnabled,
-			HostRootModified:           application.HostRootModified,
-			BackendDetailsExposed:      application.BackendDetailsExposed,
-			Summary:                    application.Summary,
-		},
+		ApplicationSummary:                         applicationSummary,
 		KnownAppSessionGateEvidenceCount:           len(knownAppSessionGateCards),
 		KnownAppLauncherSessionGateConsumedCount:   center.KnownAppLauncherSessionGateConsumedCount,
 		KnownAppPostReviewDispatchConsumedCount:    center.KnownAppPostReviewDispatchConsumedCount,
@@ -1504,6 +1493,45 @@ func kdeCenterPageExternalWinAppApplicationDetailCards(detail *ExternalWinAppApp
 		HostRootModified:           false,
 		Summary:                    detail.DesktopSafeSummary,
 	}}
+}
+
+func kdeCenterPageApplicationSummary(application CompatibilityCenterApp, detail *ExternalWinAppApplicationDetail) KDECenterPageApplication {
+	summary := KDECenterPageApplication{
+		ApplicationID:              application.ApplicationID,
+		DisplayName:                application.DisplayName,
+		CompatibilityState:         application.CompatibilityState,
+		CompatibilityLabel:         application.CompatibilityLabel,
+		DiagnosticsState:           application.DiagnosticsState,
+		RuntimeMode:                application.RuntimeMode,
+		SupportedExtensions:        application.SupportedExtensions,
+		KnownIssueCount:            application.KnownIssueCount,
+		RepairRecordState:          application.RepairRecordState,
+		RepairRecordCount:          application.RepairRecordCount,
+		ActionExecutionEnabled:     application.ActionExecutionEnabled,
+		RepairExecutionEnabled:     application.RepairExecutionEnabled,
+		BackendLaunchEnabled:       application.BackendLaunchEnabled,
+		SettingsPersistenceEnabled: application.SettingsPersistenceEnabled,
+		HostRootModified:           application.HostRootModified,
+		BackendDetailsExposed:      application.BackendDetailsExposed,
+		Summary:                    application.Summary,
+	}
+	if detail == nil {
+		return summary
+	}
+	if err := validateExternalWinAppApplicationDetail(*detail); err != nil {
+		return summary
+	}
+	summary.CompatibilityState = detail.CompatibilityState
+	summary.CompatibilityLabel = detail.CompatibilityLabel
+	summary.DiagnosticsState = "real-app-run-verified"
+	summary.ActionExecutionEnabled = false
+	summary.RepairExecutionEnabled = false
+	summary.BackendLaunchEnabled = false
+	summary.SettingsPersistenceEnabled = false
+	summary.HostRootModified = false
+	summary.BackendDetailsExposed = false
+	summary.Summary = detail.DesktopSafeSummary
+	return summary
 }
 
 func kdeCenterPageOwnerGUIRouteReady(item KnownAppSmokeEvidenceSummary) bool {
