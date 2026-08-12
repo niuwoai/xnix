@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc262
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc263
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc263 checkpoint moves the real Notepad++ Portable run one step deeper into Go product logic. The new `windows-known-app-bundle-stage-and-launch` Runtime command imports the known portable bundle, consumes the Runtime-owned external app `import-record.json`, stages desktop activation, and launches through the managed Runtime desktop path. The q4 Notepad++ smoke now proves that Go-owned direct staged launch first, then reuses the existing q4 staged Runtime/KDE acceptance chain so the final evidence still reaches `runtime-accepted-real-app-run`.
 
 The v0.2.640-rc262 checkpoint turns the staged external Windows app path into a record-first flow. After the Go Runtime imports a known portable bundle such as Notepad++ Portable, the q4 staged smoke now passes the Runtime-owned `import-record.json` into `scripts/staged_desktop_external_winapp_smoke.rb`, and the Go `external-winapp-import-stage-and-launch` command can consume that existing record directly. Targeted q4 validation passed with Notepad++ 8.9.7 Portable using `--remote-import-record`, `existing_import_record_consumed=true`, portable-directory workspace copying, file-open evidence, and final `runtime-accepted-real-app-run` state.
 

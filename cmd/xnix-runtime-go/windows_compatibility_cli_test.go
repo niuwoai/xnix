@@ -2420,6 +2420,55 @@ func TestWindowsKnownAppBundleImportRecordCommandSkipsMissingArchive(t *testing.
 	}
 }
 
+func TestWindowsKnownAppBundleStageAndLaunchCommandSkipsMissingArchive(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-bundle-stage-and-launch",
+		"--app", "org.xnix.external.notepadplusplus",
+		"--cache-root", filepath.Join(tempDir, "cache"),
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_portable_bundle_stage_launch.v1" ||
+		payload["request_type"] != "windows-known-app-bundle-stage-and-launch" ||
+		payload["status"] != "skipped" ||
+		payload["app_id"] != "org.xnix.external.notepadplusplus" ||
+		payload["display_name"] != "Notepad++ Portable" ||
+		payload["known_portable_bundle_import_request_type"] != "windows-known-app-bundle-import-record" ||
+		payload["known_portable_bundle_import_status"] != "skipped" ||
+		payload["known_portable_bundle_import_recorded"] != false ||
+		payload["known_portable_bundle_checksum_verified"] != false ||
+		payload["known_portable_bundle_extracted"] != false ||
+		payload["record_first_launch_path"] != true ||
+		payload["existing_import_record_consumed"] != false ||
+		payload["runtime_launch_executed"] != false ||
+		payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_host_path_exposed"] != false ||
+		payload["raw_import_record_path_exposed"] != false ||
+		payload["raw_launcher_output_exposed"] != false {
+		t.Fatalf("unexpected known app bundle staged launch payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), tempDir) {
+		t.Fatalf("known app bundle staged launch output leaked host paths: %s", output.String())
+	}
+}
+
 func TestWindowsKnownAppGuestWineSmokeCommandRecognizesBusyBoxW32(t *testing.T) {
 	tempDir := t.TempDir()
 

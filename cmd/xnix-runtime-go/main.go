@@ -738,6 +738,8 @@ func run(args []string, stdout io.Writer) error {
 		return runWindowsKnownAppFetch(args[1:], stdout)
 	case "windows-known-app-bundle-import-record":
 		return runWindowsKnownAppBundleImportRecord(args[1:], stdout)
+	case "windows-known-app-bundle-stage-and-launch":
+		return runWindowsKnownAppBundleStageAndLaunch(args[1:], stdout)
 	case "windows-known-app-guest-wine-smoke":
 		return runWindowsKnownAppGuestWineSmoke(args[1:], stdout)
 	case "windows-known-app-launch-profile-materialize":

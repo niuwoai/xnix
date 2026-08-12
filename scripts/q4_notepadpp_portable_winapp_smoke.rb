@@ -30,6 +30,7 @@ DEFAULT_REMOTE_BUILD_ROOT = ENV.fetch("XNIX_REMOTE_BUILD_ROOT", "/home/xnix-buil
 DEFAULT_REMOTE_TIMEOUT_SECONDS = Integer(ENV.fetch("XNIX_Q4_NOTEPADPP_TIMEOUT_SECONDS", "1800"), 10)
 DEFAULT_OUTPUT = PROJECT_ROOT.join("output", "q4-notepadpp-portable-winapp-smoke-#{VERSION}.json").to_s
 DEFAULT_MARKDOWN_OUTPUT = PROJECT_ROOT.join("output", "q4-notepadpp-portable-winapp-smoke-#{VERSION}.md").to_s
+DEFAULT_IMAGE = ENV.fetch("XNIX_WINE_IMAGE", "xnix-wine-smoke:local")
 
 options = {
   execute: false,
@@ -39,6 +40,7 @@ options = {
   remote_source_root: DEFAULT_REMOTE_SOURCE_ROOT,
   remote_build_root: DEFAULT_REMOTE_BUILD_ROOT,
   remote_timeout_seconds: DEFAULT_REMOTE_TIMEOUT_SECONDS,
+  image: DEFAULT_IMAGE,
   output: ENV.fetch("XNIX_Q4_NOTEPADPP_OUTPUT", DEFAULT_OUTPUT),
   markdown_output: ENV.fetch("XNIX_Q4_NOTEPADPP_MARKDOWN_OUTPUT", DEFAULT_MARKDOWN_OUTPUT)
 }
@@ -51,6 +53,7 @@ OptionParser.new do |parser|
   parser.on("--remote-materials-root PATH", "Remote materials root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_materials_root] = value }
   parser.on("--remote-source-root PATH", "Remote Runtime source root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_source_root] = value }
   parser.on("--remote-build-root PATH", "Remote Runtime build/cache root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_build_root] = value }
+  parser.on("--image IMAGE", "q4-local Wine GUI smoke image, default: #{DEFAULT_IMAGE}.") { |value| options[:image] = value }
   parser.on("--remote-timeout-seconds SECONDS", Integer, "Timeout for q4 download, extraction, compile, and staged execution.") { |value| options[:remote_timeout_seconds] = value }
   parser.on("--output PATH", "Write JSON result under this checkout or /tmp/xnix-*.") { |value| options[:output] = value }
   parser.on("--markdown-output PATH", "Write Markdown result under this checkout or /tmp/xnix-*.") { |value| options[:markdown_output] = value }
@@ -168,9 +171,13 @@ remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(
 remote_app_root = "#{remote_materials_root}/third-party/notepad-plus-plus/#{NOTEPADPP_VERSION}"
 remote_cache_root = "#{remote_app_root}/cache"
 remote_state_root = "#{remote_app_root}/runtime-state"
+remote_staging_root = "#{remote_app_root}/runtime-staging"
+remote_document = "#{remote_app_root}/sample-document.txt"
 remote_known_bundle_import_report = "#{remote_app_root}/known-portable-bundle-import-record.json"
+remote_known_bundle_stage_launch_report = "#{remote_app_root}/known-portable-bundle-stage-launch.json"
 remote_binary_root = "#{remote_build_root}/bin/linux-amd64"
 remote_runtime_bin = "#{remote_binary_root}/xnix-runtime-go"
+remote_launcher_bin = "#{remote_binary_root}/xnix-compat-launch"
 output_path = ensure_local_output_path!("output path", options.fetch(:output))
 markdown_output_path = ensure_local_output_path!("markdown output path", options.fetch(:markdown_output))
 
@@ -184,6 +191,22 @@ known_bundle_import_command = [
   "--include-fetch",
   "--timeout", "#{options.fetch(:remote_timeout_seconds)}s",
   "--report-output", remote_known_bundle_import_report
+]
+
+known_bundle_stage_launch_command = [
+  remote_runtime_bin,
+  "windows-known-app-bundle-stage-and-launch",
+  "--app", "org.xnix.external.notepadplusplus",
+  "--cache-root", remote_cache_root,
+  "--state-root", remote_state_root,
+  "--staging-root", remote_staging_root,
+  "--managed-launcher-bin", remote_launcher_bin,
+  "--allow-download",
+  "--include-fetch",
+  "--image", options.fetch(:image),
+  "--timeout", "#{options.fetch(:remote_timeout_seconds)}s",
+  "--report-output", remote_known_bundle_stage_launch_report,
+  "file://#{remote_document}"
 ]
 
 def staged_command(remote_host, remote_import_record, output_path, markdown_output_path, timeout_seconds)
@@ -246,9 +269,16 @@ plan = {
   "known_portable_bundle_import_recorded" => false,
   "known_portable_bundle_import_status" => "planned",
   "go_known_portable_bundle_import_backed" => true,
+  "known_portable_bundle_stage_launch_planned" => true,
+  "known_portable_bundle_stage_launch_command" => known_bundle_stage_launch_command,
+  "known_portable_bundle_stage_launch_report" => remote_known_bundle_stage_launch_report,
+  "known_portable_bundle_stage_launch_status" => "planned",
+  "go_known_portable_bundle_stage_launch_backed" => true,
   "record_first_launch_path" => true,
   "remote_cache_root" => remote_cache_root,
   "remote_state_root" => remote_state_root,
+  "remote_staging_root" => remote_staging_root,
+  "remote_launcher_binary" => remote_launcher_bin,
   "portable_directory_external_app" => true,
   "portable_directory_bundle_import_required" => true,
   "remote_materials_root" => remote_materials_root,
@@ -303,6 +333,7 @@ build = run_json_command(
     REMOTE_GO_BUILD.to_s,
     "--execute",
     "--package", "./cmd/xnix-runtime-go",
+    "--package", "./cmd/xnix-compat-launch",
     "--remote", remote_host,
     "--remote-source-root", remote_source_root,
     "--remote-build-root", remote_build_root,
@@ -310,16 +341,25 @@ build = run_json_command(
   ],
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
-abort "q4 Runtime build for known portable bundle import did not pass" unless build.fetch("status") == "passed" && bool(build, "remote_build_completed") && bool(build, "host_compilation_avoided")
+abort "q4 Runtime build for known portable bundle stage launch did not pass" unless build.fetch("status") == "passed" && bool(build, "remote_build_completed") && bool(build, "host_compilation_avoided")
 
-known_import_stdout = remote_step!(
+remote_step!(
   options.fetch(:local_shell),
   remote_host,
-  "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(known_bundle_import_command)}",
+  shell_join(["ruby", "-rfileutils", "-e", "abort 'unsafe staging root' unless ARGV[1].start_with?('/home/xnix-', '/tmp/xnix-'); FileUtils.rm_rf(ARGV[1]); FileUtils.mkdir_p(File.dirname(ARGV[0])); File.write(ARGV[0], ARGV[2])", remote_document, remote_staging_root, "Xnix Notepad++ Portable record-first staged launch smoke document"]),
   options.fetch(:remote_timeout_seconds),
-  "q4 Notepad++ Go Runtime known portable bundle import failed"
+  "q4 Notepad++ sample document and staging preparation failed"
 )
-known_import = JSON.parse(known_import_stdout)
+
+known_stage_launch_stdout = remote_step!(
+  options.fetch(:local_shell),
+  remote_host,
+  "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(known_bundle_stage_launch_command)}",
+  options.fetch(:remote_timeout_seconds),
+  "q4 Notepad++ Go Runtime known portable bundle staged launch failed"
+)
+known_stage_launch = JSON.parse(known_stage_launch_stdout)
+known_import = known_stage_launch.fetch("known_portable_bundle_import")
 unless known_import.fetch("status") == "passed" &&
        known_import.fetch("request_type") == "windows-known-app-bundle-import-record" &&
        bool(known_import, "checksum_verified") &&
@@ -332,15 +372,27 @@ unless known_import.fetch("status") == "passed" &&
   warn JSON.pretty_generate(known_import)
   abort "q4 Notepad++ Go Runtime known portable bundle import did not pass"
 end
-import_record = known_import.fetch("import_record")
-remote_bundle_root = "#{remote_state_root}/#{import_record.fetch("bundle_relative_path")}"
+unless known_stage_launch.fetch("status") == "passed" &&
+       known_stage_launch.fetch("request_type") == "windows-known-app-bundle-stage-and-launch" &&
+       bool(known_stage_launch, "existing_import_record_consumed") &&
+       bool(known_stage_launch, "record_first_launch_path") &&
+       known_stage_launch.fetch("artifact_kind", "") == "portable-directory" &&
+       bool(known_stage_launch, "application_workspace_copied") &&
+       known_stage_launch.fetch("application_workspace_mode", "") == "portable-directory" &&
+       bool(known_stage_launch, "external_file_bridge_ready") &&
+       bool(known_stage_launch, "windows_process_file_argument_window_observed")
+  warn JSON.pretty_generate(known_stage_launch)
+  abort "q4 Notepad++ Go Runtime known portable bundle staged launch did not pass"
+end
+remote_bundle_root = "#{remote_state_root}/#{known_stage_launch.fetch("known_portable_bundle_bundle_relative_path")}"
 remote_executable = "#{remote_bundle_root}/#{NOTEPADPP_EXE_RELATIVE_PATH}"
-remote_import_record = "#{remote_state_root}/#{import_record.fetch("record_relative_path")}"
+remote_import_record = "#{remote_state_root}/#{known_stage_launch.fetch("known_portable_bundle_record_relative_path")}"
 plan["notepadpp_downloaded"] = bool(known_import, "downloaded") || known_import.fetch("fetch_cache_status", "") == "verified"
 plan["notepadpp_sha256_verified"] = bool(known_import, "checksum_verified")
 plan["notepadpp_extracted"] = bool(known_import, "extracted")
 plan["known_portable_bundle_import_recorded"] = bool(known_import, "import_recorded")
 plan["known_portable_bundle_import_status"] = known_import.fetch("status")
+plan["known_portable_bundle_stage_launch_status"] = known_stage_launch.fetch("status")
 plan["remote_bundle_root"] = remote_bundle_root
 plan["remote_executable"] = remote_executable
 plan["remote_import_record"] = remote_import_record
@@ -386,6 +438,13 @@ result = plan.merge(
   "status" => "passed",
   "remote_go_build_status" => build.fetch("status"),
   "remote_build_completed_for_known_import" => bool(build, "remote_build_completed"),
+  "remote_build_completed_for_known_stage_launch" => bool(build, "remote_build_completed"),
+  "known_portable_bundle_stage_launch_status" => known_stage_launch.fetch("status"),
+  "known_portable_bundle_stage_launch_request_type" => known_stage_launch.fetch("request_type"),
+  "known_portable_bundle_stage_launch_record_first" => bool(known_stage_launch, "record_first_launch_path"),
+  "known_portable_bundle_stage_launch_existing_import_record_consumed" => bool(known_stage_launch, "existing_import_record_consumed"),
+  "known_portable_bundle_stage_launch_application_workspace_copied" => bool(known_stage_launch, "application_workspace_copied"),
+  "known_portable_bundle_stage_launch_windows_process_file_argument_window_observed" => bool(known_stage_launch, "windows_process_file_argument_window_observed"),
   "known_portable_bundle_import_status" => known_import.fetch("status"),
   "known_portable_bundle_import_recorded" => bool(known_import, "import_recorded"),
   "known_portable_bundle_import_request_type" => known_import.fetch("request_type"),

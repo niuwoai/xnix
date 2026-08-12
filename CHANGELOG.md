@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc263] - 2026-08-13
+
+### Added
+
+- Added the Go Runtime `windows-known-app-bundle-stage-and-launch` command to import a known portable Windows app bundle, consume its Runtime-owned external app import record, stage desktop activation, and launch through the managed Runtime desktop path.
+
+### Changed
+
+- Updated the q4 Notepad++ Portable smoke to prove the new Go-owned known bundle staged launch before reusing the existing q4 staged Runtime/KDE acceptance chain.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc263`.
+
 ## [0.2.640-rc262] - 2026-08-13
 
 ### Changed
