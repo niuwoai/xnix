@@ -2374,6 +2374,52 @@ func TestWindowsKnownAppFetchCommandRejectsUnknownApp(t *testing.T) {
 	}
 }
 
+func TestWindowsKnownAppBundleImportRecordCommandSkipsMissingArchive(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-bundle-import-record",
+		"--app", "org.xnix.external.notepadplusplus",
+		"--cache-root", filepath.Join(tempDir, "cache"),
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_portable_bundle_import_record.v1" ||
+		payload["request_type"] != "windows-known-app-bundle-import-record" ||
+		payload["status"] != "skipped" ||
+		payload["app_id"] != "org.xnix.external.notepadplusplus" ||
+		payload["display_name"] != "Notepad++ Portable" ||
+		payload["app_version"] != "8.9.7" ||
+		payload["artifact_kind"] != "portable-zip-bundle" ||
+		payload["download_artifact_name"] != "npp.8.9.7.portable.zip" ||
+		payload["artifact_cache_relative_path"] != "org.xnix.external.notepadplusplus/npp.8.9.7.portable.zip" ||
+		payload["portable_bundle_archive"] != true ||
+		payload["archive_verified"] != false ||
+		payload["extracted"] != false ||
+		payload["import_recorded"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_host_path_exposed"] != false ||
+		payload["raw_archive_path_exposed"] != false ||
+		payload["raw_bundle_root_path_exposed"] != false {
+		t.Fatalf("unexpected known app bundle import payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), tempDir) {
+		t.Fatalf("known app bundle import output leaked host paths: %s", output.String())
+	}
+}
+
 func TestWindowsKnownAppGuestWineSmokeCommandRecognizesBusyBoxW32(t *testing.T) {
 	tempDir := t.TempDir()
 

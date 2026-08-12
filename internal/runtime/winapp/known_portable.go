@@ -81,6 +81,7 @@ type KnownPortableApp struct {
 
 type KnownFetchRequest struct {
 	AppID         string
+	CatalogApp    KnownPortableApp
 	CacheRoot     string
 	AllowDownload bool
 	HTTPClient    *http.Client
@@ -803,7 +804,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc259",
+		Version:         "0.2.640-rc260",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
@@ -814,7 +815,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.messagebox",
 		DisplayName:     "Xnix MessageBox",
-		Version:         "0.2.640-rc259",
+		Version:         "0.2.640-rc260",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "xnix-messagebox-smoke.exe",
 		SourcePageURL:   "runtime-managed-external-gui-fixture",
@@ -824,7 +825,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:                       "org.xnix.sample.notepad",
 		DisplayName:              "Sample Notepad",
-		Version:                  "0.2.640-rc259",
+		Version:                  "0.2.640-rc260",
 		Architecture:             "windows-x86-gui",
 		ExecutableName:           "notepad.exe",
 		SourcePageURL:            "runtime-recipe-container-gui-fixture",
@@ -869,10 +870,22 @@ func LookupKnownPortableApp(appID string) (KnownPortableApp, error) {
 	return KnownPortableApp{}, fmt.Errorf("unknown known Windows app: %s", id)
 }
 
+func KnownPortableArtifactCachePath(cacheRoot string, app KnownPortableApp) (string, error) {
+	return knownAppCachePath(cacheRoot, app)
+}
+
+func KnownPortableArtifactCacheRelativePath(app KnownPortableApp) string {
+	return knownAppCacheRelativePath(app)
+}
+
 func FetchKnownPortableApp(ctx context.Context, request KnownFetchRequest) (KnownFetchResult, error) {
-	app, err := LookupKnownPortableApp(request.AppID)
-	if err != nil {
-		return KnownFetchResult{}, err
+	app := request.CatalogApp
+	if strings.TrimSpace(app.ID) == "" {
+		lookedUp, err := LookupKnownPortableApp(request.AppID)
+		if err != nil {
+			return KnownFetchResult{}, err
+		}
+		app = lookedUp
 	}
 	result := baseKnownFetchResult(app)
 	if app.GuestBuiltinGUI {

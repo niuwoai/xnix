@@ -733,6 +733,52 @@ func runWindowsKnownAppFetch(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
+func runWindowsKnownAppBundleImportRecord(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-known-app-bundle-import-record", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var appID string
+	var cacheRoot string
+	var stateRoot string
+	var timeoutText string
+	var reportOutput string
+	var allowDownload bool
+	var includeFetch bool
+	flags.StringVar(&appID, "app", "org.xnix.external.notepadplusplus", "known Windows portable bundle app id")
+	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "managed known Windows app cache root")
+	flags.StringVar(&stateRoot, "state-root", "", "isolated Runtime state root for the imported portable bundle")
+	flags.StringVar(&timeoutText, "timeout", winapp.DefaultKnownAppFetchTimeout.String(), "known app bundle fetch timeout when downloads are allowed")
+	flags.StringVar(&reportOutput, "report-output", "", "optional JSON report output path for operator-controlled evidence capture")
+	flags.BoolVar(&allowDownload, "allow-download", false, "download the known app portable bundle archive when it is missing")
+	flags.BoolVar(&includeFetch, "include-fetch", false, "include the redacted fetch evidence object in the import record output")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-known-app-bundle-import-record")
+	}
+	timeout, err := time.ParseDuration(timeoutText)
+	if err != nil {
+		return fmt.Errorf("parse timeout: %w", err)
+	}
+
+	result, err := appidentity.ImportKnownPortableBundle(context.Background(), appidentity.KnownPortableBundleImportRequest{
+		Version:       readRuntimeGoProjectVersion(),
+		AppID:         appID,
+		CacheRoot:     cacheRoot,
+		StateRoot:     stateRoot,
+		AllowDownload: allowDownload,
+		Timeout:       timeout,
+		ReportFetch:   includeFetch,
+	})
+	if err != nil {
+		return err
+	}
+
+	return writeJSONResponse(stdout, reportOutput, result)
+}
+
 func runWindowsKnownAppGuestWineSmoke(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("windows-known-app-guest-wine-smoke", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)

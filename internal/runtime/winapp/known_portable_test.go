@@ -76,6 +76,21 @@ func TestKnownPortableCatalogContainsPinnedNotepadPlusPlusPortableBundle(t *test
 	}
 }
 
+func TestKnownPortableArtifactCachePathUsesDownloadArtifactName(t *testing.T) {
+	app, err := LookupKnownPortableApp("org.xnix.external.notepadplusplus")
+	if err != nil {
+		t.Fatalf("LookupKnownPortableApp returned error: %v", err)
+	}
+	cachePath, err := KnownPortableArtifactCachePath("/tmp/xnix-known-cache", app)
+	if err != nil {
+		t.Fatalf("KnownPortableArtifactCachePath returned error: %v", err)
+	}
+	if filepath.ToSlash(cachePath) != "/tmp/xnix-known-cache/org.xnix.external.notepadplusplus/npp.8.9.7.portable.zip" ||
+		KnownPortableArtifactCacheRelativePath(app) != "org.xnix.external.notepadplusplus/npp.8.9.7.portable.zip" {
+		t.Fatalf("portable bundle cache helper did not use the archive name: %s", cachePath)
+	}
+}
+
 func TestFetchKnownPortableAppDownloadsAndVerifiesPinnedArtifact(t *testing.T) {
 	body := []byte("fixture portable windows executable")
 	sum := sha256.Sum256(body)

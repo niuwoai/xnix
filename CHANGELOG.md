@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc260] - 2026-08-13
+
+### Added
+
+- Added the Go Runtime `windows-known-app-bundle-import-record` command to download, verify, safely extract, and import known portable Windows app bundles into Runtime-managed external app state.
+- Added Runtime-owned known portable bundle import coverage for archive checksum verification, zip-slip rejection, external bundle import record creation, and host-path redaction.
+- Added catalog cache path helpers so known portable bundle archives use their pinned download artifact names instead of executable entrypoint names.
+
+### Changed
+
+- Kept known portable bundle import compilation and targeted Go validation q4-bound through `scripts/remote_go_test.rb`, preserving macOS host compilation avoidance.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc260`.
+
 ## [0.2.640-rc259] - 2026-08-13
 
 ### Added
