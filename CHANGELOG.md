@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc247] - 2026-08-13
+
+### Changed
+
+- Added optional `--output` support to `q4-staged-external-winapp-acceptance-preview` so the Go-owned staged external Windows app acceptance can be persisted as a JSON artifact.
+- Extended the q4 staged desktop external Windows app smoke to write, fetch, and report `q4-staged-external-winapp-acceptance.json` alongside the existing real-run artifacts.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc247`.
+
 ## [0.2.640-rc246] - 2026-08-13
 
 ### Added

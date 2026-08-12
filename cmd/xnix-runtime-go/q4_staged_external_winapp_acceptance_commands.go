@@ -1,9 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
 )
@@ -12,6 +17,7 @@ func runQ4StagedExternalWinAppAcceptancePreview(args []string, stdout io.Writer)
 	flags := flag.NewFlagSet(appidentity.Q4StagedExternalWinAppAcceptanceRequestType, flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	smokeReportPath := flags.String("q4-staged-external-winapp-smoke", "", "passed q4 staged desktop external Windows app smoke JSON")
+	outputPath := flags.String("output", "", "optional JSON output path for the staged external Windows app acceptance")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -24,5 +30,24 @@ func runQ4StagedExternalWinAppAcceptancePreview(args []string, stdout io.Writer)
 	if err != nil {
 		return err
 	}
-	return encodeIndentedJSON(stdout, acceptance)
+	var buffer bytes.Buffer
+	encoder := json.NewEncoder(&buffer)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(acceptance); err != nil {
+		return err
+	}
+	if _, err := stdout.Write(buffer.Bytes()); err != nil {
+		return err
+	}
+	if *outputPath == "" {
+		return nil
+	}
+	cleanOutput := filepath.Clean(*outputPath)
+	if err := os.MkdirAll(filepath.Dir(cleanOutput), 0o700); err != nil {
+		return fmt.Errorf("prepare q4 staged external Windows app acceptance output directory: %w", err)
+	}
+	if err := os.WriteFile(cleanOutput, buffer.Bytes(), 0o600); err != nil {
+		return fmt.Errorf("write q4 staged external Windows app acceptance output: %w", err)
+	}
+	return nil
 }

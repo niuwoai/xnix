@@ -160,7 +160,7 @@ def bool(payload, key)
   payload[key] == true
 end
 
-def remote_q4_staged_external_winapp_acceptance(remote_host, remote_runtime_bin, remote_input_path, payload_json, timeout_seconds:)
+def remote_q4_staged_external_winapp_acceptance(remote_host, remote_runtime_bin, remote_input_path, remote_output_path, payload_json, timeout_seconds:)
   writer = shell_join(["ruby", "-e", "File.write(ARGV.fetch(0), STDIN.read)", remote_input_path])
   _write_stdout, write_stderr, write_status = Open3.capture3(
     *ssh_command(remote_host, writer),
@@ -175,7 +175,8 @@ def remote_q4_staged_external_winapp_acceptance(remote_host, remote_runtime_bin,
   acceptance_args = [
     remote_runtime_bin,
     "q4-staged-external-winapp-acceptance-preview",
-    "--q4-staged-external-winapp-smoke", remote_input_path
+    "--q4-staged-external-winapp-smoke", remote_input_path,
+    "--output", remote_output_path
   ]
   stdout, stderr, status = run_command(
     ssh_command(remote_host, shell_join(acceptance_args)),
@@ -205,6 +206,7 @@ remote_compatibility_bundle = "#{remote_run_root}/compatibility-evidence-bundle.
 remote_application_detail = "#{remote_run_root}/external-winapp-application-detail.json"
 remote_kde_page_from_detail = "#{remote_run_root}/kde-page-from-application-detail.json"
 remote_go_acceptance_input = "#{remote_run_root}/q4-staged-external-winapp-acceptance-input.json"
+remote_go_acceptance = "#{remote_run_root}/q4-staged-external-winapp-acceptance.json"
 artifact_specs = [
   ["delegated_launcher_payload", "delegated_launcher_payload_path", "delegated-launcher-payload.json"],
   ["activation_status", "activation_status_path", "activation-status.json"],
@@ -219,7 +221,9 @@ artifact_specs = [
 ]
 planned_artifact_outputs = artifact_specs.to_h do |name, _remote_key, local_name|
   ["#{name}_artifact_output_path", artifact_output_root.join(local_name).to_s]
-end
+end.merge(
+  "go_owned_q4_staged_external_winapp_acceptance_artifact_output_path" => artifact_output_root.join("q4-staged-external-winapp-acceptance.json").to_s
+)
 
 delegated_command = [
   "ruby",
@@ -252,7 +256,7 @@ plan = {
   "output_path" => output_path.to_s,
   "markdown_output_path" => markdown_output_path.to_s,
   "artifact_output_root" => artifact_output_root.to_s,
-  "artifact_output_count" => artifact_specs.length,
+  "artifact_output_count" => artifact_specs.length + 1,
   "artifact_outputs" => planned_artifact_outputs,
   "q4_compile_required" => true,
   "host_compilation_avoided" => true,
@@ -582,6 +586,7 @@ go_acceptance = remote_q4_staged_external_winapp_acceptance(
   remote_host,
   remote_runtime_bin,
   remote_go_acceptance_input,
+  remote_go_acceptance,
   JSON.pretty_generate(result) + "\n",
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
@@ -600,5 +605,16 @@ result.merge!(
   "go_owned_q4_staged_external_winapp_acceptance_delegated_command_exposed" => go_acceptance.fetch("delegated_command_exposed"),
   "go_owned_q4_staged_external_winapp_acceptance_raw_path_exposed" => go_acceptance.fetch("raw_path_exposed")
 )
+acceptance_local_path = artifact_output_root.join("q4-staged-external-winapp-acceptance.json")
+fetched_artifacts["go_owned_q4_staged_external_winapp_acceptance_artifact_fetched"] = fetch_remote_artifact(
+  remote_host,
+  remote_go_acceptance,
+  acceptance_local_path,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+fetched_artifacts["go_owned_q4_staged_external_winapp_acceptance_artifact_output_path"] = acceptance_local_path.to_s
+result["artifact_fetch_count"] = fetched_artifacts.count { |key, value| key.end_with?("_artifact_fetched") && value == true }
+result["go_owned_q4_staged_external_winapp_acceptance_artifact_fetched"] = fetched_artifacts.fetch("go_owned_q4_staged_external_winapp_acceptance_artifact_fetched")
+result["go_owned_q4_staged_external_winapp_acceptance_artifact_output_path"] = acceptance_local_path.to_s
 
 emit_json(result, output_path)

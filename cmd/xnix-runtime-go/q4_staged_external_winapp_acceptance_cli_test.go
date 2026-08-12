@@ -12,6 +12,7 @@ import (
 func TestQ4StagedExternalWinAppAcceptancePreviewCommandConsumesWrapperEvidence(t *testing.T) {
 	tempDir := t.TempDir()
 	smokePath := filepath.Join(tempDir, "q4-staged-external-winapp.json")
+	outputPath := filepath.Join(tempDir, "acceptance.json")
 	if err := os.WriteFile(smokePath, []byte(q4StagedExternalWinAppAcceptanceCLIFixture(currentProjectVersion(t))), 0o600); err != nil {
 		t.Fatalf("WriteFile smoke returned error: %v", err)
 	}
@@ -20,6 +21,7 @@ func TestQ4StagedExternalWinAppAcceptancePreviewCommandConsumesWrapperEvidence(t
 	if err := run([]string{
 		"q4-staged-external-winapp-acceptance-preview",
 		"--q4-staged-external-winapp-smoke", smokePath,
+		"--output", outputPath,
 	}, &output); err != nil {
 		t.Fatalf("run returned error: %v", err)
 	}
@@ -43,6 +45,18 @@ func TestQ4StagedExternalWinAppAcceptancePreviewCommandConsumesWrapperEvidence(t
 		payload["kde_page_from_application_detail_summary_compatibility_state"] != "real-app-run-verified" ||
 		payload["acceptance_ready"] != true {
 		t.Fatalf("unexpected q4 staged external Windows app acceptance CLI payload: %#v", payload)
+	}
+	written, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile output returned error: %v", err)
+	}
+	var writtenPayload map[string]any
+	if err := json.Unmarshal(written, &writtenPayload); err != nil {
+		t.Fatalf("Unmarshal written output returned error: %v", err)
+	}
+	if writtenPayload["schema_version"] != payload["schema_version"] ||
+		writtenPayload["acceptance_ready"] != true {
+		t.Fatalf("unexpected written q4 staged external Windows app acceptance payload: %#v", writtenPayload)
 	}
 	lower := strings.ToLower(output.String())
 	for _, forbidden := range []string{strings.ToLower(smokePath), "root@q4", "/tmp/xnix-", "staged_desktop_external_winapp_smoke", "notepad.exe"} {
