@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc241] - 2026-08-13
+
+### Changed
+
+- Extended the q4 staged desktop external Windows app smoke to generate `external-winapp-application-detail-preview` on q4 after the compatibility evidence bundle is produced.
+- Added the Runtime application detail JSON artifact to the q4 fetch list and plan output so the real imported Notepad path yields a KDE-safe, AI-diagnostics-safe product detail payload.
+- Validated the targeted q4 external Windows app smoke with nine fetched artifacts, including the Runtime application detail with verified real GUI run, file-open, desktop evidence, and safety-boundary signals.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc241`.
+
 ## [0.2.640-rc240] - 2026-08-13
 
 ### Changed

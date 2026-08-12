@@ -173,6 +173,7 @@ remote_launcher_bin = "#{remote_binary_root}/xnix-compat-launch"
 remote_report = "#{remote_run_root}/q4-staged-desktop-external-winapp-smoke.json"
 remote_markdown = "#{remote_run_root}/q4-staged-desktop-external-winapp-smoke.md"
 remote_compatibility_bundle = "#{remote_run_root}/compatibility-evidence-bundle.json"
+remote_application_detail = "#{remote_run_root}/external-winapp-application-detail.json"
 artifact_specs = [
   ["delegated_launcher_payload", "delegated_launcher_payload_path", "delegated-launcher-payload.json"],
   ["activation_status", "activation_status_path", "activation-status.json"],
@@ -181,7 +182,8 @@ artifact_specs = [
   ["one_shot_launch_packet", "one_shot_launch_packet_path", "one-shot-desktop-launch-packet.json"],
   ["runtime_packet", "runtime_packet_path", "runtime-gui-evidence-packet.json"],
   ["kde_page", "kde_page_path", "kde-external-app-page.json"],
-  ["compatibility_evidence_bundle", "compatibility_evidence_bundle_path", "compatibility-evidence-bundle.json"]
+  ["compatibility_evidence_bundle", "compatibility_evidence_bundle_path", "compatibility-evidence-bundle.json"],
+  ["application_detail", "application_detail_path", "external-winapp-application-detail.json"]
 ]
 planned_artifact_outputs = artifact_specs.to_h do |name, _remote_key, local_name|
   ["#{name}_artifact_output_path", artifact_output_root.join(local_name).to_s]
@@ -329,6 +331,35 @@ unless compatibility_bundle.fetch("request_type") == "external-winapp-compatibil
 end
 delegated["compatibility_evidence_bundle_path"] = remote_compatibility_bundle
 
+application_detail_command = [
+  remote_runtime_bin,
+  "external-winapp-application-detail-preview",
+  "--compatibility-evidence-bundle", remote_compatibility_bundle,
+  "--output", remote_application_detail
+]
+application_detail_stdout, application_detail_stderr, application_detail_status = run_command(
+  ssh_command(remote_host, shell_join(application_detail_command)),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless application_detail_status.zero?
+  warn application_detail_stdout unless application_detail_stdout.empty?
+  warn application_detail_stderr unless application_detail_stderr.empty?
+  abort "q4 external Windows app application detail generation failed"
+end
+application_detail = JSON.parse(application_detail_stdout)
+unless application_detail.fetch("request_type") == "external-winapp-application-detail-preview" &&
+       application_detail.fetch("safe_for_kde") == true &&
+       application_detail.fetch("safe_for_ai_diagnostics") == true &&
+       application_detail.fetch("real_windows_app_run_verified") == true &&
+       application_detail.fetch("file_open_verified") == true &&
+       application_detail.fetch("runtime_owned") == true &&
+       application_detail.fetch("go_runtime_backed") == true &&
+       application_detail.fetch("kde_policy_owner") == false
+  warn application_detail_stdout
+  abort "q4 external Windows app application detail did not prove the real app detail path"
+end
+delegated["application_detail_path"] = remote_application_detail
+
 fetched_artifacts = {}
 artifact_specs.each do |name, remote_key, local_name|
   remote_path = delegated.fetch(remote_key)
@@ -419,6 +450,15 @@ result = plan.merge(
   "compatibility_evidence_bundle_runtime_owned" => compatibility_bundle.fetch("runtime_owned"),
   "compatibility_evidence_bundle_go_runtime_backed" => compatibility_bundle.fetch("go_runtime_backed"),
   "compatibility_evidence_bundle_kde_policy_owner" => compatibility_bundle.fetch("kde_policy_owner"),
+  "application_detail_generated" => true,
+  "application_detail_request_type" => application_detail.fetch("request_type"),
+  "application_detail_safe_for_kde" => application_detail.fetch("safe_for_kde"),
+  "application_detail_safe_for_ai_diagnostics" => application_detail.fetch("safe_for_ai_diagnostics"),
+  "application_detail_real_windows_app_run_verified" => application_detail.fetch("real_windows_app_run_verified"),
+  "application_detail_file_open_verified" => application_detail.fetch("file_open_verified"),
+  "application_detail_runtime_owned" => application_detail.fetch("runtime_owned"),
+  "application_detail_go_runtime_backed" => application_detail.fetch("go_runtime_backed"),
+  "application_detail_kde_policy_owner" => application_detail.fetch("kde_policy_owner"),
   "artifact_fetch_count" => fetched_artifacts.count { |key, value| key.end_with?("_artifact_fetched") && value == true },
   "artifacts_fetched" => fetched_artifacts,
   "markdown_output_written" => markdown_output_path.file?,
