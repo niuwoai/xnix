@@ -275,12 +275,14 @@ REQUIRED_FILES = %w[
   scripts/q4_sample_notepad_smoke.rb
   scripts/q4_winapp_smoke.rb
   scripts/q4_messagebox_smoke.rb
+  scripts/q4_external_winapp_run.rb
   scripts/q4_dbus_controlled_launch_owner_fixture_smoke.rb
   scripts/q4_runtime_run_plan_execution_smoke.rb
   scripts/q4_full_smoke.rb
   test/test_q4_sample_notepad_smoke_script.rb
   test/test_q4_winapp_smoke_script.rb
   test/test_q4_messagebox_smoke_script.rb
+  test/test_q4_external_winapp_run_script.rb
   test/test_q4_dbus_controlled_launch_owner_fixture_smoke_script.rb
   test/test_q4_runtime_run_plan_execution_smoke_script.rb
   test/test_q4_full_smoke_script.rb
@@ -1043,6 +1045,11 @@ end
 q4_messagebox_smoke = read_project_file("scripts/q4_messagebox_smoke.rb")
 %w[xnix.scripts.q4_messagebox_smoke.v1 q4-messagebox-smoke test/fixtures/winapp/messagebox GOOS=windows GOARCH=386 scripts/q4_winapp_smoke.rb scripts/q4_staged_desktop_external_winapp_smoke.rb --remote-executable --owner-file-open --require-real-run-acceptance --staged-external messagebox-document.txt org.xnix.apps.messagebox Xnix\ MessageBox Xnix\ Windows\ GUI\ Smoke Xnix\ document\ opened\ by\ Windows\ app Xnix\ external\ Windows\ app\ file-open\ smoke\ document remote_windows_fixture_build_planned remote_windows_executable_built remote_executable_configured remote_executable_path_exposed document_content_marker_observed kde_controlled_launch_action_preview_ready kde_controlled_launch_action_output_written kde_action_owner_file_open_verified kde_action_owner_file_open_entrypoint_invoked owner_evidence_handoff_ready owner_evidence_relative_path owner_delegated_file_argument_count file_open_entrypoint_requested real_run_acceptance_required real_run_acceptance_ready owner_file_open_entrypoint_invoked runtime_evidence_owner_file_open_entrypoint_invoked delegated_q4_winapp_smoke_schema go_owned_q4_winapp_acceptance_document_content_marker_observed go_owned_q4_winapp_acceptance_ready go_owned_q4_winapp_acceptance_schema staged_external_run_planned staged_external_status staged_external_one_shot_runtime_launch_executed staged_external_file_bridge_ready staged_external_document_marker_observed staged_external_acceptance_ready staged_external_accepted_application_detail_state runtime-accepted-real-app-run host_compilation_avoided q4_compile_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
   assert(q4_messagebox_smoke.include?(token), "q4 MessageBox smoke script must include #{token}")
+end
+q4_external_winapp_run = read_project_file("scripts/q4_external_winapp_run.rb") +
+                         read_project_file("test/test_q4_external_winapp_run_script.rb")
+%w[xnix.scripts.q4_external_winapp_run.v1 q4-external-winapp-run scripts/q4_staged_desktop_external_winapp_smoke.rb --executable --window-match --remote-materials-root scp Digest::SHA256.file local\ executable\ must\ have\ an\ MZ\ header local_executable_path_exposed local_executable_sha256 local_executable_mz_header_checked remote_upload_planned remote_upload_completed remote_executable_path_exposed_only_for_operator windows_process_file_argument_window_observed runtime-accepted-real-app-run accepted_application_detail_state kde_accepted_page_state host_compilation_avoided q4_compile_required full_smoke_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
+  assert(q4_external_winapp_run.include?(token.gsub("\\ ", " ")), "q4 external Windows app run script must include #{token}")
 end
 q4_dbus_controlled_launch_owner_fixture_smoke = read_project_file("scripts/q4_dbus_controlled_launch_owner_fixture_smoke.rb") +
                                                 read_project_file("test/test_q4_dbus_controlled_launch_owner_fixture_smoke_script.rb")

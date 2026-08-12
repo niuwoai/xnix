@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc253] - 2026-08-13
+
+### Added
+
+- Added `scripts/q4_external_winapp_run.rb` to upload a local scoped Windows `.exe` to q4 and run it through the staged external Runtime/KDE path.
+- Added script coverage and layout guards for local MZ validation, SHA256 upload naming, q4 upload reporting, required file-open window evidence, and accepted Runtime/KDE state.
+- Passed targeted q4 upload validation with a q4-built MessageBox executable copied through `/tmp/xnix-*`, uploaded to q4 external materials, run through staged external Runtime/KDE evidence, and accepted as `runtime-accepted-real-app-run`.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc253`.
+
 ## [0.2.640-rc252] - 2026-08-13
 
 ### Changed

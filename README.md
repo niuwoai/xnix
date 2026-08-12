@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc252`.
+The project is currently at `v0.2.640-rc253`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc252`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc253 adds a q4 external Windows app operator run harness. `scripts/q4_external_winapp_run.rb --executable /tmp/xnix-.../app.exe --window-match TEXT --execute` validates a local `.exe`, uploads it to a scoped q4 materials path, then delegates to the staged external Runtime/KDE path so user-supplied Windows apps can reach the same import, desktop activation, managed launcher, evidence bundle, application detail, and accepted KDE page flow without local compilation.
 
 v0.2.640-rc252 makes the q4-built MessageBox Windows GUI fixture reusable through the staged external desktop path with one targeted command. `scripts/q4_messagebox_smoke.rb --execute --direct --staged-external` now builds the real Windows `.exe` on q4, verifies the generic q4 GUI run, then sends that same executable through `scripts/q4_staged_desktop_external_winapp_smoke.rb --fixture external` so the Go Runtime import, KDE desktop activation staging, managed launcher, file-open bridge, evidence bundle, application detail, and accepted KDE page are proven together.
 
