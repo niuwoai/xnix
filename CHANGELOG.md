@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc237] - 2026-08-13
+
+### Added
+
+- Added the Go Runtime `external-winapp-compatibility-evidence-bundle-preview` command to combine one-shot Runtime launch, desktop launch packet, Runtime GUI evidence packet, and KDE page artifacts into a desktop-safe external Windows app compatibility evidence bundle.
+- Added CLI coverage proving the bundle keeps Runtime ownership, verified real GUI evidence, file bridge evidence, and KDE-safe redaction invariants without exposing host paths or backend commands.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc237`.
+
 ## [0.2.640-rc236] - 2026-08-13
 
 ### Changed
