@@ -11,6 +11,7 @@ PlasmoidItem {
     readonly property string ownerControlledGuiEvidenceCountField: "known_app_owner_controlled_gui_evidence_count"
     readonly property string ownerManagedCopyVerifiedCountField: "known_app_owner_managed_copy_verified_count"
     readonly property string guiEvidenceCardsField: "known_app_gui_evidence_cards"
+    readonly property string externalWinAppDetailCardsField: "external_winapp_application_detail_cards"
     readonly property string guiEvidenceSource: "wine-guest-gui-smoke-or-winapp-smoke-container-x-gui"
     readonly property string guiEvidenceKind: "known-application-gui-smoke"
     readonly property var guiEvidenceCardFields: [
@@ -46,6 +47,24 @@ PlasmoidItem {
         "kde_forwarded_arguments",
         "owner_service_args_exposed_to_kde"
     ]
+    readonly property var externalWinAppDetailCardFields: [
+        "display_name",
+        "compatibility_state",
+        "compatibility_label",
+        "primary_status_tone",
+        "real_windows_app_run_verified",
+        "file_open_verified",
+        "q4_staged_external_winapp_acceptance_consumed",
+        "q4_staged_external_winapp_acceptance_ready",
+        "go_owned_staged_external_winapp_acceptance_verified",
+        "evidence_signal_count",
+        "runtime_owned",
+        "go_runtime_backed",
+        "kde_policy_owner",
+        "backend_details_exposed",
+        "raw_paths_exposed",
+        "host_root_modified"
+    ]
     compactRepresentation: PlasmaComponents.ToolButton {
         icon.name: "preferences-desktop"
         text: "Compatibility"
@@ -75,6 +94,11 @@ PlasmoidItem {
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
+            text: "Accepted imported Windows apps are provided through external_winapp_application_detail_cards. KDE displays compatibility_state, compatibility_label, q4_staged_external_winapp_acceptance_consumed, q4_staged_external_winapp_acceptance_ready, go_owned_staged_external_winapp_acceptance_verified, evidence_signal_count, and closed backend_details_exposed, raw_paths_exposed, and host_root_modified gates."
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+        }
+        PlasmaComponents.Label {
             text: "The KDE read model renders display_name, recipe_backed, recipe_app_id, external_app_run_record_consumed, external_app_handle_consumed, external_app_import_record_consumed, imported_artifact_digest_verified, window_observed, x_window_observed, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, owner_controlled_runtime_launch_verified, owner_managed_copy_verified, owner_evidence_handoff_ready, runtime_dispatch_verified, primary_action_id, primary_action_kind, primary_action_label, desktop_callable_route, desktop_dbus_method, and desktop_evidence_handle_forwarded from each safe card."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
@@ -86,6 +110,11 @@ PlasmoidItem {
         }
         PlasmaComponents.Label {
             text: "A passing owner-controlled GUI card means the Runtime owner service invoked the managed launcher, copied the Windows .exe into the QEMU guest when needed, launched it by Wine, and observed it as an X11 window. A passing imported desktop-handle GUI card means the staged desktop entry invoked xnix-compat-launch with only the external app handle, the Runtime consumed the import record, and KDE saw the observed-window evidence without raw paths."
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+        }
+        PlasmaComponents.Label {
+            text: "When the Runtime reports runtime-accepted-real-app-run, the KDE header, application summary, and external app detail card show Runtime accepted real app run while launch and backend execution remain Runtime-gated."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }

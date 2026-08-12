@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc250] - 2026-08-13
+
+### Changed
+
+- Updated the KDE Plasma Compatibility Center shell to declare accepted external Windows app detail card fields from `external_winapp_application_detail_cards`.
+- Documented the shell-visible `runtime-accepted-real-app-run` state, q4 staged acceptance readiness, Go-owned acceptance verification, and closed backend/path/host gates in the plasmoid.
+- Added a q4 remote build policy so compile-heavy work, Go compilation tests, QEMU, Wine, and heavy smoke runs default to q4 instead of the macOS host.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc250`.
+
 ## [0.2.640-rc249] - 2026-08-13
 
 ### Changed

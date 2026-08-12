@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc249`.
+The project is currently at `v0.2.640-rc250`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc249`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc250 makes the KDE Plasma Compatibility Center shell explicitly model accepted imported Windows app detail cards. The plasmoid now declares `external_winapp_application_detail_cards` and the accepted-state fields that show `runtime-accepted-real-app-run`, `Runtime accepted real app run`, q4 staged acceptance readiness, Go-owned acceptance verification, and the closed backend/path/host gates supplied by the Runtime. The same checkpoint also records the q4 remote build policy so future compile-heavy work, Go tests that require compilation, QEMU, Wine, and heavy smoke runs stay on q4 by default instead of the macOS host.
 
 v0.2.640-rc249 promotes Go-owned q4 staged acceptance into the accepted application's top-level product state. When `external-winapp-application-detail-preview` consumes the q4 staged acceptance artifact, the detail and KDE page now surface `runtime-accepted-real-app-run` / `Runtime accepted real app run` instead of only the lower-level verified-run label, while non-accepted detail payloads keep the previous verified state.
 
