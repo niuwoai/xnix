@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc236] - 2026-08-13
+
+### Changed
+
+- Extended the q4 staged desktop external Windows app smoke wrapper to fetch structured JSON artifacts for the delegated launcher payload, activation status, desktop launch packet, one-shot Runtime launch, Runtime GUI evidence packet, and KDE external app page.
+- Updated the q4 staged smoke plan and script test to expose artifact output paths while keeping q4 compilation required and host compilation avoided.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc236`.
+
 ## [0.2.640-rc235] - 2026-08-13
 
 ### Changed

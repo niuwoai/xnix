@@ -148,6 +148,14 @@ def fetch_remote_text(remote_host, remote_path, timeout_seconds:)
   stdout
 end
 
+def fetch_remote_artifact(remote_host, remote_path, local_path, timeout_seconds:)
+  text = fetch_remote_text(remote_host, remote_path, timeout_seconds: timeout_seconds)
+  JSON.parse(text)
+  FileUtils.mkdir_p(local_path.dirname)
+  File.write(local_path, text.end_with?("\n") ? text : "#{text}\n")
+  true
+end
+
 def bool(payload, key)
   payload[key] == true
 end
@@ -158,11 +166,24 @@ remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(
 remote_run_root = ensure_remote_xnix_path!("remote run root", options.fetch(:remote_run_root))
 output_path = ensure_local_output_path!("output path", options.fetch(:output))
 markdown_output_path = ensure_local_output_path!("markdown output path", options.fetch(:markdown_output))
+artifact_output_root = output_path.dirname.join("artifacts")
 remote_binary_root = "#{remote_build_root}/bin/linux-amd64"
 remote_runtime_bin = "#{remote_binary_root}/xnix-runtime-go"
 remote_launcher_bin = "#{remote_binary_root}/xnix-compat-launch"
 remote_report = "#{remote_run_root}/q4-staged-desktop-external-winapp-smoke.json"
 remote_markdown = "#{remote_run_root}/q4-staged-desktop-external-winapp-smoke.md"
+artifact_specs = [
+  ["delegated_launcher_payload", "delegated_launcher_payload_path", "delegated-launcher-payload.json"],
+  ["activation_status", "activation_status_path", "activation-status.json"],
+  ["desktop_launch_packet", "desktop_launch_packet_path", "desktop-launch-packet.json"],
+  ["one_shot", "one_shot_path", "one-shot-import-stage-launch.json"],
+  ["one_shot_launch_packet", "one_shot_launch_packet_path", "one-shot-desktop-launch-packet.json"],
+  ["runtime_packet", "runtime_packet_path", "runtime-gui-evidence-packet.json"],
+  ["kde_page", "kde_page_path", "kde-external-app-page.json"]
+]
+planned_artifact_outputs = artifact_specs.to_h do |name, _remote_key, local_name|
+  ["#{name}_artifact_output_path", artifact_output_root.join(local_name).to_s]
+end
 
 delegated_command = [
   "ruby",
@@ -194,6 +215,9 @@ plan = {
   "image" => options.fetch(:image),
   "output_path" => output_path.to_s,
   "markdown_output_path" => markdown_output_path.to_s,
+  "artifact_output_root" => artifact_output_root.to_s,
+  "artifact_output_count" => artifact_specs.length,
+  "artifact_outputs" => planned_artifact_outputs,
   "q4_compile_required" => true,
   "host_compilation_avoided" => true,
   "targeted_smoke_required" => true,
@@ -275,6 +299,19 @@ end
 FileUtils.mkdir_p(markdown_output_path.dirname)
 File.write(markdown_output_path, remote_markdown_text)
 
+fetched_artifacts = {}
+artifact_specs.each do |name, remote_key, local_name|
+  remote_path = delegated.fetch(remote_key)
+  local_path = artifact_output_root.join(local_name)
+  fetched_artifacts["#{name}_artifact_fetched"] = fetch_remote_artifact(
+    remote_host,
+    remote_path,
+    local_path,
+    timeout_seconds: options.fetch(:remote_timeout_seconds)
+  )
+  fetched_artifacts["#{name}_artifact_output_path"] = local_path.to_s
+end
+
 result = plan.merge(
   "status" => "passed",
   "remote_go_build_status" => build.fetch("status"),
@@ -345,6 +382,8 @@ result = plan.merge(
   "kde_page_card_x_window_observed" => delegated.fetch("kde_page_card_x_window_observed"),
   "remote_report_fetched" => true,
   "remote_markdown_fetched" => true,
+  "artifact_fetch_count" => fetched_artifacts.count { |key, value| key.end_with?("_artifact_fetched") && value == true },
+  "artifacts_fetched" => fetched_artifacts,
   "markdown_output_written" => markdown_output_path.file?,
   "host_compilation_avoided" => bool(build, "host_compilation_avoided"),
   "host_root_modified" => delegated.fetch("host_root_modified"),
