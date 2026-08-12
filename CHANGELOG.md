@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc254] - 2026-08-13
+
+### Added
+
+- Added the Go Runtime `q4-external-winapp-run-plan-preview` entrypoint for operator-supplied external Windows app runs.
+- Captured q4-preferred build/materialization, scoped upload, MZ/SHA256 validation, observed-window evidence, and accepted Runtime/KDE state gates in the Runtime run plan.
+
+### Changed
+
+- Advertised the Go Runtime run-plan entrypoint from `scripts/q4_external_winapp_run.rb` so the Ruby executor remains aligned with Runtime-owned business rules.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc254`.
+
 ## [0.2.640-rc253] - 2026-08-13
 
 ### Added

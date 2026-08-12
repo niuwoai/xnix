@@ -1,12 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc253
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc254
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
 
-The v0.2.640-rc253 checkpoint removes the manual q4 staging step for operator-supplied Windows executables. A local `.exe` placed under the checkout or `/tmp/xnix-*` can now be validated, hashed, uploaded to q4, and run through the staged external app path with one targeted harness command. The script keeps local and remote executable paths out of safe result fields, requires an explicit observed-window marker, and leaves import, launch, evidence, application detail, and KDE accepted state generation in the Go Runtime path. Targeted q4 validation passed by pulling a q4-built MessageBox `.exe` into `/tmp/xnix-*`, uploading it back through the new harness, observing file-open marker evidence, fetching 13 artifacts, and reaching `runtime-accepted-real-app-run`.
+The v0.2.640-rc254 checkpoint makes the external Windows app route Go-planned before execution. `q4-external-winapp-run-plan-preview` records that uploaded `.exe` runs must stay scoped to the checkout or `/tmp/xnix-*`, prefer q4 build/materialization and execution, require MZ and SHA256 validation in the upload harness, require observed-window file-open evidence, and target the accepted Runtime/KDE application detail state. The Ruby harness remains the upload and smoke executor, while the Go Runtime now owns the business plan that keeps local host work limited to orchestration.
 
 The v0.2.640-rc252 checkpoint turns the q4 MessageBox fixture into a one-command staged external desktop proof. The MessageBox harness can now build the real Windows GUI `.exe` on q4, run the existing generic GUI smoke, and optionally feed that same q4 executable into the staged external app path. That second leg exercises Go Runtime import, KDE desktop activation staging, the managed launcher, copied file-open bridging, compatibility evidence bundling, application detail rendering, and accepted KDE page consumption while keeping q4 paths operator-only and the macOS host out of compilation. Targeted q4 validation passed with `staged_external_status=passed`, document-marker observation, 13 fetched staged evidence artifacts, and `runtime-accepted-real-app-run` accepted application detail plus KDE page state.
 

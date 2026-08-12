@@ -28,6 +28,7 @@ assert(source.include?("remote_upload_completed"), "q4 external app run must rep
 assert(source.include?("windows_process_file_argument_window_observed"), "q4 external app run must require file-open window evidence")
 assert(source.include?("runtime-accepted-real-app-run"), "q4 external app run must require accepted Runtime/KDE state")
 assert(source.include?("host_compilation_avoided"), "q4 external app run must avoid host compilation")
+assert(source.include?("q4-external-winapp-run-plan-preview"), "q4 external app run must advertise its Go Runtime run-plan entrypoint")
 
 stdout, stderr, status = Open3.capture3(
   "ruby",
@@ -60,6 +61,11 @@ assert(payload.fetch("delegated_command").include?("--fixture"), "plan must pass
 assert(payload.fetch("delegated_command").include?("external"), "plan must select external fixture")
 assert(payload.fetch("delegated_command").include?("--remote-executable"), "plan must pass remote executable")
 assert(payload.fetch("delegated_command").include?("--window-match"), "plan must pass required window match")
+assert(payload.fetch("go_runtime_plan_required") == true, "plan must require Go Runtime planning")
+assert(payload.fetch("go_runtime_plan_schema_version") == "xnix.runtime.q4_external_winapp_run_plan.v1", "plan must advertise Go Runtime run-plan schema")
+assert(payload.fetch("go_runtime_plan_request_type") == "q4-external-winapp-run-plan-preview", "plan must advertise Go Runtime run-plan request")
+assert(payload.fetch("go_runtime_plan_command").include?("q4-external-winapp-run-plan-preview"), "plan must expose the Go Runtime plan command")
+assert(payload.fetch("go_runtime_plan_command").include?("--window-match"), "Go Runtime plan command must require window-match")
 assert(payload.fetch("runtime_owned") == true, "plan must keep Runtime ownership")
 assert(payload.fetch("go_runtime_backed") == true, "plan must keep Go Runtime backing")
 assert(payload.fetch("kde_policy_owner") == false, "plan must not make KDE the policy owner")

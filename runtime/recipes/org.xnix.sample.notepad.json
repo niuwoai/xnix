@@ -1,7 +1,7 @@
 {
   "id": "org.xnix.sample.notepad",
   "name": "Sample Notepad",
-  "version": "0.2.640-rc253",
+  "version": "0.2.640-rc254",
   "icon": "accessories-text-editor",
   "mode": "automatic",
   "supported_extensions": [".txt", ".log"],
