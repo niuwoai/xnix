@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc256] - 2026-08-13
+
+### Added
+
+- Added the Go Runtime `external-winapp-bundle-import-plan-preview` command for portable-directory external Windows app bundles with sidecar files.
+- Added Runtime and CLI coverage for deterministic bundle manifest hashing, selected `.exe` MZ validation, sidecar file/directory accounting, unsafe symlink rejection, and closed launch/backend/path exposure gates.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc256`.
+- Kept targeted Go validation on q4 for this checkpoint so the macOS host avoided compilation.
+
 ## [0.2.640-rc255] - 2026-08-13
 
 ### Added

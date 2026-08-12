@@ -245,6 +245,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/windows_compatibility_cli_test.go
   cmd/xnix-runtime-go/known_app_matrix_evidence_commands.go
   cmd/xnix-runtime-go/known_app_matrix_evidence_cli_test.go
+  cmd/xnix-runtime-go/external_winapp_bundle_import_plan_commands.go
+  cmd/xnix-runtime-go/external_winapp_bundle_import_plan_cli_test.go
   internal/runtime/winapp/smoke.go
   internal/runtime/winapp/smoke_test.go
   internal/runtime/winapp/profile.go
@@ -261,6 +263,8 @@ REQUIRED_FILES = %w[
   internal/runtime/winapp/known_portable_test.go
   internal/runtime/appidentity/known_app_matrix_evidence.go
   internal/runtime/appidentity/known_app_matrix_evidence_test.go
+  internal/runtime/appidentity/external_winapp_bundle_import_plan.go
+  internal/runtime/appidentity/external_winapp_bundle_import_plan_test.go
   scripts/build_wine_smoke_image.rb
   scripts/winapp_smoke.rb
   scripts/container_gui_evidence_packet.rb
@@ -915,6 +919,17 @@ end
 sample_notepad_recipe = read_project_file("runtime/recipes/org.xnix.sample.notepad.json")
 %w[org.xnix.sample.notepad Sample\ Notepad container_gui_smoke notepad.exe window_match .txt .log].each do |token|
   assert(sample_notepad_recipe.include?(token.gsub("\\ ", " ")), "Sample Notepad recipe must include #{token}")
+end
+external_winapp_bundle_import_plan_go = read_project_file("internal/runtime/appidentity/external_winapp_bundle_import_plan.go") +
+                                        read_project_file("cmd/xnix-runtime-go/external_winapp_bundle_import_plan_commands.go") +
+                                        read_project_file("cmd/xnix-runtime-go/main.go")
+%w[xnix.runtime.external_winapp_bundle_import_plan.v1 external-winapp-bundle-import-plan-preview PreviewExternalWinAppBundleImportPlan portable-directory bundle_manifest_sha256 sidecar_file_count sidecar_directory_count windows_executable_mz_header_verified portable_bundle_import_ready bundle_root_path_exposed raw_executable_path_exposed backend_details_exposed host_root_modified network_required privileged_container_required docker_socket_mounted broad_host_mount_required package_manager_invoked --bundle-root --executable-relative-path].each do |token|
+  assert(external_winapp_bundle_import_plan_go.include?(token), "External Windows app bundle import plan must include #{token}")
+end
+external_winapp_bundle_import_plan_test = read_project_file("internal/runtime/appidentity/external_winapp_bundle_import_plan_test.go") +
+                                          read_project_file("cmd/xnix-runtime-go/external_winapp_bundle_import_plan_cli_test.go")
+%w[TestPreviewExternalWinAppBundleImportPlanAccountsForPortableSidecars TestPreviewExternalWinAppBundleImportPlanRejectsSymlinkSidecar TestExternalWinAppBundleImportPlanPreviewCommand external-winapp-bundle-import-plan-preview currentProjectVersion notepad++.exe plugins localization bundle_manifest_sha256 sidecar_directory_supported single_executable_import_compatible rejects\ symlink].each do |token|
+  assert(external_winapp_bundle_import_plan_test.include?(token.gsub("\\ ", " ")), "External Windows app bundle import plan test must include #{token}")
 end
 windows_app_smoke_profile_template_test = read_project_file("test/test_winapp_smoke_profile_template.rb")
 %w[windows-app-smoke-profile.template.json ruby\ scripts/winapp_smoke.rb\ --format\ json\ --profile go\ run\ ./cmd/xnix-runtime-go\ windows-app-run-smoke\ --profile redacted\ output].each do |token|

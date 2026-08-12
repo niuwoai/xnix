@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc255
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc256
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc256 checkpoint starts closing the portable-directory gap exposed by real Windows desktop apps such as Notepad++ Portable. The Go Runtime now has `external-winapp-bundle-import-plan-preview`, which scans a bundle root, validates the selected `.exe` MZ header, rejects symlink/path escape layouts, accounts for sidecar files and directories, and computes a deterministic bundle manifest digest without enabling launch, backend execution, network, Docker socket mounts, broad host mounts, or host-root mutation. Targeted Go validation ran on q4 to keep compilation off the macOS host.
 
 The v0.2.640-rc255 checkpoint moves from fixtures toward a real third-party GUI app. The new q4 PuTTY smoke downloads the official PuTTY 0.84 standalone `putty.exe` on q4, verifies the pinned SHA256, and feeds that remote executable into the staged external Runtime/KDE path. Targeted q4 validation passed with the real PuTTY GUI app, file-argument bridging, 13 fetched artifacts, Go-owned staged acceptance, and `runtime-accepted-real-app-run` accepted Runtime/KDE state while keeping the macOS host out of download and compilation.
 

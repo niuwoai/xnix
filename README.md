@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc255`.
+The project is currently at `v0.2.640-rc256`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc255`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc256 adds a Go Runtime portable-directory import plan for external Windows apps that ship as bundles instead of single `.exe` files. `external-winapp-bundle-import-plan-preview` scans a local bundle root, validates the selected Windows executable's MZ header, rejects unsafe symlink/path layouts, computes a deterministic manifest digest over sidecar files, and keeps launch/backend/path exposure gates closed. Targeted Go validation ran on q4 so the macOS host avoided compilation.
 
 v0.2.640-rc255 adds a q4 PuTTY external Windows app smoke. `scripts/q4_putty_external_winapp_smoke.rb --execute` downloads the official PuTTY 0.84 standalone `putty.exe` on q4, verifies the pinned SHA256, and runs the real third-party GUI app through the staged external Runtime/KDE path without host-side download or compilation.
 
