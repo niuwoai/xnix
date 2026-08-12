@@ -263,6 +263,10 @@ unless delegated.fetch("status") == "passed" &&
        bool(delegated, "desktop_exec_uses_external_app_handle") &&
        bool(delegated, "external_app_handle_consumed") &&
        bool(delegated, "external_file_bridge_ready") &&
+       delegated.fetch("one_shot_status") == "passed" &&
+       bool(delegated, "one_shot_staged_launcher_invoked") &&
+       bool(delegated, "one_shot_runtime_launch_executed") &&
+       bool(delegated, "one_shot_window_observed") &&
        bool(delegated, "desktop_launch_packet_safe_for_kde")
   warn remote_payload_text
   abort "q4 staged desktop external Windows app smoke did not prove the staged desktop launch path"
@@ -304,6 +308,25 @@ result = plan.merge(
   "desktop_launch_packet_external_app_handle_consumed" => delegated.fetch("desktop_launch_packet_external_app_handle_consumed"),
   "desktop_launch_packet_window_observed" => delegated.fetch("desktop_launch_packet_window_observed"),
   "desktop_launch_packet_x_window_observed" => delegated.fetch("desktop_launch_packet_x_window_observed"),
+  "one_shot_output_written" => delegated.fetch("one_shot_output_written"),
+  "one_shot_status" => delegated.fetch("one_shot_status"),
+  "one_shot_import_recorded" => delegated.fetch("one_shot_import_recorded"),
+  "one_shot_desktop_activation_staged" => delegated.fetch("one_shot_desktop_activation_staged"),
+  "one_shot_staged_launcher_invoked" => delegated.fetch("one_shot_staged_launcher_invoked"),
+  "one_shot_staged_launcher_from_activation_root" => delegated.fetch("one_shot_staged_launcher_from_activation_root"),
+  "one_shot_managed_launcher_executable_staged" => delegated.fetch("one_shot_managed_launcher_executable_staged"),
+  "one_shot_desktop_exec_uses_external_app_handle" => delegated.fetch("one_shot_desktop_exec_uses_external_app_handle"),
+  "one_shot_external_app_desktop_handle_ready" => delegated.fetch("one_shot_external_app_desktop_handle_ready"),
+  "one_shot_desktop_launch_packet_written" => delegated.fetch("one_shot_desktop_launch_packet_written"),
+  "one_shot_external_app_handle_consumed" => delegated.fetch("one_shot_external_app_handle_consumed"),
+  "one_shot_external_file_bridge_ready" => delegated.fetch("one_shot_external_file_bridge_ready"),
+  "one_shot_imported_artifact_digest_verified" => delegated.fetch("one_shot_imported_artifact_digest_verified"),
+  "one_shot_runtime_launch_executed" => delegated.fetch("one_shot_runtime_launch_executed"),
+  "one_shot_window_observed" => delegated.fetch("one_shot_window_observed"),
+  "one_shot_x_window_observed" => delegated.fetch("one_shot_x_window_observed"),
+  "one_shot_host_root_modified" => delegated.fetch("one_shot_host_root_modified"),
+  "one_shot_docker_socket_mounted" => delegated.fetch("one_shot_docker_socket_mounted"),
+  "one_shot_raw_paths_exposed" => delegated.fetch("one_shot_raw_paths_exposed"),
   "external_app_import_record_consumed" => delegated.fetch("external_app_import_record_consumed"),
   "external_app_handle_consumed" => delegated.fetch("external_app_handle_consumed"),
   "imported_artifact_digest_verified" => delegated.fetch("imported_artifact_digest_verified"),

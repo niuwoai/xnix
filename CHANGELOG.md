@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc234] - 2026-08-13
+
+### Changed
+
+- Extended the staged desktop external Windows app smoke to run the Go Runtime `external-winapp-import-stage-and-launch` command against the real q4 Wine/Xvfb Notepad file-open path.
+- Updated the q4 staged external Windows app wrapper to require and report one-shot Runtime launch evidence.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc234`.
+
 ## [0.2.640-rc233] - 2026-08-13
 
 ### Added

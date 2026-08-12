@@ -45,6 +45,8 @@ options = {
   delegated_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-delegated-launcher.json").to_s,
   activation_status_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-activation-status.json").to_s,
   launch_packet_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-launch-packet.json").to_s,
+  one_shot_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-one-shot.json").to_s,
+  one_shot_launch_packet_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-one-shot-launch-packet.json").to_s,
   runtime_packet_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-real-gui-packet.json").to_s,
   kde_page_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-kde-page.json").to_s,
   executable: "",
@@ -63,6 +65,8 @@ OptionParser.new do |parser|
   parser.on("--delegated-output PATH", "Delegated launcher JSON output path") { |value| options[:delegated_output] = value }
   parser.on("--activation-status-output PATH", "Go Runtime activation status JSON output path") { |value| options[:activation_status_output] = value }
   parser.on("--launch-packet-output PATH", "Go Runtime desktop external Windows app launch packet output path") { |value| options[:launch_packet_output] = value }
+  parser.on("--one-shot-output PATH", "Go Runtime one-shot import-stage-and-launch output path") { |value| options[:one_shot_output] = value }
+  parser.on("--one-shot-launch-packet-output PATH", "Go Runtime one-shot desktop launch packet output path") { |value| options[:one_shot_launch_packet_output] = value }
   parser.on("--runtime-packet-output PATH", "Go Runtime real Windows GUI packet output path") { |value| options[:runtime_packet_output] = value }
   parser.on("--kde-page-output PATH", "KDE center page JSON output path") { |value| options[:kde_page_output] = value }
   parser.on("--executable PATH", "Optional existing Windows GUI executable; defaults to Wine Notepad from the local image") { |value| options[:executable] = value }
@@ -279,6 +283,10 @@ def write_markdown_report(markdown_output, packet)
       "- Runtime packet: #{packet.fetch("runtime_packet_path")}",
       "- Activation status: #{packet.fetch("activation_status_path")}",
       "- Desktop launch packet: #{packet.fetch("desktop_launch_packet_path")}",
+      "- One-shot Runtime launch packet: #{packet.fetch("one_shot_path")}",
+      "- One-shot Runtime launch passed: #{packet.fetch("one_shot_status")}",
+      "- One-shot staged launcher invoked: #{packet.fetch("one_shot_staged_launcher_invoked")}",
+      "- One-shot desktop launch packet written: #{packet.fetch("one_shot_desktop_launch_packet_written")}",
       "- KDE page: #{packet.fetch("kde_page_path")}",
       "- Runtime image: #{packet.fetch("runtime_image")}",
       "- Runtime binary from Runtime image: #{packet.fetch("runtime_binary_from_runtime_image")}",
@@ -296,11 +304,15 @@ markdown_output = absolute_path(options.fetch(:markdown_output))
 delegated_output = absolute_path(options.fetch(:delegated_output))
 activation_status_output = absolute_path(options.fetch(:activation_status_output))
 launch_packet_output = absolute_path(options.fetch(:launch_packet_output))
+one_shot_output = absolute_path(options.fetch(:one_shot_output))
+one_shot_launch_packet_output = absolute_path(options.fetch(:one_shot_launch_packet_output))
 runtime_packet_output = absolute_path(options.fetch(:runtime_packet_output))
 kde_page_output = absolute_path(options.fetch(:kde_page_output))
 build_root = run_root.join("build")
 stage_root = run_root.join("stage")
 state_root = run_root.join("state")
+one_shot_stage_root = run_root.join("one-shot-stage")
+one_shot_state_root = run_root.join("one-shot-state")
 sample_document_path = run_root.join("sample-document.txt")
 sample_document_uri = "file://#{sample_document_path}"
 launcher_bin = build_root.join("xnix-compat-launch")
@@ -331,6 +343,8 @@ go_env = {
 FileUtils.mkdir_p(build_root)
 FileUtils.mkdir_p(stage_root)
 FileUtils.mkdir_p(state_root)
+FileUtils.mkdir_p(one_shot_stage_root)
+FileUtils.mkdir_p(one_shot_state_root)
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("tmp"))
@@ -340,6 +354,8 @@ FileUtils.mkdir_p(markdown_output.dirname)
 FileUtils.mkdir_p(delegated_output.dirname)
 FileUtils.mkdir_p(activation_status_output.dirname)
 FileUtils.mkdir_p(launch_packet_output.dirname)
+FileUtils.mkdir_p(one_shot_output.dirname)
+FileUtils.mkdir_p(one_shot_launch_packet_output.dirname)
 FileUtils.mkdir_p(runtime_packet_output.dirname)
 FileUtils.mkdir_p(kde_page_output.dirname)
 
@@ -582,6 +598,64 @@ assert(launch_packet.fetch("docker_socket_mounted") == false, "desktop launch pa
 assert(launch_packet.fetch("broad_host_mount_required") == false, "desktop launch packet must not require broad host mounts")
 assert_no_forbidden(launch_packet_text, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, delegated_output.to_s, executable_path.to_s, sample_document_path.to_s, sample_document_uri, docker_bin, "notepad.exe", "wine ", "docker run", "/var/run/docker.sock"], "desktop launch packet output")
 
+one_shot_command = [
+  *runtime_command,
+  "external-winapp-import-stage-and-launch",
+  "--state-root", one_shot_state_root.to_s,
+  "--executable", executable_path.to_s,
+  "--app-id", app_id,
+  "--display-name", app_name,
+  "--mode", "development",
+  "--staging-root", one_shot_stage_root.to_s,
+  "--managed-launcher-bin", managed_launcher_bin,
+  "--desktop-launch-packet-output", one_shot_launch_packet_output.to_s,
+  "--image", options.fetch(:image),
+  "--docker", docker_bin,
+  "--timeout", options.fetch(:timeout)
+]
+one_shot_command.concat(["--window-match", window_match]) unless window_match.empty?
+one_shot_command << sample_document_uri
+one_shot, one_shot_stdout = run_json(go_env, *one_shot_command)
+File.write(one_shot_output, JSON.pretty_generate(one_shot) + "\n")
+assert(one_shot.fetch("request_type") == "external-winapp-import-stage-and-launch", "one-shot Runtime command must use the import-stage-and-launch request type")
+assert(one_shot.fetch("status") == "passed", "one-shot Runtime command must pass")
+assert(one_shot.fetch("application_id") == app_id, "one-shot Runtime command must target the imported app")
+assert(one_shot.fetch("external_app_handle") == app_id, "one-shot Runtime command must preserve the opaque desktop handle")
+assert(one_shot.fetch("import_recorded") == true, "one-shot Runtime command must persist the import record")
+assert(one_shot.fetch("desktop_activation_staged") == true, "one-shot Runtime command must stage desktop activation artifacts")
+assert(one_shot.fetch("staged_launcher_invoked") == true, "one-shot Runtime command must invoke the staged launcher")
+assert(one_shot.fetch("staged_launcher_from_activation_root") == true, "one-shot Runtime command must run the launcher staged under the activation root")
+assert(one_shot.fetch("managed_launcher_executable_staged") == true, "one-shot Runtime command must stage the managed launcher executable")
+assert(one_shot.fetch("desktop_exec_uses_external_app_handle") == true, "one-shot Runtime command must preserve handle-only desktop Exec routing")
+assert(one_shot.fetch("external_app_desktop_handle_ready") == true, "one-shot Runtime command must preserve desktop handle readiness")
+assert(one_shot.fetch("desktop_launch_packet_requested") == true, "one-shot Runtime command must request a desktop launch packet")
+assert(one_shot.fetch("desktop_launch_packet_written") == true, "one-shot Runtime command must write the desktop launch packet")
+assert(one_shot.fetch("launcher_request_type") == "windows-external-app-run", "one-shot Runtime command must invoke the external app launcher request")
+assert(one_shot.fetch("launcher_status") == "passed", "one-shot Runtime command must receive a passed launcher result")
+assert(one_shot.fetch("external_app_import_record_consumed") == true, "one-shot Runtime command must consume the import record through the launcher")
+assert(one_shot.fetch("external_app_handle_consumed") == true, "one-shot Runtime command must consume the desktop handle through the launcher")
+assert(one_shot.fetch("external_desktop_argument_count") == 1, "one-shot Runtime command must pass one KDE file URI")
+assert(one_shot.fetch("external_file_uri_arguments_accepted") == true, "one-shot Runtime command must accept KDE file URI arguments")
+assert(one_shot.fetch("external_file_bridge_ready") == true, "one-shot Runtime command must prove copied, translated, and passed file bridging")
+assert(one_shot.fetch("imported_artifact_digest_verified") == true, "one-shot Runtime command must verify the imported artifact digest")
+assert(one_shot.fetch("runtime_launch_executed") == true, "one-shot Runtime command must execute the Runtime launch path")
+assert(one_shot.fetch("window_observed") == true, "one-shot Runtime command must observe a Windows GUI window")
+assert(one_shot.fetch("x_window_observed") == true, "one-shot Runtime command must preserve X window evidence")
+assert(one_shot.fetch("launch_enabled") == false, "one-shot Runtime command must keep staged desktop launch gated")
+assert(one_shot.fetch("backend_launch_enabled") == false, "one-shot Runtime command must keep backend launch gated at staging")
+assert(one_shot.fetch("execution_started") == true, "one-shot Runtime command must prove execution started through the managed launcher")
+assert(one_shot.fetch("host_root_modified") == false, "one-shot Runtime command must not mutate the host root")
+assert(one_shot.fetch("docker_socket_mounted") == false, "one-shot Runtime command must not mount the Docker socket")
+assert(one_shot.fetch("broad_host_mount_required") == false, "one-shot Runtime command must not require broad host mounts")
+assert(one_shot.fetch("raw_import_record_path_exposed") == false, "one-shot Runtime command must not expose raw import-record paths")
+assert(one_shot.fetch("raw_state_root_path_exposed") == false, "one-shot Runtime command must not expose raw state-root paths")
+assert(one_shot.fetch("raw_executable_path_exposed") == false, "one-shot Runtime command must not expose raw executable paths")
+assert(one_shot.fetch("raw_launcher_path_exposed") == false, "one-shot Runtime command must not expose raw launcher paths")
+assert(one_shot.fetch("raw_launcher_output_exposed") == false, "one-shot Runtime command must not expose raw launcher output")
+assert(one_shot_output.file?, "one-shot Runtime command output file must be written")
+assert(one_shot_launch_packet_output.file?, "one-shot Runtime command desktop launch packet must be written")
+assert_no_forbidden(one_shot_stdout, [PROJECT_ROOT.to_s, one_shot_stage_root.to_s, one_shot_state_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, sample_document_path.to_s, sample_document_uri, docker_bin, "docker run", "/var/run/docker.sock"], "one-shot Runtime command output")
+
 runtime_packet, = run_json(
   go_env,
   *runtime_command,
@@ -661,6 +735,27 @@ packet = {
   "desktop_launch_packet_external_app_handle_consumed" => launch_packet.fetch("external_app_handle_consumed"),
   "desktop_launch_packet_window_observed" => launch_packet.fetch("window_observed"),
   "desktop_launch_packet_x_window_observed" => launch_packet.fetch("x_window_observed"),
+  "one_shot_output_written" => one_shot_output.file?,
+  "one_shot_path" => one_shot_output.to_s,
+  "one_shot_launch_packet_path" => one_shot_launch_packet_output.to_s,
+  "one_shot_status" => one_shot.fetch("status"),
+  "one_shot_import_recorded" => one_shot.fetch("import_recorded"),
+  "one_shot_desktop_activation_staged" => one_shot.fetch("desktop_activation_staged"),
+  "one_shot_staged_launcher_invoked" => one_shot.fetch("staged_launcher_invoked"),
+  "one_shot_staged_launcher_from_activation_root" => one_shot.fetch("staged_launcher_from_activation_root"),
+  "one_shot_managed_launcher_executable_staged" => one_shot.fetch("managed_launcher_executable_staged"),
+  "one_shot_desktop_exec_uses_external_app_handle" => one_shot.fetch("desktop_exec_uses_external_app_handle"),
+  "one_shot_external_app_desktop_handle_ready" => one_shot.fetch("external_app_desktop_handle_ready"),
+  "one_shot_desktop_launch_packet_written" => one_shot.fetch("desktop_launch_packet_written"),
+  "one_shot_external_app_handle_consumed" => one_shot.fetch("external_app_handle_consumed"),
+  "one_shot_external_file_bridge_ready" => one_shot.fetch("external_file_bridge_ready"),
+  "one_shot_imported_artifact_digest_verified" => one_shot.fetch("imported_artifact_digest_verified"),
+  "one_shot_runtime_launch_executed" => one_shot.fetch("runtime_launch_executed"),
+  "one_shot_window_observed" => one_shot.fetch("window_observed"),
+  "one_shot_x_window_observed" => one_shot.fetch("x_window_observed"),
+  "one_shot_host_root_modified" => one_shot.fetch("host_root_modified"),
+  "one_shot_docker_socket_mounted" => one_shot.fetch("docker_socket_mounted"),
+  "one_shot_raw_paths_exposed" => one_shot.fetch("raw_import_record_path_exposed") || one_shot.fetch("raw_state_root_path_exposed") || one_shot.fetch("raw_executable_path_exposed") || one_shot.fetch("raw_launcher_path_exposed"),
   "external_app_import_record_consumed" => payload.fetch("external_app_import_record_consumed"),
   "external_app_handle_consumed" => payload.fetch("external_app_handle_consumed"),
   "imported_artifact_digest_verified" => payload.fetch("imported_artifact_digest_verified"),
