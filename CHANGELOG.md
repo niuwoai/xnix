@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc233] - 2026-08-13
+
+### Added
+
+- Added `scripts/q4_staged_desktop_external_winapp_smoke.rb` to build Runtime launcher binaries on q4, run the staged external Windows app desktop smoke on q4, and fetch JSON/Markdown evidence locally.
+- Added a Ruby script test covering the q4-first staged external Windows app smoke plan and safety fields.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc233`.
+
 ## [0.2.640-rc232] - 2026-08-13
 
 ### Added
