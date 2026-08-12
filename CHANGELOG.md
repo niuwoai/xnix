@@ -4,6 +4,119 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc229] - 2026-08-13
+
+### Fixed
+
+- Added a bounded q4 SSH/tooling preflight before full-smoke source sync so unavailable remote hosts are reported before rsync starts mutating the remote mirror.
+- Routed q4 source-sync and report-fetch rsync calls through the same bounded BatchMode/ConnectTimeout/ServerAlive SSH transport used by direct q4 commands.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc229`.
+
+## [0.2.640-rc228] - 2026-08-13
+
+### Fixed
+
+- Increased the isolated Wine/Xvfb container `/state` tmpfs to 2GB with executable mappings so q4 can initialize the Wine prefix and run imported Windows GUI apps without exhausting the state filesystem.
+- Defaulted external Windows app file-open window observation to the opened document name when KDE supplies a file URI and no explicit window match is configured.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc228`.
+
+## [0.2.640-rc227] - 2026-08-13
+
+### Changed
+
+- Made the Wine GUI smoke Dockerfile accept `XNIX_WINE_BASE_IMAGE` and made the image builder forward that base image as a Docker build argument.
+- Updated q4 full smoke to default the Wine GUI smoke base image to the q4-cached `python:3.12-slim` base instead of forcing a fresh `debian:bookworm-slim` pull.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc227`.
+
+### Fixed
+
+- Fixed the q4 full-smoke Wine GUI image preparation path failing on a clean q4 image cache when Docker attempted to pull `debian:bookworm-slim` through an unavailable local proxy.
+
+## [0.2.640-rc226] - 2026-08-13
+
+### Changed
+
+- Added `prepare-wine-smoke-image` to the formal full-smoke sequence so q4 prepares `xnix-wine-smoke:local` before running the imported external Windows app desktop smoke.
+- Updated the full-smoke report to expose `wine_smoke_image_prepared` evidence.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc226`.
+
+### Fixed
+
+- Fixed the q4 full-smoke real-app lane that passed the rc225 Runtime-binary discovery path but then skipped `staged-external-winapp-desktop-smoke` on a clean q4 image cache because `xnix-wine-smoke:local` had not been prepared.
+
+## [0.2.640-rc225] - 2026-08-13
+
+### Changed
+
+- Updated the staged external Windows app desktop smoke to accept explicit prebuilt Runtime binaries and copy `xnix-runtime-go` plus `xnix-compat-launch` from the tested `xnix-builder:<version>` Runtime image when host PATH binaries are unavailable.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc225`.
+
+### Fixed
+
+- Fixed the q4 full-smoke real-app lane that passed staged launcher dispatch in rc224 but then skipped `staged-external-winapp-desktop-smoke` because the host-side Docker orchestrator still required q4 host Runtime binaries or local Go compilation.
+
+## [0.2.640-rc224] - 2026-08-13
+
+### Changed
+
+- Routed `staged-launcher-dispatch-smoke` through the tested Runtime Docker image instead of the tools-only image, so q4 full smoke can use the prebuilt `xnix-runtime-go`, `xnix-runtime-owner`, and `xnix-compat-launch` binaries that the image already validates.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc224`.
+
+### Fixed
+
+- Fixed the q4 full-smoke staged launcher lane still skipping after rc223 because the container command was using `xnix-builder-tools:*`, which does not contain the prebuilt Runtime binaries.
+
+## [0.2.640-rc223] - 2026-08-13
+
+### Changed
+
+- Updated the staged managed launcher dispatch smoke to prefer prebuilt `xnix-runtime-go`, `xnix-runtime-owner`, and `xnix-compat-launch` binaries before considering local Go compilation, matching the q4 full-smoke Docker image where those binaries are already built.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc223`.
+
+### Fixed
+
+- Fixed the q4 full-smoke real-app lane that reached QEMU boot and verified the 7zr artifact but then skipped `staged-launcher-dispatch-smoke` because the harness checked the local Go compilation guard before checking for q4/container prebuilt Runtime binaries.
+
+## [0.2.640-rc222] - 2026-08-13
+
+### Changed
+
+- Extended the q4 full-smoke known Windows app fetch timeout to `300s` through `XNIX_KNOWN_WINAPP_FETCH_TIMEOUT` so transient GitHub latency is less likely to fail the real-app validation lane after q4 has already completed the compile-heavy Buildroot and Wine guest work.
+- Passed the known Windows app fetch timeout into the restricted networked Docker fetch container while keeping later Buildroot, QEMU, Wine, KDE, and Runtime smoke steps networkless where required.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc222`.
+
+### Fixed
+
+- Added script, container, and layout coverage proving q4 full smoke exposes the known-app fetch timeout, validates duration arguments, and forwards the timeout into Docker only for the managed known-app fetch step.
+
+## [0.2.640-rc221] - 2026-07-27
+
+### Added
+
+- Added q4-scoped Docker run resource overrides to `scripts/q4_full_smoke.rb`, defaulting remote heavy-smoke containers to `XNIX_CONTAINER_MEMORY_LIMIT=12g` and `XNIX_CONTAINER_CPU_LIMIT=2.0` while leaving direct local container defaults unchanged.
+- Added script, container, and layout coverage for q4 heavy-smoke resource planning, custom limit overrides, and whitespace-rejected Docker resource-limit arguments.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc221`.
+- Documented the q4-first full-smoke resource split so q4 owns compile-heavy Docker, Buildroot, QEMU, and Windows app validation work while the macOS host remains an orchestration node.
+
+## [0.2.640-rc220] - 2026-07-27
+
+### Added
+
+- Added `scripts/q4_full_smoke.rb`, an execute-gated q4-first orchestrator that syncs the checkout to q4, runs the existing full smoke remotely with a q4-cached tools base image, and fetches JSON, Markdown, and serial-log reports back to a constrained local output directory.
+- Added q4 full-smoke script coverage and layout guards proving q4 compilation ownership, host compilation avoidance, protected Claude document exclusion, report fetch planning, and closed unsafe host/container gates.
+
+### Changed
+
+- Added an explicit `XNIX_ALLOW_NON_COLIMA_DOCKER=1` trusted-remote opt-in and `XNIX_TOOLS_BASE_IMAGE` build-arg support so q4/Linux Docker can run the existing container full-smoke steps while macOS still defaults to the Colima guard.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc220`.
+
+### Fixed
+
+- Removed Wine-specific file-argument path translation field names from public known-app dispatch smoke results by renaming them to backend-neutral guest-path translation fields.
+
 ## [0.2.640-rc219] - 2026-07-27
 
 ### Added

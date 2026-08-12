@@ -364,62 +364,62 @@ type KnownDispatchSmokeRequest struct {
 }
 
 type KnownDispatchSmokeResult struct {
-	SchemaVersion                       string `json:"schema_version"`
-	RequestType                         string `json:"request_type"`
-	Source                              string `json:"source"`
-	Status                              string `json:"status"`
-	RequestID                           string `json:"request_id"`
-	DispatchID                          string `json:"dispatch_id"`
-	RuntimeMethod                       string `json:"runtime_method"`
-	AppID                               string `json:"app_id"`
-	DisplayName                         string `json:"display_name"`
-	AppVersion                          string `json:"app_version"`
-	Architecture                        string `json:"architecture"`
-	DispatchGate                        string `json:"dispatch_gate"`
-	RunnerLane                          string `json:"runner_lane"`
-	GuestBoundary                       string `json:"guest_boundary"`
-	CacheStatus                         string `json:"cache_status"`
-	ArtifactVerified                    bool   `json:"artifact_verified"`
-	LaunchRequestCreated                bool   `json:"launch_request_created"`
-	DispatchPreviewCreated              bool   `json:"dispatch_preview_created"`
-	DispatchReady                       bool   `json:"dispatch_ready"`
-	DispatchAllowed                     bool   `json:"dispatch_allowed"`
-	DispatchStarted                     bool   `json:"dispatch_started"`
-	ExecutionStarted                    bool   `json:"execution_started"`
-	BackendProcessStarted               bool   `json:"backend_process_started"`
-	ManagedGuestRunnerInvoked           bool   `json:"managed_guest_runner_invoked"`
-	ManagedGuestReachable               bool   `json:"managed_guest_reachable"`
-	ManagedGuestRuntimeReady            bool   `json:"managed_guest_runtime_ready"`
-	ManagedArtifactCopied               bool   `json:"managed_artifact_copied"`
-	FileArgumentCount                   int    `json:"file_argument_count"`
-	FileArgumentCopiedCount             int    `json:"file_argument_copied_count"`
-	FileArgumentsPassed                 bool   `json:"file_arguments_passed"`
-	FileArgumentWinePathTranslated      bool   `json:"file_argument_winepath_translated"`
-	FileArgumentWinePathTranslatedCount int    `json:"file_argument_winepath_translated_count"`
-	WindowMatch                         string `json:"window_match,omitempty"`
-	WindowMatchObserved                 bool   `json:"window_match_observed"`
-	WindowEvidenceSummary               string `json:"window_evidence_summary"`
-	MarkerObserved                      bool   `json:"marker_observed"`
-	SmokePassed                         bool   `json:"smoke_passed"`
-	ExitCode                            int    `json:"exit_code"`
-	DurationMillis                      int64  `json:"duration_millis"`
-	RuntimeOwnedRequest                 bool   `json:"runtime_owned_request"`
-	RuntimeOwnedLaunch                  bool   `json:"runtime_owned_launch"`
-	RuntimeOwnedDispatch                bool   `json:"runtime_owned_dispatch"`
-	KDEPresentationOnly                 bool   `json:"kde_presentation_only"`
-	HostRootModified                    bool   `json:"host_root_modified"`
-	PrivilegedContainerRequired         bool   `json:"privileged_container_required"`
-	HostNetworkingRequired              bool   `json:"host_networking_required"`
-	DockerSocketMounted                 bool   `json:"docker_socket_mounted"`
-	BroadHostMountRequired              bool   `json:"broad_host_mount_required"`
-	RawHostPathExposed                  bool   `json:"raw_host_path_exposed"`
-	RawExecutablePathExposed            bool   `json:"raw_executable_path_exposed"`
-	RawCommandExposed                   bool   `json:"raw_command_exposed"`
-	BackendDetailsExposed               bool   `json:"backend_details_exposed"`
-	DesktopSafeSummary                  string `json:"desktop_safe_summary"`
-	SkipReason                          string `json:"skip_reason,omitempty"`
-	FailureReason                       string `json:"failure_reason,omitempty"`
-	BlockedReason                       string `json:"blocked_reason,omitempty"`
+	SchemaVersion                        string `json:"schema_version"`
+	RequestType                          string `json:"request_type"`
+	Source                               string `json:"source"`
+	Status                               string `json:"status"`
+	RequestID                            string `json:"request_id"`
+	DispatchID                           string `json:"dispatch_id"`
+	RuntimeMethod                        string `json:"runtime_method"`
+	AppID                                string `json:"app_id"`
+	DisplayName                          string `json:"display_name"`
+	AppVersion                           string `json:"app_version"`
+	Architecture                         string `json:"architecture"`
+	DispatchGate                         string `json:"dispatch_gate"`
+	RunnerLane                           string `json:"runner_lane"`
+	GuestBoundary                        string `json:"guest_boundary"`
+	CacheStatus                          string `json:"cache_status"`
+	ArtifactVerified                     bool   `json:"artifact_verified"`
+	LaunchRequestCreated                 bool   `json:"launch_request_created"`
+	DispatchPreviewCreated               bool   `json:"dispatch_preview_created"`
+	DispatchReady                        bool   `json:"dispatch_ready"`
+	DispatchAllowed                      bool   `json:"dispatch_allowed"`
+	DispatchStarted                      bool   `json:"dispatch_started"`
+	ExecutionStarted                     bool   `json:"execution_started"`
+	BackendProcessStarted                bool   `json:"backend_process_started"`
+	ManagedGuestRunnerInvoked            bool   `json:"managed_guest_runner_invoked"`
+	ManagedGuestReachable                bool   `json:"managed_guest_reachable"`
+	ManagedGuestRuntimeReady             bool   `json:"managed_guest_runtime_ready"`
+	ManagedArtifactCopied                bool   `json:"managed_artifact_copied"`
+	FileArgumentCount                    int    `json:"file_argument_count"`
+	FileArgumentCopiedCount              int    `json:"file_argument_copied_count"`
+	FileArgumentsPassed                  bool   `json:"file_arguments_passed"`
+	FileArgumentGuestPathTranslated      bool   `json:"file_argument_guest_path_translated"`
+	FileArgumentGuestPathTranslatedCount int    `json:"file_argument_guest_path_translated_count"`
+	WindowMatch                          string `json:"window_match,omitempty"`
+	WindowMatchObserved                  bool   `json:"window_match_observed"`
+	WindowEvidenceSummary                string `json:"window_evidence_summary"`
+	MarkerObserved                       bool   `json:"marker_observed"`
+	SmokePassed                          bool   `json:"smoke_passed"`
+	ExitCode                             int    `json:"exit_code"`
+	DurationMillis                       int64  `json:"duration_millis"`
+	RuntimeOwnedRequest                  bool   `json:"runtime_owned_request"`
+	RuntimeOwnedLaunch                   bool   `json:"runtime_owned_launch"`
+	RuntimeOwnedDispatch                 bool   `json:"runtime_owned_dispatch"`
+	KDEPresentationOnly                  bool   `json:"kde_presentation_only"`
+	HostRootModified                     bool   `json:"host_root_modified"`
+	PrivilegedContainerRequired          bool   `json:"privileged_container_required"`
+	HostNetworkingRequired               bool   `json:"host_networking_required"`
+	DockerSocketMounted                  bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired               bool   `json:"broad_host_mount_required"`
+	RawHostPathExposed                   bool   `json:"raw_host_path_exposed"`
+	RawExecutablePathExposed             bool   `json:"raw_executable_path_exposed"`
+	RawCommandExposed                    bool   `json:"raw_command_exposed"`
+	BackendDetailsExposed                bool   `json:"backend_details_exposed"`
+	DesktopSafeSummary                   string `json:"desktop_safe_summary"`
+	SkipReason                           string `json:"skip_reason,omitempty"`
+	FailureReason                        string `json:"failure_reason,omitempty"`
+	BlockedReason                        string `json:"blocked_reason,omitempty"`
 }
 
 type KnownLaunchBridgeRequest struct {
@@ -790,7 +790,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc219",
+		Version:         "0.2.640-rc229",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
@@ -801,7 +801,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.messagebox",
 		DisplayName:     "Xnix MessageBox",
-		Version:         "0.2.640-rc219",
+		Version:         "0.2.640-rc229",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "xnix-messagebox-smoke.exe",
 		SourcePageURL:   "runtime-managed-external-gui-fixture",
@@ -811,7 +811,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:                       "org.xnix.sample.notepad",
 		DisplayName:              "Sample Notepad",
-		Version:                  "0.2.640-rc219",
+		Version:                  "0.2.640-rc229",
 		Architecture:             "windows-x86-gui",
 		ExecutableName:           "notepad.exe",
 		SourcePageURL:            "runtime-recipe-container-gui-fixture",
@@ -1254,8 +1254,8 @@ func RunKnownPortableGuestGUIDispatchSmoke(ctx context.Context, request KnownDis
 	result.FileArgumentCount = gui.FileArgumentCount
 	result.FileArgumentCopiedCount = gui.FileArgumentCopiedCount
 	result.FileArgumentsPassed = gui.FileArgumentsPassed
-	result.FileArgumentWinePathTranslated = gui.FileArgumentWinePathTranslated
-	result.FileArgumentWinePathTranslatedCount = gui.FileArgumentWinePathTranslatedCount
+	result.FileArgumentGuestPathTranslated = gui.FileArgumentWinePathTranslated
+	result.FileArgumentGuestPathTranslatedCount = gui.FileArgumentWinePathTranslatedCount
 	result.WindowMatch = gui.WindowMatch
 	result.WindowMatchObserved = gui.WindowMatchObserved
 	result.WindowEvidenceSummary = gui.WindowEvidenceSummary

@@ -225,7 +225,7 @@ func TestRunContainerXGUISmokeObservesWindowWithRestrictedDockerRunner(t *testin
 		"--pids-limit 512",
 		"--security-opt no-new-privileges",
 		"--cap-drop ALL",
-		"--tmpfs /state:rw,nosuid,nodev,size=1g",
+		"--tmpfs /state:rw,nosuid,nodev,exec,size=2g",
 		"--env WINEPREFIX=/state/wineprefix",
 		"--env DISPLAY=:99",
 		"--env XNIX_GUI_APP=notepad.exe",

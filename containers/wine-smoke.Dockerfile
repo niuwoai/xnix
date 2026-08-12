@@ -1,5 +1,6 @@
+ARG XNIX_WINE_BASE_IMAGE=debian:bookworm-slim
 ARG XNIX_WINE_BASE_PLATFORM=linux/amd64
-FROM --platform=${XNIX_WINE_BASE_PLATFORM} debian:bookworm-slim
+FROM --platform=${XNIX_WINE_BASE_PLATFORM} ${XNIX_WINE_BASE_IMAGE}
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV WINEDEBUG=-all

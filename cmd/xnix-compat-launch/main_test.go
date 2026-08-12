@@ -257,6 +257,10 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		payload["window_observed"] != true {
 		t.Fatalf("unexpected external handle launcher payload: %#v", payload)
 	}
+	runtimePayload, ok := payload["runtime_payload"].(map[string]any)
+	if !ok || runtimePayload["window_match"] != "report.docx" {
+		t.Fatalf("external handle launcher payload must expose the safe file-open window title: %#v", payload["runtime_payload"])
+	}
 	dockerInvocation, err := os.ReadFile(dockerLog)
 	if err != nil {
 		t.Fatalf("ReadFile docker log returned error: %v", err)
@@ -317,9 +321,7 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 	if strings.Contains(output.String(), documentPath) ||
 		strings.Contains(output.String(), documentURI) ||
 		strings.Contains(string(packetBytes), documentPath) ||
-		strings.Contains(string(packetBytes), documentURI) ||
-		strings.Contains(output.String(), "report.docx") ||
-		strings.Contains(string(packetBytes), "report.docx") {
+		strings.Contains(string(packetBytes), documentURI) {
 		t.Fatalf("external launcher exposed raw file URI argument\nstdout=%s\npacket=%s", output.String(), string(packetBytes))
 	}
 	assertCompatLaunchContainerGUIDispatchSafe(t, output.String(), stateRoot, executablePath, dockerPath)
@@ -754,8 +756,8 @@ func TestCompatLaunchPassesFileArgumentToGuestGUINotepad(t *testing.T) {
 		payload["file_argument_count"] != float64(1) ||
 		payload["file_argument_copied_count"] != float64(1) ||
 		payload["file_arguments_passed"] != true ||
-		payload["file_argument_winepath_translated"] != true ||
-		payload["file_argument_winepath_translated_count"] != float64(1) ||
+		payload["file_argument_guest_path_translated"] != true ||
+		payload["file_argument_guest_path_translated_count"] != float64(1) ||
 		payload["window_match"] != "sample-document.txt" ||
 		payload["window_match_observed"] != true ||
 		payload["window_evidence_summary"] == "" ||

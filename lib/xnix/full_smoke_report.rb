@@ -119,6 +119,7 @@ module Xnix
         "qemu_network_restricted" => true,
         "network_required_for_source_download" => true,
         "wine_guest_built" => wine_guest_built?,
+        "wine_smoke_image_prepared" => wine_smoke_image_prepared?,
         "known_app_smoke_included" => known_app_smoke_included?,
         "known_app_smoke_passed" => smoke_passed?("staged-launcher-dispatch-smoke"),
         "external_imported_app_smoke_included" => external_imported_app_smoke_included?,
@@ -157,6 +158,7 @@ module Xnix
         "- QEMU network restricted: #{data.fetch("qemu_network_restricted")}",
         "- Source download network required: #{data.fetch("network_required_for_source_download")}",
         "- Wine guest built: #{data.fetch("wine_guest_built")}",
+        "- Wine smoke image prepared: #{data.fetch("wine_smoke_image_prepared")}",
         "- Known Windows app smoke included: #{data.fetch("known_app_smoke_included")}",
         "- Known Windows app smoke passed: #{data.fetch("known_app_smoke_passed")}",
         "- External imported Windows app desktop smoke included: #{data.fetch("external_imported_app_smoke_included")}",
@@ -196,6 +198,10 @@ module Xnix
 
     def known_app_smoke_included?
       @steps.include?("staged-launcher-dispatch-smoke")
+    end
+
+    def wine_smoke_image_prepared?
+      @steps.include?("prepare-wine-smoke-image")
     end
 
     def external_imported_app_smoke_included?

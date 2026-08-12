@@ -7,13 +7,14 @@ require "securerandom"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 IMAGE = ENV.fetch("XNIX_WINE_IMAGE", "xnix-wine-smoke:local")
+BASE_IMAGE = ENV.fetch("XNIX_WINE_BASE_IMAGE", "debian:bookworm-slim")
 PLATFORM = ENV.fetch("XNIX_WINE_PLATFORM", "linux/amd64")
 BASE_PLATFORM = ENV.fetch("XNIX_WINE_BASE_PLATFORM", PLATFORM)
 PULL_BASE = ENV.fetch("XNIX_WINE_PULL", "0") == "1"
 DOCKERFILE_RELATIVE = "containers/wine-smoke.Dockerfile"
 DOCKERFILE = PROJECT_ROOT.join(DOCKERFILE_RELATIVE)
 
-argv = ["docker", "build", "--platform", PLATFORM, "--build-arg", "XNIX_WINE_BASE_PLATFORM=#{BASE_PLATFORM}"]
+argv = ["docker", "build", "--platform", PLATFORM, "--build-arg", "XNIX_WINE_BASE_IMAGE=#{BASE_IMAGE}", "--build-arg", "XNIX_WINE_BASE_PLATFORM=#{BASE_PLATFORM}"]
 argv << "--pull" if PULL_BASE
 argv.concat([
   "-f", DOCKERFILE.to_s,

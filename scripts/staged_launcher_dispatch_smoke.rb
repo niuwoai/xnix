@@ -34,6 +34,9 @@ SMOKE_NAME = "staged managed launcher dispatch smoke"
 GO_BUILD_STEP = "go build"
 ALLOW_LOCAL_GO_COMPILE_ENV = "XNIX_ALLOW_LOCAL_GO_COMPILE"
 REMOTE_GO_BUILD_HINT = "scripts/remote_go_build.rb --execute"
+RUNTIME_GO_BIN_ENV = "XNIX_RUNTIME_GO_BIN"
+RUNTIME_OWNER_BIN_ENV = "XNIX_RUNTIME_OWNER_BIN"
+COMPAT_LAUNCH_BIN_ENV = "XNIX_COMPAT_LAUNCH_BIN"
 
 def go_env
   {
@@ -50,7 +53,61 @@ def assert(condition, message)
   exit 1
 end
 
+def local_go_compile_allowed?
+  ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1"
+end
+
+def command_path(name)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).each do |directory|
+    path = File.join(directory, name)
+    return path if File.file?(path) && File.executable?(path)
+  end
+
+  nil
+end
+
+def managed_command(env_name, binary_name, go_package)
+  explicit = ENV.fetch(env_name, "").strip
+  return [explicit] unless explicit.empty?
+
+  path = command_path(binary_name)
+  return [path] unless path.nil?
+
+  return ["go", "run", go_package] if local_go_compile_allowed? && !command_path("go").nil?
+
+  nil
+end
+
+def runtime_go_command
+  managed_command(RUNTIME_GO_BIN_ENV, "xnix-runtime-go", "./cmd/xnix-runtime-go")
+end
+
+def runtime_owner_command
+  managed_command(RUNTIME_OWNER_BIN_ENV, "xnix-runtime-owner", "./cmd/xnix-runtime-owner")
+end
+
+def resolve_managed_go_command(argv)
+  if argv.first(3) == ["go", "run", "./cmd/xnix-runtime-go"]
+    command = runtime_go_command
+    return nil if command.nil?
+
+    return command + argv[3..]
+  end
+
+  if argv.first(3) == ["go", "run", "./cmd/xnix-runtime-owner"]
+    command = runtime_owner_command
+    return nil if command.nil?
+
+    return command + argv[3..]
+  end
+
+  argv
+end
+
 def run_command(env, *argv)
+  argv = resolve_managed_go_command(argv)
+  return ["", "managed Runtime binary unavailable and local Go compilation is disabled", 1] if argv.nil?
+
   stdout, stderr, status = Open3.capture3(env, *argv, chdir: PROJECT_ROOT.to_s)
   [stdout, stderr, status.exitstatus]
 end
@@ -74,8 +131,13 @@ def assert_no_forbidden(text, forbidden_terms, label)
   end
 end
 
-unless ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1"
-  puts "SKIP: #{SMOKE_NAME} (local Go compilation is disabled by default, set #{ALLOW_LOCAL_GO_COMPILE_ENV}=1 only for an explicit local override or build on q4 with #{REMOTE_GO_BUILD_HINT})"
+unless runtime_go_command
+  puts "SKIP: #{SMOKE_NAME} (xnix-runtime-go is unavailable; local Go compilation is disabled by default, set #{ALLOW_LOCAL_GO_COMPILE_ENV}=1 only for an explicit local override or build on q4 with #{REMOTE_GO_BUILD_HINT})"
+  exit 0
+end
+
+unless runtime_owner_command
+  puts "SKIP: #{SMOKE_NAME} (xnix-runtime-owner is unavailable; local Go compilation is disabled by default, set #{ALLOW_LOCAL_GO_COMPILE_ENV}=1 only for an explicit local override or build on q4 with #{REMOTE_GO_BUILD_HINT})"
   exit 0
 end
 
@@ -87,6 +149,30 @@ def stop_qemu(wait_thread)
   Process.kill("KILL", wait_thread.pid) if wait_thread.alive?
 rescue Errno::ESRCH
   nil
+end
+
+def prebuilt_launcher_path
+  explicit = ENV.fetch(COMPAT_LAUNCH_BIN_ENV, "").strip
+  return explicit if !explicit.empty? && File.file?(explicit) && File.executable?(explicit)
+
+  command_path("xnix-compat-launch")
+end
+
+def prepare_launcher_binary
+  prebuilt = prebuilt_launcher_path
+  unless prebuilt.nil?
+    FileUtils.cp(prebuilt, LAUNCHER_BIN)
+    FileUtils.chmod(0o755, LAUNCHER_BIN)
+    return
+  end
+
+  unless local_go_compile_allowed?
+    puts "SKIP: #{SMOKE_NAME} (xnix-compat-launch is unavailable; local Go compilation is disabled by default, set #{COMPAT_LAUNCH_BIN_ENV} to a prebuilt launcher or build on q4 with #{REMOTE_GO_BUILD_HINT})"
+    exit 0
+  end
+
+  build_stdout, build_stderr, build_status = run_command(go_env, "go", "build", "-o", LAUNCHER_BIN.to_s, "./cmd/xnix-compat-launch")
+  assert(build_status.zero?, "#{GO_BUILD_STEP} must exit successfully: #{build_stderr}\n#{build_stdout}")
 end
 
 FileUtils.mkdir_p(WORK_ROOT)
@@ -136,8 +222,7 @@ unless File.file?(qemu.kernel_image)
   exit 0
 end
 
-build_stdout, build_stderr, build_status = run_command(go_env, "go", "build", "-o", LAUNCHER_BIN.to_s, "./cmd/xnix-compat-launch")
-assert(build_status.zero?, "#{GO_BUILD_STEP} must exit successfully: #{build_stderr}\n#{build_stdout}")
+prepare_launcher_binary
 
 stage, stage_stdout = run_json(
   go_env,

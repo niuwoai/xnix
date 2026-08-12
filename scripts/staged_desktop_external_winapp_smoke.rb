@@ -23,6 +23,11 @@ RUN_ID = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{Process.pid}-#{SecureRandom
 GO_CACHE_ROOT = PROJECT_ROOT.join(".cache", "go")
 ALLOW_LOCAL_GO_COMPILE_ENV = "XNIX_ALLOW_LOCAL_GO_COMPILE"
 REMOTE_GO_BUILD_HINT = "scripts/remote_go_build.rb --execute"
+RUNTIME_GO_BIN_ENV = "XNIX_RUNTIME_GO_BIN"
+COMPAT_LAUNCH_BIN_ENV = "XNIX_COMPAT_LAUNCH_BIN"
+RUNTIME_IMAGE_ENV = "XNIX_RUNTIME_IMAGE"
+RUNTIME_GO_IMAGE_PATH = "/usr/local/bin/xnix-runtime-go"
+COMPAT_LAUNCH_IMAGE_PATH = "/usr/local/bin/xnix-compat-launch"
 CONTAINER_NOTEPAD_CANDIDATES = [
   "/usr/lib/wine/x86_64-windows/notepad.exe",
   "/usr/lib/wine/i386-windows/notepad.exe",
@@ -45,6 +50,7 @@ options = {
   executable: "",
   fixture: "notepad",
   image: ENV.fetch("XNIX_WINE_IMAGE", DEFAULT_IMAGE),
+  runtime_image: ENV.fetch(RUNTIME_IMAGE_ENV, "xnix-builder:#{VERSION}"),
   docker: ENV.fetch("XNIX_DOCKER_BIN", "docker"),
   timeout: "120s"
 }
@@ -62,6 +68,7 @@ OptionParser.new do |parser|
   parser.on("--executable PATH", "Optional existing Windows GUI executable; defaults to Wine Notepad from the local image") { |value| options[:executable] = value }
   parser.on("--fixture NAME", "Built-in executable fixture: notepad or notepad-file-argument") { |value| options[:fixture] = value }
   parser.on("--image IMAGE", "Local Wine GUI smoke image") { |value| options[:image] = value }
+  parser.on("--runtime-image IMAGE", "Runtime image with prebuilt Xnix command binaries") { |value| options[:runtime_image] = value }
   parser.on("--docker PATH", "Docker runner path") { |value| options[:docker] = value }
   parser.on("--timeout DURATION", "GUI smoke timeout") { |value| options[:timeout] = value }
 end.parse!
@@ -129,6 +136,10 @@ def command_available?(name)
 end
 
 def runtime_go_command
+  configured = ENV.fetch(RUNTIME_GO_BIN_ENV, "").strip
+  configured_path = resolve_executable(configured)
+  return [configured_path] unless configured_path.nil?
+
   return ["xnix-runtime-go"] if command_available?("xnix-runtime-go")
   return ["go", "run", "./cmd/xnix-runtime-go"] if ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1" && command_available?("go")
 
@@ -136,8 +147,9 @@ def runtime_go_command
 end
 
 def launcher_binary
-  configured = ENV.fetch("XNIX_COMPAT_LAUNCH_BIN", "").strip
-  return configured if !configured.empty? && File.file?(configured) && File.executable?(configured)
+  configured = ENV.fetch(COMPAT_LAUNCH_BIN_ENV, "").strip
+  configured_path = resolve_executable(configured)
+  return configured_path unless configured_path.nil?
 
   resolve_executable("xnix-compat-launch")
 end
@@ -164,6 +176,22 @@ def copy_container_notepad(docker_bin, image, source_path, destination_path)
   begin
     _cp_stdout, cp_stderr, cp_status = Open3.capture3(docker_bin, "cp", "#{container_id}:#{source_path}", destination_path.to_s)
     abort "docker cp for Notepad extraction failed:\n#{cp_stderr}" unless cp_status.success?
+  ensure
+    Open3.capture3(docker_bin, "rm", "-f", container_id) unless container_id.empty?
+  end
+end
+
+def copy_image_binary(docker_bin, image, source_path, destination_path)
+  stdout, _stderr, status = Open3.capture3(docker_bin, "create", "--network", "none", "--entrypoint", "sh", image, "-lc", "sleep 30")
+  return false unless status.success?
+
+  container_id = stdout.strip
+  begin
+    _cp_stdout, _cp_stderr, cp_status = Open3.capture3(docker_bin, "cp", "#{container_id}:#{source_path}", destination_path.to_s)
+    return false unless cp_status.success?
+
+    FileUtils.chmod(0o755, destination_path)
+    true
   ensure
     Open3.capture3(docker_bin, "rm", "-f", container_id) unless container_id.empty?
   end
@@ -252,6 +280,9 @@ def write_markdown_report(markdown_output, packet)
       "- Activation status: #{packet.fetch("activation_status_path")}",
       "- Desktop launch packet: #{packet.fetch("desktop_launch_packet_path")}",
       "- KDE page: #{packet.fetch("kde_page_path")}",
+      "- Runtime image: #{packet.fetch("runtime_image")}",
+      "- Runtime binary from Runtime image: #{packet.fetch("runtime_binary_from_runtime_image")}",
+      "- Launcher binary from Runtime image: #{packet.fetch("launcher_binary_from_runtime_image")}",
       "- KDE card window observed: #{packet.fetch("kde_page_card_window_observed")}",
       "- KDE card X window observed: #{packet.fetch("kde_page_card_x_window_observed")}",
       ""
@@ -313,11 +344,17 @@ FileUtils.mkdir_p(runtime_packet_output.dirname)
 FileUtils.mkdir_p(kde_page_output.dirname)
 
 runtime_command = runtime_go_command
+runtime_binary_from_runtime_image = false
+if runtime_command.nil? && !docker_bin.nil? && docker_image_available?(docker_bin, options.fetch(:runtime_image))
+  runtime_go_bin = build_root.join("xnix-runtime-go")
+  runtime_binary_from_runtime_image = copy_image_binary(docker_bin, options.fetch(:runtime_image), RUNTIME_GO_IMAGE_PATH, runtime_go_bin)
+  runtime_command = [runtime_go_bin.to_s] if runtime_binary_from_runtime_image && runtime_go_bin.file? && runtime_go_bin.executable?
+end
 unless runtime_command
   write_skip_report(
     report_output,
     markdown_output,
-    "xnix-runtime-go is unavailable; local Go compilation is disabled by default, set #{ALLOW_LOCAL_GO_COMPILE_ENV}=1 only for an explicit local override or build on q4 with #{REMOTE_GO_BUILD_HINT}",
+    "xnix-runtime-go is unavailable; local Go compilation is disabled by default, set #{RUNTIME_GO_BIN_ENV} to a prebuilt Runtime binary, provide #{RUNTIME_IMAGE_ENV}=xnix-builder:#{VERSION}, or build on q4 with #{REMOTE_GO_BUILD_HINT}",
     app_id,
     app_name
   )
@@ -325,6 +362,12 @@ unless runtime_command
 end
 
 managed_launcher_bin = launcher_binary
+launcher_binary_from_runtime_image = false
+if managed_launcher_bin.nil? && !docker_bin.nil? && docker_image_available?(docker_bin, options.fetch(:runtime_image))
+  runtime_launcher_bin = build_root.join("xnix-compat-launch")
+  launcher_binary_from_runtime_image = copy_image_binary(docker_bin, options.fetch(:runtime_image), COMPAT_LAUNCH_IMAGE_PATH, runtime_launcher_bin)
+  managed_launcher_bin = runtime_launcher_bin.to_s if launcher_binary_from_runtime_image && runtime_launcher_bin.file? && runtime_launcher_bin.executable?
+end
 if managed_launcher_bin.nil? && ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1" && command_available?("go")
   build_stdout, build_stderr, build_status = run_command(
     go_env,
@@ -338,7 +381,7 @@ unless managed_launcher_bin
   write_skip_report(
     report_output,
     markdown_output,
-    "xnix-compat-launch is unavailable; local Go compilation is disabled by default, set XNIX_COMPAT_LAUNCH_BIN to a prebuilt launcher or build on q4 with #{REMOTE_GO_BUILD_HINT}",
+    "xnix-compat-launch is unavailable; local Go compilation is disabled by default, set #{COMPAT_LAUNCH_BIN_ENV} to a prebuilt launcher, provide #{RUNTIME_IMAGE_ENV}=xnix-builder:#{VERSION}, or build on q4 with #{REMOTE_GO_BUILD_HINT}",
     app_id,
     app_name
   )
@@ -644,6 +687,9 @@ packet = {
   "activation_status_path" => activation_status_output.to_s,
   "desktop_launch_packet_path" => launch_packet_output.to_s,
   "kde_page_path" => kde_page_output.to_s,
+  "runtime_image" => options.fetch(:runtime_image),
+  "runtime_binary_from_runtime_image" => runtime_binary_from_runtime_image,
+  "launcher_binary_from_runtime_image" => launcher_binary_from_runtime_image,
   "report_path" => report_output.to_s,
   "markdown_path" => markdown_output.to_s
 }

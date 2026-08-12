@@ -62,7 +62,8 @@ steps = [
   ["configure-wine-guest"],
   ["download-wine-guest"],
   ["build-ssh-wine-guest"],
-  ["fetch-known-winapp"]
+  ["fetch-known-winapp"],
+  ["prepare-wine-smoke-image"]
 ]
 
 completed_steps = []

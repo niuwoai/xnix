@@ -119,10 +119,7 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 	if err != nil {
 		return ExternalWinAppRunResult{}, err
 	}
-	windowMatch := strings.TrimSpace(request.WindowMatch)
-	if windowMatch == "" {
-		windowMatch = record.ExecutableName
-	}
+	windowMatch := externalWinAppWindowMatch(request.WindowMatch, fileArgumentPaths, record.ExecutableName)
 	runtimePayload, err := winapp.RunContainerXGUISmoke(ctx, winapp.ContainerXGUIRequest{
 		ExecutablePath:                  importedExecutablePath,
 		ApplicationName:                 "/" + record.ExecutableName,
@@ -209,6 +206,19 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 		result.DesktopSafeSummary = fmt.Sprintf("%s Runtime imported Windows app run did not complete successfully; unsafe desktop and backend details remain hidden.", record.DisplayName)
 	}
 	return result, nil
+}
+
+func externalWinAppWindowMatch(requested string, fileArgumentPaths []string, executableName string) string {
+	windowMatch := strings.TrimSpace(requested)
+	if windowMatch != "" {
+		return windowMatch
+	}
+	if len(fileArgumentPaths) > 0 {
+		if filename := filepath.Base(fileArgumentPaths[0]); filename != "." && filename != string(filepath.Separator) {
+			return filename
+		}
+	}
+	return strings.TrimSpace(executableName)
 }
 
 func validateExternalDesktopArguments(values []string) (int, bool, []string, error) {

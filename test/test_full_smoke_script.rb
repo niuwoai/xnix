@@ -25,6 +25,7 @@ script = project_root.join("scripts/full_smoke.rb").read
   download-wine-guest
   build-ssh-wine-guest
   fetch-known-winapp
+  prepare-wine-smoke-image
   boot-system
   staged-launcher-dispatch-smoke
   staged-external-winapp-desktop-smoke
@@ -45,6 +46,7 @@ configure_wine_index = script.index("\"configure-wine-guest\"")
 download_wine_index = script.index("\"download-wine-guest\"")
 build_wine_index = script.index("\"build-ssh-wine-guest\"")
 fetch_known_app_index = script.index("\"fetch-known-winapp\"")
+prepare_wine_smoke_image_index = script.index("\"prepare-wine-smoke-image\"")
 boot_index = script.index("\"boot-system\"")
 known_app_smoke_index = script.index("\"staged-launcher-dispatch-smoke\"")
 external_app_smoke_index = script.index("\"staged-external-winapp-desktop-smoke\"")
@@ -62,6 +64,8 @@ assert(configure_wine_index < download_wine_index, "full smoke must configure th
 assert(download_wine_index < build_wine_index, "full smoke must download Wine guest sources before building the SSH Wine guest")
 assert(build_wine_index < fetch_known_app_index, "full smoke must build the SSH Wine guest before fetching known Windows apps")
 assert(fetch_known_app_index < boot_index, "full smoke must fetch known Windows apps before the final base boot smoke")
+assert(fetch_known_app_index < prepare_wine_smoke_image_index, "full smoke must fetch known Windows apps before preparing the Wine GUI smoke image")
+assert(prepare_wine_smoke_image_index < boot_index, "full smoke must prepare the Wine GUI smoke image before the final base boot smoke")
 assert(build_system_index < boot_index, "full smoke must build the system before booting QEMU")
 assert(boot_index < known_app_smoke_index, "full smoke must prove the base QEMU boot before the known Windows app smoke")
 assert(known_app_smoke_index < external_app_smoke_index, "full smoke must prove known app smoke before imported external Windows app desktop smoke")

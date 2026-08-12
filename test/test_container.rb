@@ -16,20 +16,28 @@ end
 
 container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION)
 custom_container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION, docker_bin: "/tmp/xnix-docker")
+custom_base_container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION, tools_base_image: "python:3.12-slim")
+custom_resource_container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION, memory_limit: "12g", cpu_limit: "2.0")
+custom_known_fetch_timeout_container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION, known_winapp_fetch_timeout: "300s")
 build_command = container.build_command
 build_tools_command = container.build_tools_command
 offline_command = container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
+custom_resource_offline_command = custom_resource_container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
 custom_build_command = custom_container.build_command
 custom_build_tools_command = custom_container.build_tools_command
 custom_offline_command = custom_container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
+custom_base_build_command = custom_base_container.build_command
+custom_base_build_tools_command = custom_base_container.build_tools_command
 runtime_activation_command = container.runtime_activation_smoke_command
 runtime_dbus_command = container.runtime_dbus_smoke_command
 runtime_owner_candidate_command = container.runtime_owner_candidate_smoke_command
 kde_center_dbus_command = container.kde_center_dbus_smoke_command
 known_winapp_fetch_command = container.known_winapp_fetch_command
+custom_known_fetch_timeout_command = custom_known_fetch_timeout_container.known_winapp_fetch_command
 known_winapp_guest_command = container.known_winapp_guest_wine_smoke_command
 winapp_container_x_gui_command = container.winapp_container_x_gui_smoke_command
 staged_launcher_dispatch_command = container.staged_launcher_dispatch_smoke_command
+prepare_wine_smoke_image_command = container.prepare_wine_smoke_image_command
 runtime_status_owner_service_session_bus_command = container.runtime_status_owner_service_session_bus_smoke_command
 kde_controlled_launch_action_smoke_command = container.kde_controlled_launch_action_smoke_command
 desktop_trigger_request_preflight_smoke_command = container.desktop_trigger_request_preflight_smoke_command
@@ -63,6 +71,11 @@ assert(build_tools_command.include?("--target"), "tools build command must selec
 assert(build_tools_command.fetch(build_tools_command.index("--target") + 1) == "tools", "tools build command must avoid the full validation target")
 assert(build_command.include?("--pull=false"), "build command must prefer the local base image cache")
 assert(build_tools_command.include?("--pull=false"), "tools build command must prefer the local base image cache")
+assert(!build_command.include?("--build-arg"), "build command must not override the tools base image by default")
+assert(custom_base_build_command.include?("--build-arg"), "build command must support an explicit tools base image override")
+assert(custom_base_build_command.include?("XNIX_TOOLS_BASE_IMAGE=python:3.12-slim"), "build command must pass the explicit tools base image")
+assert(custom_base_build_tools_command.include?("--build-arg"), "tools build command must support an explicit tools base image override")
+assert(custom_base_build_tools_command.include?("XNIX_TOOLS_BASE_IMAGE=python:3.12-slim"), "tools build command must pass the explicit tools base image")
 assert(!build_command.include?("--memory"), "Buildx must not receive an unsupported memory argument")
 assert(!build_command.include?("--cpus"), "Buildx must not receive an unsupported CPU argument")
 assert(!build_tools_command.include?("--memory"), "tools Buildx must not receive an unsupported memory argument")
@@ -77,6 +90,10 @@ assert(offline_command.fetch(offline_command.index("--network") + 1) == "none", 
 assert(offline_command.include?("--read-only"), "offline container root filesystem must be read-only")
 assert(offline_command.include?("--pids-limit"), "offline container must set a process limit")
 assert(offline_command.include?(Xnix::Container::PROCESS_LIMIT), "offline container must use the configured process limit")
+assert(offline_command.include?(Xnix::Container::BUILD_MEMORY_LIMIT), "offline container must use the default memory limit")
+assert(offline_command.include?(Xnix::Container::CPU_LIMIT), "offline container must use the default CPU limit")
+assert(custom_resource_offline_command.include?("12g"), "offline container must support an explicit memory limit override")
+assert(custom_resource_offline_command.include?("2.0"), "offline container must support an explicit CPU limit override")
 assert(!offline_command.include?("--privileged"), "offline container must not be privileged")
 assert(!offline_command.include?("--network=host"), "offline container must not use host networking")
 assert(!offline_command.any? { |argument| argument.include?("docker.sock") }, "offline container must not mount the Docker socket")
@@ -102,10 +119,14 @@ assert(kde_center_dbus_command.last(2) == ["ruby", "scripts/kde_center_dbus_smok
 assert(known_winapp_fetch_command.fetch(known_winapp_fetch_command.index("--network") + 1) == "bridge", "known Windows app fetch must use explicit bridge networking")
 assert(known_winapp_fetch_command.include?("--read-only"), "known Windows app fetch must keep the container root read-only")
 assert(known_winapp_fetch_command.include?("--mount"), "known Windows app fetch must mount its managed cache volume")
+assert(!known_winapp_fetch_command.include?("--env"), "known Windows app fetch must not override timeout by default")
 known_fetch_mount = known_winapp_fetch_command.fetch(known_winapp_fetch_command.index("--mount") + 1)
 assert(known_fetch_mount == expected_source_mount, "known Windows app fetch must use the managed source cache volume")
 assert(!known_fetch_mount.include?("type=bind"), "known Windows app fetch must not bind mount a host directory")
 assert(known_winapp_fetch_command.last(2) == ["ruby", "scripts/known_winapp_fetch.rb"], "known Windows app fetch must run the fetch harness")
+assert(custom_known_fetch_timeout_command.include?("--env"), "known Windows app fetch must support an explicit timeout env")
+assert(custom_known_fetch_timeout_command.include?("XNIX_KNOWN_WINAPP_FETCH_TIMEOUT=300s"), "known Windows app fetch must pass the explicit timeout into Docker")
+assert(custom_known_fetch_timeout_command.last(2) == ["ruby", "scripts/known_winapp_fetch.rb"], "known Windows app fetch timeout override must preserve the fetch harness")
 
 assert(known_winapp_guest_command.fetch(known_winapp_guest_command.index("--network") + 1) == "none", "known Windows app guest smoke must run without container networking")
 assert(known_winapp_guest_command.include?("--read-only"), "known Windows app guest smoke must keep the container root read-only")
@@ -130,12 +151,16 @@ assert(winapp_container_x_gui_command.last(4) == ["ruby", "scripts/winapp_smoke.
 assert(staged_launcher_dispatch_command.fetch(staged_launcher_dispatch_command.index("--network") + 1) == "none", "staged launcher dispatch smoke must run without container networking")
 assert(staged_launcher_dispatch_command.include?("--read-only"), "staged launcher dispatch smoke must keep the container root read-only")
 assert(staged_launcher_dispatch_command.include?("--mount"), "staged launcher dispatch smoke must mount its managed cache volume")
+assert(staged_launcher_dispatch_command.include?(container.image_tag), "staged launcher dispatch smoke must run in the tested Runtime image with prebuilt binaries")
+assert(!staged_launcher_dispatch_command.include?(container.tools_image_tag), "staged launcher dispatch smoke must not run in the tools image without Runtime binaries")
 staged_launcher_dispatch_mount = staged_launcher_dispatch_command.fetch(staged_launcher_dispatch_command.index("--mount") + 1)
 assert(staged_launcher_dispatch_mount == expected_source_mount, "staged launcher dispatch smoke must use the managed source cache volume")
 assert(!staged_launcher_dispatch_mount.include?("type=bind"), "staged launcher dispatch smoke must not bind mount a host directory")
 assert(!staged_launcher_dispatch_command.include?("--privileged"), "staged launcher dispatch smoke must not be privileged")
 assert(!staged_launcher_dispatch_command.any? { |argument| argument.include?("docker.sock") }, "staged launcher dispatch smoke must not mount the Docker socket")
 assert(staged_launcher_dispatch_command.last(2) == ["ruby", "scripts/staged_launcher_dispatch_smoke.rb"], "staged launcher dispatch smoke must run through the staged launcher harness")
+
+assert(prepare_wine_smoke_image_command == ["ruby", "scripts/build_wine_smoke_image.rb"], "Wine GUI smoke image preparation must use the host-side Docker image builder")
 
 assert(runtime_status_owner_service_session_bus_command.fetch(runtime_status_owner_service_session_bus_command.index("--network") + 1) == "none", "Runtime-status owner service session-bus smoke must run without container networking")
 assert(runtime_status_owner_service_session_bus_command.include?("--read-only"), "Runtime-status owner service session-bus smoke must keep the container root read-only")

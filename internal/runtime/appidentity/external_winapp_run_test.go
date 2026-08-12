@@ -215,3 +215,77 @@ func TestRunExternalWinAppConsumesHandleAndRunsContainerGUI(t *testing.T) {
 		t.Fatalf("expected mutually exclusive handle/import path rejection, got %v", err)
 	}
 }
+
+func TestRunExternalWinAppDefaultsFileOpenWindowMatchToDocumentName(t *testing.T) {
+	if testing.Short() {
+		t.Skip("external app run fake Docker fixture uses shell")
+	}
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "ExternalGui.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	documentPath := filepath.Join(tempDir, "sample-document.txt")
+	if err := os.WriteFile(documentPath, []byte("file-open fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	stateRoot := filepath.Join(tempDir, "state")
+	if _, err := RecordExternalWinAppImport(ExternalWinAppImportRequest{
+		Version:        "0.2.640-test",
+		StateRoot:      stateRoot,
+		ExecutablePath: executablePath,
+		AppID:          "org.xnix.external.gui",
+		DisplayName:    "External GUI",
+		AppVersion:     "0.2.640-test",
+	}); err != nil {
+		t.Fatalf("RecordExternalWinAppImport returned error: %v", err)
+	}
+	dockerLog := filepath.Join(tempDir, "fake-docker.log")
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
+		"if test \"$1 $2\" = 'image inspect'; then printf 'linux/amd64\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'create'; then printf 'fake-x-gui-container\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'cp'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'start -a'; then " +
+		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_FILE_ARGS_PASSED=1\\n'\n" +
+		"printf 'XNIX_X_GUI_FILE_ARGS_WINEPATH_TRANSLATED=1\\n'\n" +
+		"printf '0x700001 \"sample-document.txt - Notepad\": (\"notepad.exe\" \"notepad.exe\") 320x160+20+20 +20+20\\n'\n" +
+		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'rm'; then exit 0; fi\n" +
+		"exit 2\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+
+	result, err := RunExternalWinApp(context.Background(), ExternalWinAppRunRequest{
+		StateRoot:                stateRoot,
+		ExternalAppHandle:        "org.xnix.external.gui",
+		ExternalDesktopArguments: []string{"file://" + filepath.ToSlash(documentPath)},
+		Image:                    "local/wine-x-gui:test",
+		Platform:                 "linux/amd64",
+		DockerPath:               dockerPath,
+		Timeout:                  5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunExternalWinApp returned error: %v", err)
+	}
+	if result.Status != "passed" ||
+		result.RuntimePayload.WindowMatch != "sample-document.txt" ||
+		result.ExternalFileBridgeReady != true ||
+		result.ExternalFileBridgeWinePathTranslated != true ||
+		result.ExternalFileBridgeWinePathTranslatedCount != 1 ||
+		result.XWindowObserved != true {
+		t.Fatalf("unexpected external app file-open run result: %#v", result)
+	}
+	dockerInvocation, err := os.ReadFile(dockerLog)
+	if err != nil {
+		t.Fatalf("ReadFile docker log returned error: %v", err)
+	}
+	if !strings.Contains(string(dockerInvocation), "XNIX_WINDOW_MATCH=sample-document.txt") ||
+		strings.Contains(string(dockerInvocation), "XNIX_WINDOW_MATCH=ExternalGui.exe") {
+		t.Fatalf("external app file-open should observe the opened document title: %s", string(dockerInvocation))
+	}
+}

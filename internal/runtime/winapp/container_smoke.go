@@ -563,7 +563,7 @@ func restrictedDockerXGUIContainerArgs(appName string, windowMatch string, image
 		"--security-opt", "no-new-privileges",
 		"--cap-drop", "ALL",
 		"--tmpfs", "/tmp:rw,nosuid,nodev,size=256m",
-		"--tmpfs", "/state:rw,nosuid,nodev,size=1g",
+		"--tmpfs", "/state:rw,nosuid,nodev,exec,size=2g",
 		"--env", "WINEPREFIX=/state/wineprefix",
 		"--env", "HOME=/state/home",
 		"--env", "WINEDEBUG=-all",

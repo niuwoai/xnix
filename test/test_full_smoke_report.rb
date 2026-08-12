@@ -27,6 +27,7 @@ report = Xnix::FullSmokeReport.new(
     download-wine-guest
     build-ssh-wine-guest
     fetch-known-winapp
+    prepare-wine-smoke-image
     boot-system
     staged-launcher-dispatch-smoke
     staged-external-winapp-desktop-smoke
@@ -41,7 +42,7 @@ data = report.to_h
 assert(data.fetch("version") == version, "full smoke report must expose the canonical version")
 assert(data.fetch("schema_version") == "xnix.full_smoke_report.v1", "full smoke report must expose its schema")
 assert(data.fetch("report_type") == "full-build-qemu-smoke-report", "full smoke report must identify its type")
-assert(data.fetch("step_count") == 16, "full smoke report must count smoke steps")
+assert(data.fetch("step_count") == 17, "full smoke report must count smoke steps")
 assert(data.fetch("steps").last == "kde-controlled-launch-action-dbus-fixture-smoke", "full smoke report must include the KDE action smoke step")
 assert(data.fetch("serial_log_path") == "output/serial.log", "full smoke report must expose the serial log path")
 assert(data.fetch("serial_log_persisted"), "full smoke report must record serial log persistence")
@@ -54,6 +55,7 @@ assert(!data.fetch("host_network_enabled"), "full smoke report must keep host ne
 assert(data.fetch("qemu_network_restricted"), "full smoke report must keep QEMU networking restricted")
 assert(data.fetch("network_required_for_source_download"), "full smoke report must identify source download network use")
 assert(data.fetch("wine_guest_built"), "full smoke report must record Wine guest build coverage")
+assert(data.fetch("wine_smoke_image_prepared"), "full smoke report must record Wine GUI smoke image preparation")
 assert(data.fetch("known_app_smoke_included"), "full smoke report must record known Windows app smoke coverage")
 assert(data.fetch("known_app_smoke_passed"), "full smoke report must record known Windows app smoke pass evidence")
 assert(data.fetch("external_imported_app_smoke_included"), "full smoke report must record external imported Windows app desktop smoke coverage")
@@ -74,10 +76,12 @@ assert(markdown.include?("# Full Build and QEMU Smoke Report"), "full smoke repo
 assert(markdown.include?("- QEMU booted: true"), "full smoke report markdown must include boot status")
 assert(markdown.include?("- Known Windows app smoke passed: true"), "full smoke report markdown must include known app smoke status")
 assert(markdown.include?("- External imported Windows app desktop smoke passed: true"), "full smoke report markdown must include external imported app smoke status")
-assert(markdown.include?("12. boot-system"), "full smoke report markdown must list the boot step")
-assert(markdown.include?("14. staged-external-winapp-desktop-smoke"), "full smoke report markdown must list the external imported app smoke step")
-assert(markdown.include?("15. winapp-guest-wine-smoke"), "full smoke report markdown must list the fixture app smoke step")
-assert(markdown.include?("16. kde-controlled-launch-action-dbus-fixture-smoke"), "full smoke report markdown must list the KDE action smoke step")
+assert(markdown.include?("- Wine smoke image prepared: true"), "full smoke report markdown must include Wine GUI smoke image preparation status")
+assert(markdown.include?("12. prepare-wine-smoke-image"), "full smoke report markdown must list the Wine GUI smoke image preparation step")
+assert(markdown.include?("13. boot-system"), "full smoke report markdown must list the boot step")
+assert(markdown.include?("15. staged-external-winapp-desktop-smoke"), "full smoke report markdown must list the external imported app smoke step")
+assert(markdown.include?("16. winapp-guest-wine-smoke"), "full smoke report markdown must list the fixture app smoke step")
+assert(markdown.include?("17. kde-controlled-launch-action-dbus-fixture-smoke"), "full smoke report markdown must list the KDE action smoke step")
 assert(markdown.include?("- Failure class: none"), "full smoke report markdown must include failure class")
 assert(markdown.include?("- Formal release ready: true"), "full smoke report markdown must include release readiness")
 

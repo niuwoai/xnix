@@ -11,6 +11,7 @@ require_relative "../lib/xnix/ssh_test_key"
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
 DOCKER_BIN = Xnix::Container.docker_bin
+ALLOW_NON_COLIMA_DOCKER_ENV = "XNIX_ALLOW_NON_COLIMA_DOCKER"
 
 def docker_available?
   system(DOCKER_BIN, "--version", out: File::NULL, err: File::NULL)
@@ -25,8 +26,12 @@ rescue SystemCallError
   false
 end
 
+def non_colima_docker_allowed?
+  ENV.fetch(ALLOW_NON_COLIMA_DOCKER_ENV, "") == "1"
+end
+
 abort "Xnix commands require a Docker CLI. Install Docker or set XNIX_DOCKER_BIN=/absolute/path/to/docker." unless docker_available?
-abort "Xnix commands require the Colima Docker context. Run `docker context use colima` or set XNIX_DOCKER_BIN to a Docker-compatible CLI that uses the Colima context." unless colima_context?
+abort "Xnix commands require the Colima Docker context. Run `docker context use colima`, or set #{ALLOW_NON_COLIMA_DOCKER_ENV}=1 only on a trusted remote build host such as q4." unless colima_context? || non_colima_docker_allowed?
 
 container = Xnix::Container.new(project_root: PROJECT_ROOT.to_s, version: VERSION, docker_bin: DOCKER_BIN)
 buildroot = Xnix::Buildroot.new
@@ -125,6 +130,10 @@ when "staged-external-winapp-desktop-smoke"
   abort "Usage: ruby scripts/container.rb staged-external-winapp-desktop-smoke" unless ARGV.empty?
 
   exec(*container.staged_external_winapp_desktop_smoke_command)
+when "prepare-wine-smoke-image"
+  abort "Usage: ruby scripts/container.rb prepare-wine-smoke-image" unless ARGV.empty?
+
+  exec(*container.prepare_wine_smoke_image_command)
 when "runtime-status-owner-service-session-bus-smoke"
   abort "Usage: ruby scripts/container.rb runtime-status-owner-service-session-bus-smoke" unless ARGV.empty?
 
@@ -163,5 +172,5 @@ when "boot-system"
 
   exec(*container.tools_cache_run_command(["timeout", "180s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-tools|build-wine-guest|configure-system|configure-wine-guest|dbus-controlled-launch-owner-fixture-smoke|desktop-trigger-request-preflight-smoke|download-system|download-wine-guest|fetch-known-winapp|fetch-sources|kde-center-dbus-smoke|kde-controlled-launch-action-dbus-fixture-smoke|kde-controlled-launch-action-smoke|known-winapp-guest-wine-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|runtime-status-owner-service-session-bus-smoke|ssh-smoke|staged-external-winapp-desktop-smoke|staged-launcher-dispatch-smoke|start-build-ssh-wine-guest|start-build-system|winapp-container-x-gui-smoke|winapp-guest-wine-smoke}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-tools|build-wine-guest|configure-system|configure-wine-guest|dbus-controlled-launch-owner-fixture-smoke|desktop-trigger-request-preflight-smoke|download-system|download-wine-guest|fetch-known-winapp|fetch-sources|kde-center-dbus-smoke|kde-controlled-launch-action-dbus-fixture-smoke|kde-controlled-launch-action-smoke|known-winapp-guest-wine-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|prepare-wine-smoke-image|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|runtime-status-owner-service-session-bus-smoke|ssh-smoke|staged-external-winapp-desktop-smoke|staged-launcher-dispatch-smoke|start-build-ssh-wine-guest|start-build-system|winapp-container-x-gui-smoke|winapp-guest-wine-smoke}"
 end

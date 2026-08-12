@@ -12,6 +12,10 @@ module Xnix
     CONTROLLED_LAUNCH_SCRATCH_SIZE_BYTES = "67108864"
     KDE_CONTROLLED_LAUNCH_ACTION_DBUS_FIXTURE_ENV = "XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE_DBUS_FIXTURE"
     DOCKER_ENV = "XNIX_DOCKER_BIN"
+    TOOLS_BASE_IMAGE_ENV = "XNIX_TOOLS_BASE_IMAGE"
+    MEMORY_LIMIT_ENV = "XNIX_CONTAINER_MEMORY_LIMIT"
+    CPU_LIMIT_ENV = "XNIX_CONTAINER_CPU_LIMIT"
+    KNOWN_WINAPP_FETCH_TIMEOUT_ENV = "XNIX_KNOWN_WINAPP_FETCH_TIMEOUT"
     DEFAULT_DOCKER_BIN = "docker"
 
     def self.docker_bin
@@ -21,10 +25,42 @@ module Xnix
       value
     end
 
-    def initialize(project_root:, version:, docker_bin: self.class.docker_bin)
+    def self.tools_base_image
+      value = ENV.fetch(TOOLS_BASE_IMAGE_ENV, "").to_s.strip
+      return nil if value.empty?
+
+      value
+    end
+
+    def self.memory_limit
+      value = ENV.fetch(MEMORY_LIMIT_ENV, BUILD_MEMORY_LIMIT).to_s.strip
+      return BUILD_MEMORY_LIMIT if value.empty?
+
+      value
+    end
+
+    def self.cpu_limit
+      value = ENV.fetch(CPU_LIMIT_ENV, CPU_LIMIT).to_s.strip
+      return CPU_LIMIT if value.empty?
+
+      value
+    end
+
+    def self.known_winapp_fetch_timeout
+      value = ENV.fetch(KNOWN_WINAPP_FETCH_TIMEOUT_ENV, "").to_s.strip
+      return nil if value.empty?
+
+      value
+    end
+
+    def initialize(project_root:, version:, docker_bin: self.class.docker_bin, tools_base_image: self.class.tools_base_image, memory_limit: self.class.memory_limit, cpu_limit: self.class.cpu_limit, known_winapp_fetch_timeout: self.class.known_winapp_fetch_timeout)
       @project_root = project_root
       @version = version
       @docker_bin = docker_bin
+      @tools_base_image = tools_base_image
+      @memory_limit = memory_limit
+      @cpu_limit = cpu_limit
+      @known_winapp_fetch_timeout = known_winapp_fetch_timeout
     end
 
     def image_tag
@@ -39,6 +75,7 @@ module Xnix
       [
         @docker_bin, "build",
         "--pull=false",
+        *tools_base_image_build_arg,
         "--target", "tested-runtime",
         "--tag", image_tag,
         "--file", File.join(@project_root, "Dockerfile"),
@@ -50,6 +87,7 @@ module Xnix
       [
         @docker_bin, "build",
         "--pull=false",
+        *tools_base_image_build_arg,
         "--target", "tools",
         "--tag", tools_image_tag,
         "--file", File.join(@project_root, "Dockerfile"),
@@ -78,7 +116,10 @@ module Xnix
     end
 
     def known_winapp_fetch_command
-      networked_cache_run_command(["ruby", "scripts/known_winapp_fetch.rb"])
+      networked_cache_run_command(
+        ["ruby", "scripts/known_winapp_fetch.rb"],
+        extra_env: known_winapp_fetch_env
+      )
     end
 
     def known_winapp_guest_wine_smoke_command
@@ -90,11 +131,20 @@ module Xnix
     end
 
     def staged_launcher_dispatch_smoke_command
-      tools_cache_run_command(["ruby", "scripts/staged_launcher_dispatch_smoke.rb"])
+      runtime_command(
+        network: "none",
+        extra_mounts: [source_cache_mount],
+        command: ["ruby", "scripts/staged_launcher_dispatch_smoke.rb"],
+        image: image_tag
+      )
     end
 
     def staged_external_winapp_desktop_smoke_command
       ["ruby", "scripts/staged_desktop_external_winapp_smoke.rb", "--docker", @docker_bin]
+    end
+
+    def prepare_wine_smoke_image_command
+      ["ruby", "scripts/build_wine_smoke_image.rb"]
     end
 
     def runtime_status_owner_service_session_bus_smoke_command
@@ -142,8 +192,8 @@ module Xnix
       runtime_command(network: "none", extra_mounts: [source_cache_mount], command: command, image: tools_image_tag)
     end
 
-    def networked_cache_run_command(command)
-      runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command, image: tools_image_tag)
+    def networked_cache_run_command(command, extra_env: {})
+      runtime_command(network: "bridge", extra_mounts: [source_cache_mount], extra_env: extra_env, command: command, image: tools_image_tag)
     end
 
     def observed_cache_run_command(name:, command:)
@@ -152,11 +202,21 @@ module Xnix
 
     private
 
+    def tools_base_image_build_arg
+      @tools_base_image.nil? ? [] : ["--build-arg", "XNIX_TOOLS_BASE_IMAGE=#{@tools_base_image}"]
+    end
+
+    def known_winapp_fetch_env
+      return {} if @known_winapp_fetch_timeout.nil? || @known_winapp_fetch_timeout.empty?
+
+      { KNOWN_WINAPP_FETCH_TIMEOUT_ENV => @known_winapp_fetch_timeout }
+    end
+
     def runtime_command(network:, extra_mounts:, command:, remove: true, name: nil, detach: false, image: image_tag, extra_tmpfs: [], extra_env: {})
       [
         @docker_bin, "run", *(remove ? ["--rm"] : []), *(detach ? ["--detach"] : []), *(name.nil? ? [] : ["--name", name]), "--init",
-        "--memory", BUILD_MEMORY_LIMIT,
-        "--cpus", CPU_LIMIT,
+        "--memory", @memory_limit,
+        "--cpus", @cpu_limit,
         "--pids-limit", PROCESS_LIMIT,
         "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges",
