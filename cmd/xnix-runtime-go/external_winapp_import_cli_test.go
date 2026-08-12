@@ -359,6 +359,111 @@ func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
 	}
 }
 
+func TestExternalWinAppImportAndStageCommandImportsAndStagesDesktopActivation(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	stagingRoot := filepath.Join(tempDir, "stage")
+	executablePath := filepath.Join(tempDir, "ExternalGui.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	launcherSource := filepath.Join(tempDir, "xnix-compat-launch")
+	launcherContent := []byte("#!/bin/sh\nprintf 'XNIX_EXTERNAL_STAGE_LAUNCHER_OK\\n'\n")
+	if err := os.WriteFile(launcherSource, launcherContent, 0o755); err != nil {
+		t.Fatalf("WriteFile launcher returned error: %v", err)
+	}
+	outputPath := filepath.Join(tempDir, "import-and-stage.json")
+	var output bytes.Buffer
+	if err := run([]string{
+		"external-winapp-import-and-stage",
+		"--state-root", stateRoot,
+		"--executable", executablePath,
+		"--app-id", "org.xnix.external.gui",
+		"--display-name", "External GUI",
+		"--mode", "development",
+		"--staging-root", stagingRoot,
+		"--managed-launcher-bin", launcherSource,
+		"--output", outputPath,
+	}, &output); err != nil {
+		t.Fatalf("external app import-and-stage returned error: %v", err)
+	}
+	written, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile output returned error: %v", err)
+	}
+	if string(written) != output.String() {
+		t.Fatalf("written output must match stdout\nstdout=%s\nwritten=%s", output.String(), string(written))
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal import-and-stage output returned error: %v\n%s", err, output.String())
+	}
+	if payload["schema_version"] != "xnix.runtime.desktop_activation_stage.v1" ||
+		payload["request_type"] != "desktop-activation-stage" ||
+		payload["application_id"] != "org.xnix.external.gui" ||
+		payload["display_name"] != "External GUI" ||
+		payload["desktop_file"] != "xnix-org.xnix.external.gui.desktop" ||
+		payload["external_app_handle"] != "org.xnix.external.gui" ||
+		payload["desktop_exec_uses_external_app_handle"] != true ||
+		payload["external_app_desktop_handle_ready"] != true ||
+		payload["desktop_exec_uses_raw_import_record"] != false ||
+		payload["desktop_exec_uses_state_root"] != false ||
+		payload["written_file_count"] != float64(6) ||
+		payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["staging_root_path_exposed"] != false {
+		t.Fatalf("unexpected external import-and-stage payload: %#v", payload)
+	}
+	if !containsAnyString(payload["written_file_ids"].([]any), "managed-launcher-executable") {
+		t.Fatalf("written_file_ids must include managed-launcher-executable: %#v", payload["written_file_ids"])
+	}
+	recordPath, err := appidentity.ExternalWinAppImportRecordPathFromHandle(stateRoot, "org.xnix.external.gui")
+	if err != nil {
+		t.Fatalf("ExternalWinAppImportRecordPathFromHandle returned error: %v", err)
+	}
+	if _, err := os.Stat(recordPath); err != nil {
+		t.Fatalf("one-shot import-and-stage must persist the import record: %v", err)
+	}
+	desktopEntryPath := filepath.Join(stagingRoot, "usr/share/applications/xnix-org.xnix.external.gui.desktop")
+	desktopEntry, err := os.ReadFile(desktopEntryPath)
+	if err != nil {
+		t.Fatalf("external imported app desktop entry was not staged: %v", err)
+	}
+	if !bytes.Contains(desktopEntry, []byte("Exec=xnix-compat-launch --external-app-handle org.xnix.external.gui %U\n")) ||
+		bytes.Contains(desktopEntry, []byte("MimeType=")) {
+		t.Fatalf("unexpected external imported app desktop entry:\n%s", desktopEntry)
+	}
+	launcherPath := filepath.Join(stagingRoot, "usr/local/bin/xnix-compat-launch")
+	launcherData, err := os.ReadFile(launcherPath)
+	if err != nil {
+		t.Fatalf("managed launcher executable was not staged: %v", err)
+	}
+	if !bytes.Equal(launcherData, launcherContent) {
+		t.Fatalf("unexpected managed launcher executable:\n%s", launcherData)
+	}
+	for _, stagedPath := range []string{
+		"usr/share/xnix/compatibility/manifests/org.xnix.external.gui.json",
+		"usr/share/xnix/compatibility/activation-receipts/org.xnix.external.gui.json",
+		"usr/share/xnix/compatibility/launcher-artifacts/xnix-compat-launch.json",
+	} {
+		if _, err := os.Stat(filepath.Join(stagingRoot, stagedPath)); err != nil {
+			t.Fatalf("expected staged desktop activation artifact %s: %v", stagedPath, err)
+		}
+	}
+	if strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), stagingRoot) ||
+		strings.Contains(output.String(), executablePath) ||
+		strings.Contains(output.String(), launcherSource) ||
+		strings.Contains(output.String(), recordPath) ||
+		strings.Contains(output.String(), "/var/run/docker.sock") ||
+		strings.Contains(output.String(), "--network host") ||
+		strings.Contains(output.String(), "--privileged") {
+		t.Fatalf("external import-and-stage output exposed unsafe details: %s", output.String())
+	}
+}
+
 func TestExternalWinAppImportAndRunCommandImportsAndRunsFileOpen(t *testing.T) {
 	tempDir := t.TempDir()
 	stateRoot := filepath.Join(tempDir, "state")
