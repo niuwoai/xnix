@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc270] - 2026-08-13
+
+### Added
+
+- Added `--q4-known-portable-winapp-run-acceptance` support to `external-winapp-application-detail-preview`, allowing Runtime application detail to consume the Go-owned Notepad++ Portable operator-run acceptance artifact.
+- Added KDE page propagation for known portable operator-run acceptance fields, including `q4_known_portable_winapp_run_acceptance_consumed`, readiness, and Go-owned verification on external Windows app detail cards.
+
+### Changed
+
+- Updated `scripts/q4_known_portable_winapp_run.rb --execute` to generate and fetch an operator-accepted application detail plus a KDE page after the real Notepad++ Portable run acceptance passes.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, product overview, and Claude guide to `0.2.640-rc270`.
+
 ## [0.2.640-rc269] - 2026-08-13
 
 ### Added

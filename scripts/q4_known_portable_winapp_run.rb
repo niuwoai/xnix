@@ -161,6 +161,13 @@ def fetch_remote_artifact(shell, remote_host, remote_path, local_path, timeout_s
   true
 end
 
+def remote_project_command(remote_source_root, argv)
+  [
+    "cd #{Shellwords.escape(remote_source_root)}",
+    shell_join(argv)
+  ].join("\n")
+end
+
 def write_markdown(payload, markdown_output_path)
   lines = [
     "# q4 Known Portable Windows App Run",
@@ -200,7 +207,11 @@ delegated_markdown_output_path = artifact_root.join("q4-known-portable-winapp-ru
 remote_acceptance_root = "#{remote_materials_root}/operator-run/notepad-plus-plus/8.9.7"
 remote_acceptance_input = "#{remote_acceptance_root}/q4-known-portable-winapp-run-acceptance-input.json"
 remote_acceptance_output = "#{remote_acceptance_root}/q4-known-portable-winapp-run-acceptance.json"
+remote_operator_detail = "#{remote_acceptance_root}/q4-known-portable-winapp-run-application-detail.json"
+remote_operator_kde_page = "#{remote_acceptance_root}/q4-known-portable-winapp-run-kde-page.json"
 acceptance_local_path = artifact_root.join("q4-known-portable-winapp-run-acceptance-#{VERSION}.json")
+operator_detail_local_path = artifact_root.join("q4-known-portable-winapp-run-application-detail-#{VERSION}.json")
+operator_kde_page_local_path = artifact_root.join("q4-known-portable-winapp-run-kde-page-#{VERSION}.json")
 
 delegated_command = [
   "ruby",
@@ -256,6 +267,12 @@ plan = {
   "operator_run_acceptance_request_type" => "q4-known-portable-winapp-run-acceptance-preview",
   "operator_run_acceptance_report" => remote_acceptance_output,
   "operator_run_acceptance_status" => "planned",
+  "operator_run_application_detail_planned" => true,
+  "operator_run_application_detail_report" => remote_operator_detail,
+  "operator_run_application_detail_status" => "planned",
+  "operator_run_kde_page_planned" => true,
+  "operator_run_kde_page_report" => remote_operator_kde_page,
+  "operator_run_kde_page_status" => "planned",
   "output_path" => output_path.to_s,
   "markdown_output_path" => markdown_output_path.to_s,
   "runtime_owned" => true,
@@ -359,7 +376,7 @@ acceptance_command = [
 ]
 acceptance_stdout, acceptance_stderr, acceptance_status = run_shell(
   options.fetch(:local_shell),
-  shell_join(ssh_command(options.fetch(:remote_host), shell_join(acceptance_command))),
+  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_source_root, acceptance_command))),
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
 unless acceptance_status.zero?
@@ -387,13 +404,104 @@ acceptance_fetched = fetch_remote_artifact(
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
 
+operator_detail_command = [
+  remote_runtime_binary,
+  "external-winapp-application-detail-preview",
+  "--compatibility-evidence-bundle", delegated.fetch("known_portable_bundle_compatibility_bundle_report"),
+  "--q4-known-portable-winapp-run-acceptance", remote_acceptance_output,
+  "--output", remote_operator_detail
+]
+operator_detail_stdout, operator_detail_stderr, operator_detail_status = run_shell(
+  options.fetch(:local_shell),
+  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_source_root, operator_detail_command))),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless operator_detail_status.zero?
+  warn operator_detail_stdout unless operator_detail_stdout.empty?
+  warn operator_detail_stderr unless operator_detail_stderr.empty?
+  abort "q4 known portable Windows app run application detail generation failed"
+end
+operator_detail = JSON.parse(operator_detail_stdout)
+unless operator_detail.fetch("request_type") == "external-winapp-application-detail-preview" &&
+       operator_detail.fetch("application_id") == app_id &&
+       operator_detail.fetch("display_name") == SUPPORTED_DISPLAY_NAME &&
+       operator_detail.fetch("compatibility_state") == "runtime-accepted-real-app-run" &&
+       bool(operator_detail, "q4_known_portable_winapp_run_acceptance_consumed") &&
+       bool(operator_detail, "q4_known_portable_winapp_run_acceptance_ready") &&
+       bool(operator_detail, "go_owned_known_portable_winapp_run_acceptance_verified") &&
+       !bool(operator_detail, "backend_details_exposed") &&
+       !bool(operator_detail, "raw_paths_exposed") &&
+       !bool(operator_detail, "host_root_modified")
+  warn operator_detail_stdout
+  abort "q4 known portable Windows app run application detail did not consume operator acceptance"
+end
+operator_detail_fetched = fetch_remote_artifact(
+  options.fetch(:local_shell),
+  options.fetch(:remote_host),
+  remote_operator_detail,
+  operator_detail_local_path,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+
+operator_kde_page_command = [
+  remote_runtime_binary,
+  "kde-center-page-preview",
+  "--external-app-application-detail", remote_operator_detail,
+  "--decision", "approved",
+  "--output", remote_operator_kde_page
+]
+operator_kde_stdout, operator_kde_stderr, operator_kde_status = run_shell(
+  options.fetch(:local_shell),
+  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_source_root, operator_kde_page_command))),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless operator_kde_status.zero?
+  warn operator_kde_stdout unless operator_kde_stdout.empty?
+  warn operator_kde_stderr unless operator_kde_stderr.empty?
+  abort "q4 known portable Windows app run KDE page generation failed"
+end
+operator_kde_page = JSON.parse(operator_kde_stdout)
+operator_kde_cards = operator_kde_page.fetch("external_winapp_application_detail_cards")
+operator_kde_card = operator_kde_cards.first
+unless operator_kde_page.fetch("request_type") == "kde-center-page-preview" &&
+       operator_kde_page.fetch("application_id") == app_id &&
+       operator_kde_card.fetch("compatibility_state") == "runtime-accepted-real-app-run" &&
+       bool(operator_kde_card, "q4_known_portable_winapp_run_acceptance_consumed") &&
+       bool(operator_kde_card, "q4_known_portable_winapp_run_acceptance_ready") &&
+       bool(operator_kde_card, "go_owned_known_portable_winapp_run_acceptance_verified") &&
+       !bool(operator_kde_card, "backend_details_exposed") &&
+       !bool(operator_kde_card, "raw_paths_exposed") &&
+       !bool(operator_kde_card, "host_root_modified")
+  warn operator_kde_stdout
+  abort "q4 known portable Windows app run KDE page did not consume operator accepted detail"
+end
+operator_kde_page_fetched = fetch_remote_artifact(
+  options.fetch(:local_shell),
+  options.fetch(:remote_host),
+  remote_operator_kde_page,
+  operator_kde_page_local_path,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+
 result = result.merge(
   "operator_run_acceptance_status" => "passed",
   "operator_run_acceptance_request_type" => operator_acceptance.fetch("request_type"),
   "operator_run_acceptance_ready" => bool(operator_acceptance, "acceptance_ready"),
   "operator_run_acceptance_runtime_accepted_chain_verified" => bool(operator_acceptance, "runtime_accepted_chain_verified"),
   "operator_run_acceptance_artifact_fetched" => acceptance_fetched,
-  "operator_run_acceptance_artifact_output_path" => acceptance_local_path.to_s
+  "operator_run_acceptance_artifact_output_path" => acceptance_local_path.to_s,
+  "operator_run_application_detail_status" => "passed",
+  "operator_run_application_detail_request_type" => operator_detail.fetch("request_type"),
+  "operator_run_application_detail_acceptance_consumed" => bool(operator_detail, "q4_known_portable_winapp_run_acceptance_consumed"),
+  "operator_run_application_detail_acceptance_ready" => bool(operator_detail, "q4_known_portable_winapp_run_acceptance_ready"),
+  "operator_run_application_detail_artifact_fetched" => operator_detail_fetched,
+  "operator_run_application_detail_artifact_output_path" => operator_detail_local_path.to_s,
+  "operator_run_kde_page_status" => "passed",
+  "operator_run_kde_page_request_type" => operator_kde_page.fetch("request_type"),
+  "operator_run_kde_page_acceptance_consumed" => bool(operator_kde_card, "q4_known_portable_winapp_run_acceptance_consumed"),
+  "operator_run_kde_page_acceptance_ready" => bool(operator_kde_card, "q4_known_portable_winapp_run_acceptance_ready"),
+  "operator_run_kde_page_artifact_fetched" => operator_kde_page_fetched,
+  "operator_run_kde_page_artifact_output_path" => operator_kde_page_local_path.to_s
 )
 write_markdown(result, markdown_output_path)
 emit_json(result, output_path)

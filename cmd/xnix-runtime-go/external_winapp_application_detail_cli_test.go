@@ -370,6 +370,97 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesQ4StagedAcceptance
 	}
 }
 
+func TestExternalWinAppApplicationDetailPreviewCommandConsumesKnownPortableOperatorAcceptance(t *testing.T) {
+	tempDir := t.TempDir()
+	bundlePath := filepath.Join(tempDir, "known-portable-bundle-compatibility-evidence-bundle.json")
+	acceptancePath := filepath.Join(tempDir, "q4-known-portable-winapp-run-acceptance.json")
+	outputPath := filepath.Join(tempDir, "detail", "known-portable-operator-detail.json")
+	writeTextFile(t, bundlePath, knownPortableOperatorAcceptedApplicationDetailBundleFixture())
+	writeTextFile(t, acceptancePath, externalWinAppApplicationDetailKnownPortableOperatorAcceptanceFixture(currentProjectVersion(t)))
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"external-winapp-application-detail-preview",
+		"--compatibility-evidence-bundle", bundlePath,
+		"--q4-known-portable-winapp-run-acceptance", acceptancePath,
+		"--output", outputPath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["source"] != "external-winapp-compatibility-evidence-bundle+q4-known-portable-winapp-run-acceptance" ||
+		payload["application_id"] != "org.xnix.external.notepadplusplus" ||
+		payload["display_name"] != "Notepad++ Portable" ||
+		payload["compatibility_state"] != "runtime-accepted-real-app-run" ||
+		payload["compatibility_label"] != "Runtime accepted real app run" ||
+		payload["q4_known_portable_winapp_run_acceptance_consumed"] != true ||
+		payload["q4_known_portable_winapp_run_acceptance_ready"] != true ||
+		payload["q4_known_portable_winapp_run_acceptance_type"] != "q4-known-portable-real-winapp-operator-run-acceptance" ||
+		payload["go_owned_known_portable_winapp_run_acceptance_verified"] != true ||
+		payload["known_portable_bundle_stage_launch_consumed"] != true ||
+		payload["known_portable_bundle_stage_launch_verified"] != true ||
+		payload["evidence_artifact_count"] != float64(5) ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_paths_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected known portable operator acceptance detail payload: %#v", payload)
+	}
+	if len(payload["evidence_signals"].([]any)) != 6 ||
+		len(payload["review_cards"].([]any)) != 5 {
+		t.Fatalf("operator-accepted detail must expose known bundle and operator acceptance evidence: %#v", payload)
+	}
+
+	var kdePageOutput bytes.Buffer
+	if err := run([]string{
+		"kde-center-page-preview",
+		"--external-app-application-detail", outputPath,
+		"--decision", "approved",
+	}, &kdePageOutput); err != nil {
+		t.Fatalf("kde-center-page-preview returned error: %v", err)
+	}
+	var kdePage map[string]any
+	if err := json.Unmarshal(kdePageOutput.Bytes(), &kdePage); err != nil {
+		t.Fatalf("Unmarshal KDE page output returned error: %v", err)
+	}
+	detailCards := kdePage["external_winapp_application_detail_cards"].([]any)
+	if len(detailCards) != 1 {
+		t.Fatalf("unexpected KDE external app detail cards: %#v", detailCards)
+	}
+	detailCard := detailCards[0].(map[string]any)
+	if detailCard["compatibility_state"] != "runtime-accepted-real-app-run" ||
+		detailCard["q4_known_portable_winapp_run_acceptance_consumed"] != true ||
+		detailCard["q4_known_portable_winapp_run_acceptance_ready"] != true ||
+		detailCard["go_owned_known_portable_winapp_run_acceptance_verified"] != true ||
+		detailCard["known_portable_bundle_stage_launch_consumed"] != true ||
+		detailCard["evidence_signal_count"] != float64(6) ||
+		detailCard["backend_details_exposed"] != false ||
+		detailCard["raw_paths_exposed"] != false ||
+		detailCard["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE known portable operator accepted detail card: %#v", detailCard)
+	}
+	header := kdePage["header"].(map[string]any)
+	applicationSummary := kdePage["application_summary"].(map[string]any)
+	if header["badge"] != "Runtime accepted real app run" ||
+		applicationSummary["compatibility_state"] != "runtime-accepted-real-app-run" ||
+		applicationSummary["compatibility_label"] != "Runtime accepted real app run" ||
+		applicationSummary["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE known portable operator accepted top-level state: header=%#v summary=%#v", header, applicationSummary)
+	}
+	for _, rendered := range []string{output.String(), kdePageOutput.String()} {
+		if strings.Contains(rendered, acceptancePath) ||
+			strings.Contains(rendered, "root@q4") ||
+			strings.Contains(rendered, "/home/xnix-") ||
+			strings.Contains(rendered, "/Users/rocky") ||
+			strings.Contains(rendered, "notepad++.exe") ||
+			strings.Contains(strings.ToLower(rendered), "wine ") {
+			t.Fatalf("known portable operator accepted detail exposed unsafe details: %s", rendered)
+		}
+	}
+}
+
 func externalWinAppApplicationDetailBundleFixture() string {
 	return `{
   "version": "0.2.640-test",
@@ -427,6 +518,57 @@ func knownPortableExternalWinAppApplicationDetailBundleFixture() string {
   "desktop": "KDE Plasma",
   "known_portable_bundle_stage_launch_consumed": true,
   "known_portable_bundle_stage_launch_verified": true,`, 1)
+}
+
+func knownPortableOperatorAcceptedApplicationDetailBundleFixture() string {
+	bundle := knownPortableExternalWinAppApplicationDetailBundleFixture()
+	bundle = strings.ReplaceAll(bundle, "org.xnix.external.desktop-notepad-file-argument", "org.xnix.external.notepadplusplus")
+	bundle = strings.ReplaceAll(bundle, "External Desktop Notepad File Argument", "Notepad++ Portable")
+	return bundle
+}
+
+func externalWinAppApplicationDetailKnownPortableOperatorAcceptanceFixture(version string) string {
+	return strings.ReplaceAll(`{
+  "version": "VERSION_PLACEHOLDER",
+  "schema_version": "xnix.runtime.q4_known_portable_winapp_run_acceptance.v1",
+  "request_type": "q4-known-portable-winapp-run-acceptance-preview",
+  "source": "q4-known-portable-winapp-run+go-runtime-operator-acceptance",
+  "runtime_method": "PreviewQ4KnownPortableWinAppRunAcceptance",
+  "read_method": "GetQ4KnownPortableWinAppRunAcceptance",
+  "acceptance_type": "q4-known-portable-real-winapp-operator-run-acceptance",
+  "run_report_consumed": true,
+  "run_report_path_exposed": false,
+  "remote_host_exposed": false,
+  "delegated_command_exposed": false,
+  "raw_path_exposed": false,
+  "app_id": "org.xnix.external.notepadplusplus",
+  "display_name": "Notepad++ Portable",
+  "known_catalog_app": true,
+  "portable_directory_external_app": true,
+  "official_archive_checksum_verified": true,
+  "known_portable_bundle_imported": true,
+  "known_portable_bundle_stage_launch_status": "passed",
+  "known_portable_bundle_acceptance_ready": true,
+  "runtime_accepted_chain_verified": true,
+  "accepted_application_detail_state": "runtime-accepted-real-app-run",
+  "kde_accepted_page_state": "runtime-accepted-real-app-run",
+  "operator_run_ready": true,
+  "delegated_artifact_fetch_count": 13,
+  "q4_download_required": true,
+  "q4_extract_required": true,
+  "q4_compile_required": true,
+  "q4_execution_required": true,
+  "host_compilation_avoided": true,
+  "host_download_avoided": true,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "backend_details_exposed": false,
+  "acceptance_ready": true,
+  "desktop_safe_summary": "Notepad++ Portable completed the q4 known portable Windows app operator run with Runtime-owned acceptance and KDE accepted-state evidence."
+}`, "VERSION_PLACEHOLDER", version)
 }
 
 func externalWinAppApplicationDetailQ4StagedAcceptanceFixture(version string) string {
