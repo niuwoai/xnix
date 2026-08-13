@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc273] - 2026-08-13
+
+### Added
+
+- Added q4 execute-path consumption of the Go Runtime `q4-known-portable-winapp-run-plan-preview` from `scripts/q4_known_portable_winapp_run.rb`, carrying catalog-backed app version, artifact kind, archive name, executable relative path, and supported portable app IDs into the final operator run report.
+
+### Changed
+
+- Updated the q4 known portable run script tests and layout checks to require Go Runtime catalog plan consumption before operator acceptance.
+- Updated README, product overview, Claude guide, Runtime metadata, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc273`.
+
 ## [0.2.640-rc272] - 2026-08-13
 
 ### Added

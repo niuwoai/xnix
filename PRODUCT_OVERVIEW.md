@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc272
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc273
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc273 checkpoint moves the q4 known portable operator run wrapper another step away from Ruby-owned business decisions. After the delegated q4 Notepad++ Portable real app run produces a q4-built `xnix-runtime-go` binary, `scripts/q4_known_portable_winapp_run.rb --execute` now invokes `q4-known-portable-winapp-run-plan-preview` on q4, verifies that the Go Runtime plan consumed catalog metadata, and carries `go_runtime_plan_catalog_consumed`, supported portable app IDs, artifact kind, download artifact name, executable relative path, and app version into the final operator run report before generating Go-owned acceptance, application detail, and KDE page artifacts.
 
 The v0.2.640-rc272 checkpoint moves the q4 known portable app run plan closer to a reusable product runner. `q4-known-portable-winapp-run-plan-preview` now looks up the selected app in the Go Runtime known portable catalog, derives display name, app version, artifact kind, download archive, and executable relative path from catalog metadata, and exposes the current `supported_known_portable_app_ids` list for the q4 portable-bundle lane. Known catalog apps that are not portable zip bundles fail closed, so adding the next real bundled Windows app now has a clearer Runtime catalog path instead of another Notepad++-specific branch.
 

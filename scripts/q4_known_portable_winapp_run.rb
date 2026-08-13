@@ -247,6 +247,8 @@ plan = {
   "go_runtime_plan_required" => true,
   "go_runtime_plan_schema_version" => "xnix.runtime.q4_known_portable_winapp_run_plan.v1",
   "go_runtime_plan_request_type" => "q4-known-portable-winapp-run-plan-preview",
+  "go_runtime_plan_status" => "planned",
+  "go_runtime_plan_catalog_consumed" => false,
   "go_runtime_plan_command" => [
     "xnix-runtime-go",
     "q4-known-portable-winapp-run-plan-preview",
@@ -347,6 +349,51 @@ result = plan.merge(
 )
 
 remote_runtime_binary = delegated.fetch("remote_runtime_binary")
+runtime_plan_command = [
+  remote_runtime_binary,
+  "q4-known-portable-winapp-run-plan-preview",
+  "--app", app_id,
+  "--remote", options.fetch(:remote_host),
+  "--remote-materials-root", remote_materials_root,
+  "--remote-source-root", remote_source_root,
+  "--remote-build-root", remote_build_root
+]
+runtime_plan_stdout, runtime_plan_stderr, runtime_plan_status = run_shell(
+  options.fetch(:local_shell),
+  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_source_root, runtime_plan_command))),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless runtime_plan_status.zero?
+  warn runtime_plan_stdout unless runtime_plan_stdout.empty?
+  warn runtime_plan_stderr unless runtime_plan_stderr.empty?
+  abort "q4 known portable Windows app run Go Runtime plan failed"
+end
+runtime_plan = JSON.parse(runtime_plan_stdout)
+unless runtime_plan.fetch("request_type") == "q4-known-portable-winapp-run-plan-preview" &&
+       runtime_plan.fetch("app_id") == app_id &&
+       runtime_plan.fetch("display_name") == SUPPORTED_DISPLAY_NAME &&
+       runtime_plan.fetch("catalog_artifact_kind") == "portable-zip-bundle" &&
+       runtime_plan.fetch("download_artifact_name") == "npp.8.9.7.portable.zip" &&
+       runtime_plan.fetch("executable_relative_path") == "notepad++.exe" &&
+       runtime_plan.fetch("supported_known_portable_app_ids").include?(app_id) &&
+       bool(runtime_plan, "known_catalog_app") &&
+       bool(runtime_plan, "portable_directory_external_app") &&
+       bool(runtime_plan, "q4_compile_required") &&
+       bool(runtime_plan, "host_compilation_avoided") &&
+       !bool(runtime_plan, "remote_paths_exposed_to_desktop") &&
+       !bool(runtime_plan, "host_root_modified")
+  warn runtime_plan_stdout
+  abort "q4 known portable Windows app run Go Runtime plan did not consume catalog metadata"
+end
+result = result.merge(
+  "go_runtime_plan_status" => "passed",
+  "go_runtime_plan_catalog_consumed" => true,
+  "go_runtime_plan_supported_known_portable_app_ids" => runtime_plan.fetch("supported_known_portable_app_ids"),
+  "catalog_artifact_kind" => runtime_plan.fetch("catalog_artifact_kind"),
+  "download_artifact_name" => runtime_plan.fetch("download_artifact_name"),
+  "executable_relative_path" => runtime_plan.fetch("executable_relative_path"),
+  "app_version" => runtime_plan.fetch("app_version")
+)
 acceptance_input_path = artifact_root.join("q4-known-portable-winapp-run-acceptance-input-#{VERSION}.json")
 FileUtils.mkdir_p(acceptance_input_path.dirname)
 File.write(acceptance_input_path, JSON.pretty_generate(result) + "\n")
