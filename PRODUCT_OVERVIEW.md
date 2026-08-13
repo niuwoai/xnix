@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc274
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc275
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc275 checkpoint makes the Go Runtime q4 known portable Windows app run plan select both currently proven runnable catalog lanes. Notepad++ Portable stays on the portable zip bundle path with q4 extraction, known bundle import, known bundle staged launch, and known bundle acceptance. PuTTY 0.84 now plans through the single-executable GUI path, delegates to `scripts/q4_putty_external_winapp_smoke.rb`, preserves the `single-executable` artifact kind, and uses the q4 staged external Windows app acceptance type. This keeps the real PuTTY app visible to Runtime-owned planning instead of leaving it as a standalone Ruby smoke.
 
 The v0.2.640-rc274 checkpoint adds PuTTY 0.84 to the Go Runtime known portable catalog as a real third-party standalone Windows GUI executable. The Runtime catalog now preserves the official PuTTY source page, pinned q4 download URL, SHA256, executable name, GUI architecture, and window marker used by the q4 PuTTY external Windows app smoke. This moves another real runnable Windows app from a Ruby-only q4 harness toward Runtime-owned product metadata while keeping compilation-heavy validation q4-first.
 

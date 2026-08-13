@@ -40,6 +40,7 @@ type Q4KnownPortableWinAppRunPlanPreview struct {
 	SupportedKnownPortableAppIDs         []string `json:"supported_known_portable_app_ids"`
 	KnownCatalogApp                      bool     `json:"known_catalog_app"`
 	PortableDirectoryExternalApp         bool     `json:"portable_directory_external_app"`
+	SingleFileExternalApp                bool     `json:"single_file_external_app"`
 	OfficialDownloadRequired             bool     `json:"official_download_required"`
 	PinnedChecksumRequired               bool     `json:"pinned_checksum_required"`
 	KnownBundleImportRequired            bool     `json:"known_bundle_import_required"`
@@ -97,7 +98,7 @@ func PreviewQ4KnownPortableWinAppRunPlan(request Q4KnownPortableWinAppRunPlanReq
 	}
 	supportedAppIDs := supportedQ4KnownPortableWinAppRunAppIDs()
 	if !stringSliceContains(supportedAppIDs, app.ID) {
-		return Q4KnownPortableWinAppRunPlanPreview{}, errors.New("q4 known portable Windows app run plan requires a Runtime catalog portable bundle app")
+		return Q4KnownPortableWinAppRunPlanPreview{}, errors.New("q4 known portable Windows app run plan requires a Runtime catalog q4-runnable GUI app")
 	}
 	remoteHost, err := requiredSingleLine("remote host", request.RemoteHost)
 	if err != nil {
@@ -116,14 +117,36 @@ func PreviewQ4KnownPortableWinAppRunPlan(request Q4KnownPortableWinAppRunPlanReq
 		return Q4KnownPortableWinAppRunPlanPreview{}, err
 	}
 
+	artifactKind := q4KnownPortableRunArtifactKind(app)
+	downloadArtifactName := q4KnownPortableRunDownloadArtifactName(app)
+	executableRelativePath := q4KnownPortableRunExecutableRelativePath(app)
+	isBundle := q4KnownPortableRunSupportsBundle(app)
+	isSingleExecutable := q4KnownPortableRunSupportsSingleExecutable(app)
+	delegatedScript := "scripts/q4_known_portable_winapp_run.rb"
+	delegatedRequestType := "q4-known-portable-winapp-run"
+	delegatedAcceptanceRequestType := Q4KnownPortableBundleWinAppAcceptanceRequestType
+	launchSourceRequestType := "windows-known-app-bundle-stage-and-launch"
 	command := []string{
 		"ruby",
-		"scripts/q4_known_portable_winapp_run.rb",
+		delegatedScript,
 		"--app", appID,
 		"--remote", remoteHost,
 		"--remote-materials-root", request.RemoteMaterialsRoot,
 		"--remote-source-root", request.RemoteSourceRoot,
 		"--remote-build-root", request.RemoteBuildRoot,
+	}
+	if isSingleExecutable {
+		delegatedScript = "scripts/q4_putty_external_winapp_smoke.rb"
+		delegatedRequestType = "q4-putty-external-winapp-smoke"
+		delegatedAcceptanceRequestType = Q4StagedExternalWinAppAcceptanceRequestType
+		launchSourceRequestType = "external-winapp-import-stage-and-launch"
+		command = []string{
+			"ruby",
+			delegatedScript,
+			"--remote", remoteHost,
+			"--remote-materials-root", request.RemoteMaterialsRoot,
+			"--remote-timeout-seconds", "1200",
+		}
 	}
 	if output := strings.TrimSpace(request.Output); output != "" {
 		command = append(command, "--output", output)
@@ -145,18 +168,19 @@ func PreviewQ4KnownPortableWinAppRunPlan(request Q4KnownPortableWinAppRunPlanReq
 		AppID:                                app.ID,
 		DisplayName:                          app.DisplayName,
 		AppVersion:                           app.Version,
-		CatalogArtifactKind:                  app.ArtifactKind,
-		DownloadArtifactName:                 app.DownloadArtifactName,
-		ExecutableRelativePath:               app.ExecutableRelativePath,
+		CatalogArtifactKind:                  artifactKind,
+		DownloadArtifactName:                 downloadArtifactName,
+		ExecutableRelativePath:               executableRelativePath,
 		SupportedKnownPortableAppIDs:         supportedAppIDs,
 		KnownCatalogApp:                      true,
-		PortableDirectoryExternalApp:         true,
+		PortableDirectoryExternalApp:         isBundle,
+		SingleFileExternalApp:                isSingleExecutable,
 		OfficialDownloadRequired:             true,
 		PinnedChecksumRequired:               true,
-		KnownBundleImportRequired:            true,
-		KnownBundleStageLaunchRequired:       true,
+		KnownBundleImportRequired:            isBundle,
+		KnownBundleStageLaunchRequired:       isBundle,
 		RuntimeAcceptanceRequired:            true,
-		LaunchSourceRequestType:              "windows-known-app-bundle-stage-and-launch",
+		LaunchSourceRequestType:              launchSourceRequestType,
 		RemoteHostConfigured:                 true,
 		RemoteHostExposedToDesktop:           false,
 		RemoteMaterialsRootClass:             remoteMaterialsClass,
@@ -164,7 +188,7 @@ func PreviewQ4KnownPortableWinAppRunPlan(request Q4KnownPortableWinAppRunPlanReq
 		RemoteBuildRootClass:                 remoteBuildClass,
 		RemotePathsExposedToDesktop:          false,
 		Q4DownloadRequired:                   true,
-		Q4ExtractRequired:                    true,
+		Q4ExtractRequired:                    isBundle,
 		Q4CompileRequired:                    true,
 		Q4ExecutionRequired:                  true,
 		Q4BuildPreferred:                     true,
@@ -172,9 +196,9 @@ func PreviewQ4KnownPortableWinAppRunPlan(request Q4KnownPortableWinAppRunPlanReq
 		HostCompilationAvoided:               true,
 		HostDownloadAvoided:                  true,
 		LocalHostRole:                        "operator-plan-and-artifact-review-only",
-		DelegatedScript:                      "scripts/q4_known_portable_winapp_run.rb",
-		DelegatedRequestType:                 "q4-known-portable-winapp-run",
-		DelegatedAcceptanceRequestType:       Q4KnownPortableBundleWinAppAcceptanceRequestType,
+		DelegatedScript:                      delegatedScript,
+		DelegatedRequestType:                 delegatedRequestType,
+		DelegatedAcceptanceRequestType:       delegatedAcceptanceRequestType,
 		DelegatedCommand:                     command,
 		DelegatedCommandExposedToOperator:    true,
 		DelegatedCommandExposedToDesktop:     false,
@@ -192,10 +216,10 @@ func PreviewQ4KnownPortableWinAppRunPlan(request Q4KnownPortableWinAppRunPlanReq
 		BlockedActions: []string{
 			"Do not download, extract, compile, or launch the Windows app on the local host.",
 			"Do not expose q4 paths, remote hosts, backend commands, or raw launcher details to KDE-facing summaries.",
-			"Do not bypass the known portable bundle import, staged launch, Runtime detail, KDE detail, and Go-owned acceptance chain.",
+			"Do not bypass the Runtime-owned staged launch, Runtime detail, KDE detail, and Go-owned acceptance chain.",
 			"Do not run privileged containers, host networking, Docker socket mounts, or broad host mounts.",
 		},
-		DesktopSafeSummary: app.DisplayName + " is planned as a catalog-backed q4 known portable Windows app run through Runtime-owned import, staged launch, KDE detail, and Go-owned acceptance evidence.",
+		DesktopSafeSummary: app.DisplayName + " is planned as a catalog-backed q4 known portable Windows app run through Runtime-owned staged launch, KDE detail, and Go-owned acceptance evidence.",
 	}, nil
 }
 
@@ -203,11 +227,48 @@ func supportedQ4KnownPortableWinAppRunAppIDs() []string {
 	apps := winapp.KnownPortableCatalog()
 	ids := make([]string, 0, len(apps))
 	for _, app := range apps {
-		if app.PortableBundleArchive && app.ArtifactKind == winapp.KnownPortableArtifactZipBundle && strings.TrimSpace(app.ExecutableRelativePath) != "" && strings.TrimSpace(app.DownloadArtifactName) != "" {
+		if q4KnownPortableRunSupportsBundle(app) || q4KnownPortableRunSupportsSingleExecutable(app) {
 			ids = append(ids, app.ID)
 		}
 	}
 	return ids
+}
+
+func q4KnownPortableRunArtifactKind(app winapp.KnownPortableApp) string {
+	if strings.TrimSpace(app.ArtifactKind) != "" {
+		return app.ArtifactKind
+	}
+	return winapp.KnownPortableArtifactSingleExecutable
+}
+
+func q4KnownPortableRunDownloadArtifactName(app winapp.KnownPortableApp) string {
+	if strings.TrimSpace(app.DownloadArtifactName) != "" {
+		return app.DownloadArtifactName
+	}
+	return app.ExecutableName
+}
+
+func q4KnownPortableRunExecutableRelativePath(app winapp.KnownPortableApp) string {
+	if strings.TrimSpace(app.ExecutableRelativePath) != "" {
+		return app.ExecutableRelativePath
+	}
+	return app.ExecutableName
+}
+
+func q4KnownPortableRunSupportsBundle(app winapp.KnownPortableApp) bool {
+	return app.PortableBundleArchive &&
+		q4KnownPortableRunArtifactKind(app) == winapp.KnownPortableArtifactZipBundle &&
+		strings.TrimSpace(app.ExecutableRelativePath) != "" &&
+		strings.TrimSpace(app.DownloadArtifactName) != ""
+}
+
+func q4KnownPortableRunSupportsSingleExecutable(app winapp.KnownPortableApp) bool {
+	return !app.PortableBundleArchive &&
+		q4KnownPortableRunArtifactKind(app) == winapp.KnownPortableArtifactSingleExecutable &&
+		strings.Contains(app.Architecture, "gui") &&
+		strings.TrimSpace(app.DownloadURL) != "" &&
+		strings.TrimSpace(app.SHA256) != "" &&
+		strings.HasSuffix(strings.ToLower(strings.TrimSpace(app.ExecutableName)), ".exe")
 }
 
 func stringSliceContains(values []string, target string) bool {

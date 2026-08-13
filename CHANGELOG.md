@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc275] - 2026-08-13
+
+### Added
+
+- Added a PuTTY single-executable lane to the Go Runtime `q4-known-portable-winapp-run-plan-preview`, delegating catalog-backed PuTTY runs to the proven q4 PuTTY external Windows app smoke and q4 staged external app acceptance path.
+- Added Runtime and CLI tests proving the known portable run plan supports both the Notepad++ portable-bundle lane and PuTTY single-executable lane while rejecting non-runnable catalog apps.
+
+### Changed
+
+- Updated the q4 targeted `remote_go_test.rb` default regex and layout checks to cover PuTTY single-executable known portable run planning.
+- Updated README, product overview, Claude guide, Runtime metadata, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc275`.
+
 ## [0.2.640-rc274] - 2026-08-13
 
 ### Added

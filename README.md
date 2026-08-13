@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc274`.
+The project is currently at `v0.2.640-rc275`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc274`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc275 makes the Go Runtime q4 known portable Windows app run plan choose both supported runnable lanes from the catalog: Notepad++ Portable remains the portable zip bundle lane, and PuTTY now appears as a single-executable GUI lane delegated to the proven q4 PuTTY external app smoke. The plan exposes lane-specific artifact kind, download artifact name, executable relative path, launch source, q4 extraction requirement, delegated script, and Go-owned acceptance type without exposing q4 paths to KDE-facing summaries.
 
 v0.2.640-rc274 adds PuTTY 0.84 to the Go Runtime known portable catalog as a real third-party standalone Windows GUI executable. The catalog now carries the same official PuTTY source page, pinned q4 download URL, SHA256, executable name, GUI architecture, and window marker used by the proven q4 PuTTY smoke, moving that runnable app out of a Ruby-only harness and into Runtime-owned app metadata.
 
