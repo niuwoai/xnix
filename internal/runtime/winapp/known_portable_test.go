@@ -76,6 +76,30 @@ func TestKnownPortableCatalogContainsPinnedNotepadPlusPlusPortableBundle(t *test
 	}
 }
 
+func TestKnownPortableCatalogContainsPinnedPuttyStandaloneGUIExecutable(t *testing.T) {
+	app, err := LookupKnownPortableApp("org.xnix.external.putty")
+	if err != nil {
+		t.Fatalf("LookupKnownPortableApp returned error: %v", err)
+	}
+	if app.DisplayName != "PuTTY" ||
+		app.Version != "0.84" ||
+		app.Architecture != "windows-x86-gui" ||
+		app.ExecutableName != "putty.exe" ||
+		app.ArtifactKind != "" ||
+		app.DownloadArtifactName != "" ||
+		app.ExecutableRelativePath != "" ||
+		app.SourcePageURL != "https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html?textonly=1" ||
+		app.DownloadURL != "https://the.earth.li/~sgtatham/putty/0.84/w32/putty.exe" ||
+		app.SHA256 != "d5a83cd1233f6da38fa82b14d970dbb2c2705769b5ebabb464918b9b57180bc4" ||
+		app.ExpectedMarker != "PuTTY" ||
+		app.PortableBundleArchive {
+		t.Fatalf("unexpected PuTTY catalog entry: %#v", app)
+	}
+	if KnownPortableArtifactCacheRelativePath(app) != "org.xnix.external.putty/putty.exe" {
+		t.Fatalf("unexpected PuTTY cache relative path: %s", KnownPortableArtifactCacheRelativePath(app))
+	}
+}
+
 func TestKnownPortableArtifactCachePathUsesDownloadArtifactName(t *testing.T) {
 	app, err := LookupKnownPortableApp("org.xnix.external.notepadplusplus")
 	if err != nil {

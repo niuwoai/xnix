@@ -805,7 +805,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc273",
+		Version:         "0.2.640-rc274",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
@@ -816,7 +816,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.messagebox",
 		DisplayName:     "Xnix MessageBox",
-		Version:         "0.2.640-rc273",
+		Version:         "0.2.640-rc274",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "xnix-messagebox-smoke.exe",
 		SourcePageURL:   "runtime-managed-external-gui-fixture",
@@ -826,7 +826,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:                       "org.xnix.sample.notepad",
 		DisplayName:              "Sample Notepad",
-		Version:                  "0.2.640-rc273",
+		Version:                  "0.2.640-rc274",
 		Architecture:             "windows-x86-gui",
 		ExecutableName:           "notepad.exe",
 		SourcePageURL:            "runtime-recipe-container-gui-fixture",
@@ -849,6 +849,17 @@ var knownPortableCatalog = []KnownPortableApp{
 		SHA256:                 "ce0690fac91c1fc5d61dcdf5b09733ff0d143a61d0a27c6cb9f4003ea92765bb",
 		ExpectedMarker:         "sample-document.txt",
 		PortableBundleArchive:  true,
+	},
+	{
+		ID:             "org.xnix.external.putty",
+		DisplayName:    "PuTTY",
+		Version:        "0.84",
+		Architecture:   "windows-x86-gui",
+		ExecutableName: "putty.exe",
+		SourcePageURL:  "https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html?textonly=1",
+		DownloadURL:    "https://the.earth.li/~sgtatham/putty/0.84/w32/putty.exe",
+		SHA256:         "d5a83cd1233f6da38fa82b14d970dbb2c2705769b5ebabb464918b9b57180bc4",
+		ExpectedMarker: "PuTTY",
 	},
 }
 

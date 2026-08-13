@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc274] - 2026-08-13
+
+### Added
+
+- Added PuTTY 0.84 to the Go Runtime known portable catalog as a pinned standalone third-party Windows GUI executable, sharing the official URL, SHA256, executable name, GUI architecture, and marker already proven by the q4 PuTTY smoke.
+- Added a Runtime catalog test proving the PuTTY app metadata and single-executable cache path.
+
+### Changed
+
+- Updated README, product overview, Claude guide, Runtime metadata, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc274`.
+
 ## [0.2.640-rc273] - 2026-08-13
 
 ### Added
