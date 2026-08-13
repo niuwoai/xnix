@@ -4,13 +4,13 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.2.640-rc266`
+- Version: `0.2.640-rc267`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - Flagship stack: Fedora Kinoite-compatible atomic base, KDE Plasma 6, XDG Desktop Portal, and the Xnix Compatibility Runtime
 - Learning baseline: Linux LTS kernel, Buildroot, BusyBox, initramfs, and OpenSSH `sshd`
 - Container host: Colima Docker, currently started with 2 CPUs; project containers still keep their own narrower runtime limits
-- Heavy build default: use `ssh root@q4` for compile-heavy work whenever the task allows it; keep the macOS host for lightweight targeted checks and explicitly approved restricted smoke runs.
+- Heavy build default: use `ssh root@q4` for compile-heavy work whenever the task allows it; keep the macOS host for lightweight targeted checks, Git, artifact review, and explicitly approved restricted smoke runs.
 - Local compile guard: do not run `go build`, `go test`, `go run`, QEMU, Wine, or heavy smoke on the macOS host by default. Use q4 remote build/test commands instead, unless a human explicitly sets a local override such as `XNIX_ALLOW_LOCAL_GO_COMPILE=1`.
 - Remote build policy: follow [docs/q4-remote-build-policy.md](docs/q4-remote-build-policy.md) before running any compile-heavy or smoke-heavy command.
 

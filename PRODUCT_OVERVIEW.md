@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc266
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc267
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc267 checkpoint moves the known portable bundle acceptance decision into the Go Runtime. The new `q4-known-portable-bundle-winapp-acceptance-preview` command consumes the q4 Notepad++ Portable smoke report and verifies the official archive checksum/extraction, known bundle import, direct staged launch, GUI evidence packet, KDE page, compatibility bundle, application detail, KDE page from detail, and final `runtime-accepted-real-app-run` chain before returning a redacted desktop-safe acceptance payload. The q4 wrapper now fetches `known-portable-bundle-winapp-acceptance.json`, and the q4-first compile policy is reaffirmed so compile-heavy Go validation and real Windows app smoke work use `root@q4` while the macOS host remains for lightweight checks, Git, dry-run planning, and artifact review by default.
 
 The v0.2.640-rc266 checkpoint carries known portable bundle provenance into the product-facing application detail surface. `external-winapp-application-detail-preview` and KDE external Windows app detail cards now preserve `launch_source_request_type=windows-known-app-bundle-stage-and-launch`, `known_portable_bundle_stage_launch_consumed`, and `known_portable_bundle_stage_launch_verified` after consuming the Runtime compatibility evidence bundle. The q4 Notepad++ Portable smoke now generates and fetches `known-portable-bundle-application-detail.json` plus `known-portable-bundle-kde-page-from-detail.json`, proving that the real Notepad++ staged launch can reach Runtime detail and KDE detail read models through the direct Go-owned known bundle path.
 

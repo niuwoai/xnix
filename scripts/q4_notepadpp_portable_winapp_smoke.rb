@@ -162,6 +162,17 @@ def fetch_remote_artifact(shell, remote_host, remote_path, local_path, timeout_s
   true
 end
 
+def push_remote_artifact(shell, remote_host, local_path, remote_path, timeout_seconds:)
+  _stdout, stderr, status = run_shell(
+    shell,
+    shell_join(["scp", "-q", local_path.to_s, "#{remote_host}:#{remote_path}"]),
+    timeout_seconds: timeout_seconds
+  )
+  abort "failed to push q4 artifact #{remote_path}: #{stderr}" unless status.zero?
+
+  true
+end
+
 def run_json_command(shell, argv, timeout_seconds:)
   stdout, stderr, status = run_shell(
     shell,
@@ -193,6 +204,8 @@ remote_known_bundle_kde_page = "#{remote_app_root}/known-portable-bundle-kde-pag
 remote_known_bundle_compatibility_bundle = "#{remote_app_root}/known-portable-bundle-compatibility-evidence-bundle.json"
 remote_known_bundle_application_detail = "#{remote_app_root}/known-portable-bundle-application-detail.json"
 remote_known_bundle_kde_page_from_detail = "#{remote_app_root}/known-portable-bundle-kde-page-from-detail.json"
+remote_known_bundle_acceptance_input = "#{remote_app_root}/known-portable-bundle-winapp-acceptance-input.json"
+remote_known_bundle_acceptance = "#{remote_app_root}/known-portable-bundle-winapp-acceptance.json"
 remote_binary_root = "#{remote_build_root}/bin/linux-amd64"
 remote_runtime_bin = "#{remote_binary_root}/xnix-runtime-go"
 remote_launcher_bin = "#{remote_binary_root}/xnix-compat-launch"
@@ -266,6 +279,13 @@ known_bundle_kde_page_from_detail_command = [
   "--external-app-application-detail", remote_known_bundle_application_detail,
   "--decision", "approved",
   "--output", remote_known_bundle_kde_page_from_detail
+]
+
+known_bundle_acceptance_command = [
+  remote_runtime_bin,
+  "q4-known-portable-bundle-winapp-acceptance-preview",
+  "--q4-notepadpp-portable-winapp-smoke", remote_known_bundle_acceptance_input,
+  "--output", remote_known_bundle_acceptance
 ]
 
 def staged_command(remote_host, remote_import_record, output_path, markdown_output_path, timeout_seconds)
@@ -353,6 +373,10 @@ plan = {
   "known_portable_bundle_kde_page_from_detail_command" => known_bundle_kde_page_from_detail_command,
   "known_portable_bundle_kde_page_from_detail_report" => remote_known_bundle_kde_page_from_detail,
   "known_portable_bundle_kde_page_from_detail_status" => "planned",
+  "known_portable_bundle_acceptance_planned" => true,
+  "known_portable_bundle_acceptance_command" => known_bundle_acceptance_command,
+  "known_portable_bundle_acceptance_report" => remote_known_bundle_acceptance,
+  "known_portable_bundle_acceptance_status" => "planned",
   "record_first_launch_path" => true,
   "remote_cache_root" => remote_cache_root,
   "remote_state_root" => remote_state_root,
@@ -753,5 +777,57 @@ result = plan.merge(
   "accepted_application_detail_state" => delegated.fetch("accepted_application_detail_compatibility_state", ""),
   "kde_accepted_page_state" => delegated.fetch("kde_page_from_accepted_application_detail_compatibility_state", ""),
   "artifact_fetch_count" => delegated.fetch("artifact_fetch_count", 0)
+)
+known_bundle_acceptance_input_local_path = artifact_output_root.join("known-portable-bundle-winapp-acceptance-input.json")
+FileUtils.mkdir_p(known_bundle_acceptance_input_local_path.dirname)
+File.write(known_bundle_acceptance_input_local_path, JSON.pretty_generate(result) + "\n")
+push_remote_artifact(
+  options.fetch(:local_shell),
+  remote_host,
+  known_bundle_acceptance_input_local_path,
+  remote_known_bundle_acceptance_input,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+known_bundle_acceptance_stdout = remote_step!(
+  options.fetch(:local_shell),
+  remote_host,
+  "cd #{Shellwords.escape(remote_source_root)} && #{shell_join(known_bundle_acceptance_command)}",
+  options.fetch(:remote_timeout_seconds),
+  "q4 Notepad++ Go Runtime known portable bundle acceptance failed"
+)
+known_bundle_acceptance = JSON.parse(known_bundle_acceptance_stdout)
+unless known_bundle_acceptance.fetch("request_type") == "q4-known-portable-bundle-winapp-acceptance-preview" &&
+       known_bundle_acceptance.fetch("app_id") == "org.xnix.external.notepadplusplus" &&
+       known_bundle_acceptance.fetch("display_name") == "Notepad++ Portable" &&
+       known_bundle_acceptance.fetch("launch_source_request_type") == "windows-known-app-bundle-stage-and-launch" &&
+       bool(known_bundle_acceptance, "known_portable_bundle_stage_launch_consumed") &&
+       bool(known_bundle_acceptance, "known_bundle_application_detail_verified") &&
+       bool(known_bundle_acceptance, "known_bundle_kde_page_from_detail_verified") &&
+       bool(known_bundle_acceptance, "runtime_accepted_chain_verified") &&
+       bool(known_bundle_acceptance, "host_compilation_avoided") &&
+       bool(known_bundle_acceptance, "host_download_avoided") &&
+       bool(known_bundle_acceptance, "acceptance_ready") &&
+       !bool(known_bundle_acceptance, "raw_path_exposed") &&
+       !bool(known_bundle_acceptance, "host_root_modified")
+  warn JSON.pretty_generate(known_bundle_acceptance)
+  abort "q4 Notepad++ Go Runtime known portable bundle acceptance did not pass"
+end
+known_bundle_acceptance_local_path = artifact_output_root.join("known-portable-bundle-winapp-acceptance.json")
+known_bundle_acceptance_fetched = fetch_remote_artifact(
+  options.fetch(:local_shell),
+  remote_host,
+  remote_known_bundle_acceptance,
+  known_bundle_acceptance_local_path,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+result.merge!(
+  "known_portable_bundle_acceptance_status" => "passed",
+  "known_portable_bundle_acceptance_request_type" => known_bundle_acceptance.fetch("request_type"),
+  "known_portable_bundle_acceptance_ready" => bool(known_bundle_acceptance, "acceptance_ready"),
+  "known_portable_bundle_acceptance_launch_source_request_type" => known_bundle_acceptance.fetch("launch_source_request_type"),
+  "known_portable_bundle_acceptance_stage_launch_consumed" => bool(known_bundle_acceptance, "known_portable_bundle_stage_launch_consumed"),
+  "known_portable_bundle_acceptance_runtime_accepted_chain_verified" => bool(known_bundle_acceptance, "runtime_accepted_chain_verified"),
+  "known_portable_bundle_acceptance_artifact_fetched" => known_bundle_acceptance_fetched,
+  "known_portable_bundle_acceptance_artifact_output_path" => known_bundle_acceptance_local_path.to_s
 )
 emit_json(result, output_path)

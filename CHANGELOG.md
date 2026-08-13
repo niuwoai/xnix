@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc267] - 2026-08-13
+
+### Added
+
+- Added the Go-owned `q4-known-portable-bundle-winapp-acceptance-preview` command to consume the q4 Notepad++ Portable smoke report and make the final known portable bundle acceptance decision inside Runtime product logic.
+- Added q4 Notepad++ Portable smoke coverage that generates, validates, fetches, and reports `known-portable-bundle-winapp-acceptance.json` with direct known bundle staged-launch, Runtime application detail, KDE detail, and accepted-chain evidence.
+
+### Changed
+
+- Reaffirmed the q4-first compile policy so compile-heavy Go validation and real Windows app smoke work stay on `root@q4`, keeping the macOS host limited to lightweight checks, Git, dry-run planning, and artifact review by default.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, product overview, and q4 remote build policy to `0.2.640-rc267`.
+
 ## [0.2.640-rc266] - 2026-08-13
 
 ### Added

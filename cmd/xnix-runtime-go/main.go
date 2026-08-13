@@ -302,6 +302,8 @@ func run(args []string, stdout io.Writer) error {
 		return runQ4ExternalWinAppRunPlanPreview(args[1:], stdout)
 	case "q4-staged-external-winapp-acceptance-preview":
 		return runQ4StagedExternalWinAppAcceptancePreview(args[1:], stdout)
+	case "q4-known-portable-bundle-winapp-acceptance-preview":
+		return runQ4KnownPortableBundleWinAppAcceptancePreview(args[1:], stdout)
 	case "known-existing-winapp-acceptance-preview":
 		return runKnownExistingWinAppAcceptancePreview(args[1:], stdout)
 	case "known-app-runtime-status-launch-owner-fixture-record":
