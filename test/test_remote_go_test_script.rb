@@ -69,6 +69,8 @@ assert(payload["run_regex"].include?("TestPreviewQ4KnownPortableWinAppRunPlanSel
 assert(payload["run_regex"].include?("TestPreviewQ4KnownPortableWinAppRunPlanRejectsKnownNonRunnableCatalogApp"), "remote Go test must include q4 known portable non-runnable rejection model tests")
 assert(payload["run_regex"].include?("TestQ4KnownPortableWinAppRunPlanPreviewCommand"), "remote Go test must include q4 known portable catalog-backed plan CLI tests")
 assert(payload["run_regex"].include?("TestQ4KnownPortableWinAppRunPlanPreviewCommandRendersPuttySingleExecutableLane"), "remote Go test must include q4 known portable PuTTY single-executable plan CLI tests")
+assert(payload["run_regex"].include?("TestQ4KnownPortableWinAppRunAcceptancePreviewCommandConsumesPuttyOperatorRun"), "remote Go test must include q4 known portable PuTTY operator acceptance CLI tests")
+assert(payload["run_regex"].include?("TestExternalWinAppApplicationDetailPreviewCommandConsumesPuttyKnownPortableOperatorAcceptance"), "remote Go test must include PuTTY known portable application detail CLI tests")
 assert(payload["count"] == 1, "remote Go test must default to count 1")
 assert(payload["go_test_timeout"] == "5m", "remote Go test must default to a bounded Go test timeout")
 assert(payload["remote_test_planned"] == true, "remote Go test must plan remote test")

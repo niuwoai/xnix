@@ -397,9 +397,9 @@ func validateExternalWinAppApplicationDetailKnownPortableRunAcceptance(bundle Ex
 		return errors.New("external Windows app application detail requires ready q4 known portable Windows app operator acceptance")
 	case acceptance.AppID != bundle.ApplicationID || acceptance.DisplayName != bundle.DisplayName:
 		return errors.New("external Windows app application detail known portable acceptance must match bundle application identity")
-	case !acceptance.KnownCatalogApp || !acceptance.PortableDirectoryExternalApp || !acceptance.OfficialArchiveChecksumVerified || !acceptance.KnownPortableBundleImported:
-		return errors.New("external Windows app application detail known portable acceptance requires verified catalog bundle evidence")
-	case acceptance.KnownPortableBundleStageLaunchStatus != "passed" || !acceptance.KnownPortableBundleAcceptanceReady || !acceptance.RuntimeAcceptedChainVerified:
+	case !acceptance.KnownCatalogApp:
+		return errors.New("external Windows app application detail known portable acceptance requires catalog evidence")
+	case !acceptance.RuntimeAcceptedChainVerified:
 		return errors.New("external Windows app application detail known portable acceptance requires accepted staged launch chain")
 	case !acceptance.OperatorRunReady || acceptance.AcceptedApplicationDetailState != "runtime-accepted-real-app-run" || acceptance.KDEAcceptedPageState != "runtime-accepted-real-app-run":
 		return errors.New("external Windows app application detail known portable acceptance requires accepted operator run states")
@@ -407,8 +407,28 @@ func validateExternalWinAppApplicationDetailKnownPortableRunAcceptance(bundle Ex
 		return errors.New("external Windows app application detail known portable acceptance requires closed host and container gates")
 	case acceptance.BackendDetailsExposed || acceptance.RawPathExposed || acceptance.RunReportPathExposed || acceptance.RemoteHostExposed || acceptance.DelegatedCommandExposed:
 		return errors.New("external Windows app application detail known portable acceptance requires redacted acceptance evidence")
-	case !bundle.KnownPortableBundleStageLaunchConsumed || !bundle.KnownPortableBundleStageLaunchVerified || bundle.LaunchSourceRequestType != "windows-known-app-bundle-stage-and-launch":
-		return errors.New("external Windows app application detail known portable acceptance requires matching known bundle launch provenance")
+	}
+	switch {
+	case acceptance.PortableDirectoryExternalApp:
+		if !acceptance.OfficialArchiveChecksumVerified ||
+			!acceptance.KnownPortableBundleImported ||
+			acceptance.KnownPortableBundleStageLaunchStatus != "passed" ||
+			!acceptance.KnownPortableBundleAcceptanceReady ||
+			!bundle.KnownPortableBundleStageLaunchConsumed ||
+			!bundle.KnownPortableBundleStageLaunchVerified ||
+			bundle.LaunchSourceRequestType != "windows-known-app-bundle-stage-and-launch" {
+			return errors.New("external Windows app application detail known portable acceptance requires verified catalog bundle evidence")
+		}
+	case acceptance.SingleFileExternalApp:
+		if !acceptance.OfficialExecutableChecksumVerified ||
+			!acceptance.StagedExternalWinAppAcceptanceReady ||
+			!acceptance.ExternalFileBridgeReady ||
+			!acceptance.WindowsProcessFileArgumentObserved ||
+			bundle.LaunchSourceRequestType != "external-winapp-import-stage-and-launch" {
+			return errors.New("external Windows app application detail known portable acceptance requires verified catalog single-executable evidence")
+		}
+	default:
+		return errors.New("external Windows app application detail known portable acceptance requires a supported catalog run lane")
 	}
 	return nil
 }

@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc276] - 2026-08-13
+
+### Added
+
+- Added a structured PuTTY single-executable execute guard to `scripts/q4_known_portable_winapp_run.rb`, keeping the catalog-backed plan visible while blocking `--execute` until an argumentless desktop launch lane exists.
+- Added q4-first validation evidence for a fresh Notepad++ Portable real desktop Windows app run, including q4 download, extraction, Go Runtime compilation, Wine/Xvfb GUI execution, operator acceptance, Runtime application detail, KDE page generation, and host compilation/download avoidance.
+
+### Changed
+
+- Updated the q4 PuTTY smoke to expose the q4-built Runtime binary, Runtime source root, compatibility evidence bundle, and staged external acceptance artifact fields required by future single-executable follow-up work.
+- Updated targeted tests, layout checks, README, product overview, Claude guide, Runtime metadata, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc276`.
+
 ## [0.2.640-rc275] - 2026-08-13
 
 ### Added

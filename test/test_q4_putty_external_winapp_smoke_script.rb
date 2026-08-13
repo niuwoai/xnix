@@ -27,6 +27,9 @@ assert(source.include?("sha256sum"), "q4 PuTTY smoke must verify the executable 
 assert(source.include?("scripts/q4_staged_desktop_external_winapp_smoke.rb"), "q4 PuTTY smoke must delegate to the staged external Runtime/KDE path")
 assert(source.include?("real_third_party_windows_app"), "q4 PuTTY smoke must distinguish real third-party app evidence")
 assert(source.include?("single_file_windows_app"), "q4 PuTTY smoke must record that this app fits the current single-file lane")
+assert(source.include?("remote_runtime_binary"), "q4 PuTTY smoke must expose q4 Runtime binary for operator follow-up")
+assert(source.include?("staged_external_winapp_acceptance_ready"), "q4 PuTTY smoke must expose staged external acceptance readiness")
+assert(source.include?("compatibility_evidence_bundle_report"), "q4 PuTTY smoke must expose the Runtime compatibility bundle path for operator follow-up")
 assert(source.include?("host_download_avoided"), "q4 PuTTY smoke must avoid host-side download")
 assert(source.include?("host_compilation_avoided"), "q4 PuTTY smoke must avoid host-side compilation")
 

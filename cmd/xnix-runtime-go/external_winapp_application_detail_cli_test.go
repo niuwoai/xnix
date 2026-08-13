@@ -461,6 +461,46 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesKnownPortableOpera
 	}
 }
 
+func TestExternalWinAppApplicationDetailPreviewCommandConsumesPuttyKnownPortableOperatorAcceptance(t *testing.T) {
+	tempDir := t.TempDir()
+	bundlePath := filepath.Join(tempDir, "putty-compatibility-evidence-bundle.json")
+	acceptancePath := filepath.Join(tempDir, "q4-known-portable-putty-run-acceptance.json")
+	writeTextFile(t, bundlePath, puttyKnownPortableOperatorAcceptedApplicationDetailBundleFixture())
+	writeTextFile(t, acceptancePath, externalWinAppApplicationDetailPuttyKnownPortableOperatorAcceptanceFixture(currentProjectVersion(t)))
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"external-winapp-application-detail-preview",
+		"--compatibility-evidence-bundle", bundlePath,
+		"--q4-known-portable-winapp-run-acceptance", acceptancePath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["application_id"] != "org.xnix.external.putty" ||
+		payload["display_name"] != "PuTTY" ||
+		payload["launch_source_request_type"] != "external-winapp-import-stage-and-launch" ||
+		payload["compatibility_state"] != "runtime-accepted-real-app-run" ||
+		payload["q4_known_portable_winapp_run_acceptance_consumed"] != true ||
+		payload["q4_known_portable_winapp_run_acceptance_ready"] != true ||
+		payload["go_owned_known_portable_winapp_run_acceptance_verified"] != true ||
+		payload["known_portable_bundle_stage_launch_consumed"] != false ||
+		payload["known_portable_bundle_stage_launch_verified"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_paths_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected PuTTY known portable operator acceptance detail payload: %#v", payload)
+	}
+	for _, forbidden := range []string{acceptancePath, "root@q4", "/home/xnix-", "/Users/rocky", " putty.exe ", "docker run"} {
+		if strings.Contains(output.String(), forbidden) {
+			t.Fatalf("PuTTY known portable operator accepted detail exposed unsafe details %q: %s", forbidden, output.String())
+		}
+	}
+}
+
 func externalWinAppApplicationDetailBundleFixture() string {
 	return `{
   "version": "0.2.640-test",
@@ -527,6 +567,16 @@ func knownPortableOperatorAcceptedApplicationDetailBundleFixture() string {
 	return bundle
 }
 
+func puttyKnownPortableOperatorAcceptedApplicationDetailBundleFixture() string {
+	bundle := externalWinAppApplicationDetailBundleFixture()
+	bundle = strings.Replace(bundle, `"desktop": "KDE Plasma",`, `"source": "external-winapp-import-stage-and-launch+desktop-launch-packet+real-winapp-gui-evidence-packet+kde-center-page",
+  "launch_source_request_type": "external-winapp-import-stage-and-launch",
+  "desktop": "KDE Plasma",`, 1)
+	bundle = strings.ReplaceAll(bundle, "org.xnix.external.desktop-notepad-file-argument", "org.xnix.external.putty")
+	bundle = strings.ReplaceAll(bundle, "External Desktop Notepad File Argument", "PuTTY")
+	return bundle
+}
+
 func externalWinAppApplicationDetailKnownPortableOperatorAcceptanceFixture(version string) string {
 	return strings.ReplaceAll(`{
   "version": "VERSION_PLACEHOLDER",
@@ -568,6 +618,55 @@ func externalWinAppApplicationDetailKnownPortableOperatorAcceptanceFixture(versi
   "backend_details_exposed": false,
   "acceptance_ready": true,
   "desktop_safe_summary": "Notepad++ Portable completed the q4 known portable Windows app operator run with Runtime-owned acceptance and KDE accepted-state evidence."
+}`, "VERSION_PLACEHOLDER", version)
+}
+
+func externalWinAppApplicationDetailPuttyKnownPortableOperatorAcceptanceFixture(version string) string {
+	return strings.ReplaceAll(`{
+  "version": "VERSION_PLACEHOLDER",
+  "schema_version": "xnix.runtime.q4_known_portable_winapp_run_acceptance.v1",
+  "request_type": "q4-known-portable-winapp-run-acceptance-preview",
+  "source": "q4-known-portable-winapp-run+go-runtime-operator-acceptance",
+  "runtime_method": "PreviewQ4KnownPortableWinAppRunAcceptance",
+  "read_method": "GetQ4KnownPortableWinAppRunAcceptance",
+  "acceptance_type": "q4-known-portable-real-winapp-operator-run-acceptance",
+  "run_report_consumed": true,
+  "run_report_path_exposed": false,
+  "remote_host_exposed": false,
+  "delegated_command_exposed": false,
+  "raw_path_exposed": false,
+  "app_id": "org.xnix.external.putty",
+  "display_name": "PuTTY",
+  "known_catalog_app": true,
+  "portable_directory_external_app": false,
+  "single_file_external_app": true,
+  "official_archive_checksum_verified": false,
+  "official_executable_checksum_verified": true,
+  "known_portable_bundle_imported": false,
+  "known_portable_bundle_stage_launch_status": "",
+  "known_portable_bundle_acceptance_ready": false,
+  "staged_external_winapp_acceptance_ready": true,
+  "external_file_bridge_ready": true,
+  "windows_process_file_argument_window_observed": true,
+  "runtime_accepted_chain_verified": true,
+  "accepted_application_detail_state": "runtime-accepted-real-app-run",
+  "kde_accepted_page_state": "runtime-accepted-real-app-run",
+  "operator_run_ready": true,
+  "delegated_artifact_fetch_count": 13,
+  "q4_download_required": true,
+  "q4_extract_required": false,
+  "q4_compile_required": true,
+  "q4_execution_required": true,
+  "host_compilation_avoided": true,
+  "host_download_avoided": true,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "backend_details_exposed": false,
+  "acceptance_ready": true,
+  "desktop_safe_summary": "PuTTY completed the q4 known portable Windows app operator run with Runtime-owned acceptance and KDE accepted-state evidence."
 }`, "VERSION_PLACEHOLDER", version)
 }
 

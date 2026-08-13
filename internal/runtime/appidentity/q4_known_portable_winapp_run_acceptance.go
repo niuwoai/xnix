@@ -34,10 +34,15 @@ type Q4KnownPortableWinAppRunAcceptance struct {
 	DisplayName                          string `json:"display_name"`
 	KnownCatalogApp                      bool   `json:"known_catalog_app"`
 	PortableDirectoryExternalApp         bool   `json:"portable_directory_external_app"`
+	SingleFileExternalApp                bool   `json:"single_file_external_app"`
 	OfficialArchiveChecksumVerified      bool   `json:"official_archive_checksum_verified"`
+	OfficialExecutableChecksumVerified   bool   `json:"official_executable_checksum_verified"`
 	KnownPortableBundleImported          bool   `json:"known_portable_bundle_imported"`
 	KnownPortableBundleStageLaunchStatus string `json:"known_portable_bundle_stage_launch_status"`
 	KnownPortableBundleAcceptanceReady   bool   `json:"known_portable_bundle_acceptance_ready"`
+	StagedExternalWinAppAcceptanceReady  bool   `json:"staged_external_winapp_acceptance_ready"`
+	ExternalFileBridgeReady              bool   `json:"external_file_bridge_ready"`
+	WindowsProcessFileArgumentObserved   bool   `json:"windows_process_file_argument_window_observed"`
 	RuntimeAcceptedChainVerified         bool   `json:"runtime_accepted_chain_verified"`
 	AcceptedApplicationDetailState       string `json:"accepted_application_detail_state"`
 	KDEAcceptedPageState                 string `json:"kde_accepted_page_state"`
@@ -90,10 +95,11 @@ func PreviewQ4KnownPortableWinAppRunAcceptanceJSON(content []byte) (Q4KnownPorta
 		remoteBool(report, "broad_host_mount_required")
 	appID := remoteString(report, "app_id")
 	displayName := remoteString(report, "display_name")
-	ready := appID == "org.xnix.external.notepadplusplus" &&
+	bundleReady := appID == "org.xnix.external.notepadplusplus" &&
 		displayName == "Notepad++ Portable" &&
 		remoteBool(report, "known_catalog_app") &&
 		remoteBool(report, "portable_directory_external_app") &&
+		!remoteBool(report, "single_file_external_app") &&
 		remoteBool(report, "official_download_required") &&
 		remoteBool(report, "pinned_checksum_required") &&
 		remoteBool(report, "official_archive_checksum_verified") &&
@@ -113,8 +119,33 @@ func PreviewQ4KnownPortableWinAppRunAcceptanceJSON(content []byte) (Q4KnownPorta
 		remoteBool(report, "host_compilation_avoided") &&
 		remoteBool(report, "host_download_avoided") &&
 		!unsafeGateOpen
-	if !ready {
-		return Q4KnownPortableWinAppRunAcceptance{}, errors.New("q4 known portable Windows app run acceptance requires a passed catalog-backed Notepad++ operator run, Go-owned bundle acceptance, accepted Runtime/KDE state, fetched artifacts, and closed safety gates")
+	singleExecutableReady := appID == "org.xnix.external.putty" &&
+		displayName == "PuTTY" &&
+		remoteBool(report, "known_catalog_app") &&
+		!remoteBool(report, "portable_directory_external_app") &&
+		remoteBool(report, "single_file_external_app") &&
+		remoteBool(report, "official_download_required") &&
+		remoteBool(report, "pinned_checksum_required") &&
+		remoteBool(report, "official_executable_checksum_verified") &&
+		!remoteBool(report, "known_portable_bundle_imported") &&
+		remoteString(report, "staged_external_winapp_acceptance_request_type") == Q4StagedExternalWinAppAcceptanceRequestType &&
+		remoteBool(report, "staged_external_winapp_acceptance_ready") &&
+		remoteBool(report, "external_file_bridge_ready") &&
+		remoteBool(report, "windows_process_file_argument_window_observed") &&
+		remoteBool(report, "runtime_accepted_chain_verified") &&
+		remoteString(report, "accepted_application_detail_state") == "runtime-accepted-real-app-run" &&
+		remoteString(report, "kde_accepted_page_state") == "runtime-accepted-real-app-run" &&
+		remoteBool(report, "operator_run_ready") &&
+		remoteInt(report, "delegated_artifact_fetch_count") >= 13 &&
+		remoteBool(report, "q4_download_required") &&
+		!remoteBool(report, "q4_extract_required") &&
+		remoteBool(report, "q4_compile_required") &&
+		remoteBool(report, "q4_execution_required") &&
+		remoteBool(report, "host_compilation_avoided") &&
+		remoteBool(report, "host_download_avoided") &&
+		!unsafeGateOpen
+	if !bundleReady && !singleExecutableReady {
+		return Q4KnownPortableWinAppRunAcceptance{}, errors.New("q4 known portable Windows app run acceptance requires a passed catalog-backed bundle or single-executable operator run, Go-owned acceptance, accepted Runtime/KDE state, fetched artifacts, and closed safety gates")
 	}
 	acceptance := Q4KnownPortableWinAppRunAcceptance{
 		Version:                              remoteString(report, "version"),
@@ -132,18 +163,23 @@ func PreviewQ4KnownPortableWinAppRunAcceptanceJSON(content []byte) (Q4KnownPorta
 		AppID:                                appID,
 		DisplayName:                          displayName,
 		KnownCatalogApp:                      true,
-		PortableDirectoryExternalApp:         true,
-		OfficialArchiveChecksumVerified:      true,
-		KnownPortableBundleImported:          true,
-		KnownPortableBundleStageLaunchStatus: "passed",
-		KnownPortableBundleAcceptanceReady:   true,
+		PortableDirectoryExternalApp:         bundleReady,
+		SingleFileExternalApp:                singleExecutableReady,
+		OfficialArchiveChecksumVerified:      bundleReady,
+		OfficialExecutableChecksumVerified:   singleExecutableReady,
+		KnownPortableBundleImported:          bundleReady,
+		KnownPortableBundleStageLaunchStatus: remoteString(report, "known_portable_bundle_stage_launch_status"),
+		KnownPortableBundleAcceptanceReady:   bundleReady,
+		StagedExternalWinAppAcceptanceReady:  singleExecutableReady,
+		ExternalFileBridgeReady:              singleExecutableReady,
+		WindowsProcessFileArgumentObserved:   remoteBool(report, "windows_process_file_argument_window_observed"),
 		RuntimeAcceptedChainVerified:         true,
 		AcceptedApplicationDetailState:       "runtime-accepted-real-app-run",
 		KDEAcceptedPageState:                 "runtime-accepted-real-app-run",
 		OperatorRunReady:                     true,
 		DelegatedArtifactFetchCount:          remoteInt(report, "delegated_artifact_fetch_count"),
 		Q4DownloadRequired:                   true,
-		Q4ExtractRequired:                    true,
+		Q4ExtractRequired:                    bundleReady,
 		Q4CompileRequired:                    true,
 		Q4ExecutionRequired:                  true,
 		HostCompilationAvoided:               true,
@@ -155,7 +191,7 @@ func PreviewQ4KnownPortableWinAppRunAcceptanceJSON(content []byte) (Q4KnownPorta
 		BroadHostMountRequired:               false,
 		BackendDetailsExposed:                false,
 		AcceptanceReady:                      true,
-		DesktopSafeSummary:                   "Notepad++ Portable completed the q4 known portable Windows app operator run with Runtime-owned acceptance and KDE accepted-state evidence.",
+		DesktopSafeSummary:                   displayName + " completed the q4 known portable Windows app operator run with Runtime-owned acceptance and KDE accepted-state evidence.",
 	}
 	if err := validateNoBackendTerms(acceptance, "q4 known portable Windows app run acceptance"); err != nil {
 		return Q4KnownPortableWinAppRunAcceptance{}, err

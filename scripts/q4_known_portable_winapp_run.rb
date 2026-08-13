@@ -12,11 +12,18 @@ require "timeout"
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
 NOTEPADPP_SMOKE = PROJECT_ROOT.join("scripts/q4_notepadpp_portable_winapp_smoke.rb")
+PUTTY_SMOKE = PROJECT_ROOT.join("scripts/q4_putty_external_winapp_smoke.rb")
+PUTTY_ARGUMENTLESS_LANE_REASON = "PuTTY is a single-executable GUI app that does not implement the current KDE file-open contract; execute mode needs an argumentless desktop launch lane before it can be accepted."
 
 SCHEMA_VERSION = "xnix.scripts.q4_known_portable_winapp_run.v1"
 REQUEST_TYPE = "q4-known-portable-winapp-run"
-SUPPORTED_APP_ID = "org.xnix.external.notepadplusplus"
-SUPPORTED_DISPLAY_NAME = "Notepad++ Portable"
+SUPPORTED_NOTEPADPP_APP_ID = "org.xnix.external.notepadplusplus"
+SUPPORTED_PUTTY_APP_ID = "org.xnix.external.putty"
+SUPPORTED_APP_IDS = [SUPPORTED_NOTEPADPP_APP_ID, SUPPORTED_PUTTY_APP_ID].freeze
+SUPPORTED_DISPLAY_NAMES = {
+  SUPPORTED_NOTEPADPP_APP_ID => "Notepad++ Portable",
+  SUPPORTED_PUTTY_APP_ID => "PuTTY"
+}.freeze
 
 DEFAULT_REMOTE_HOST = ENV.fetch("XNIX_REMOTE_HOST", "root@q4")
 DEFAULT_LOCAL_SHELL = ENV.fetch("XNIX_LOCAL_SHELL", "/bin/zsh")
@@ -30,7 +37,7 @@ DEFAULT_MARKDOWN_OUTPUT = PROJECT_ROOT.join("output", "q4-known-portable-winapp-
 
 options = {
   execute: false,
-  app: ENV.fetch("XNIX_Q4_KNOWN_PORTABLE_WINAPP_APP", SUPPORTED_APP_ID),
+  app: ENV.fetch("XNIX_Q4_KNOWN_PORTABLE_WINAPP_APP", SUPPORTED_NOTEPADPP_APP_ID),
   local_shell: DEFAULT_LOCAL_SHELL,
   remote_host: DEFAULT_REMOTE_HOST,
   remote_materials_root: DEFAULT_REMOTE_MATERIALS_ROOT,
@@ -43,9 +50,9 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: ruby scripts/q4_known_portable_winapp_run.rb --app org.xnix.external.notepadplusplus [--execute]"
+  parser.banner = "Usage: ruby scripts/q4_known_portable_winapp_run.rb --app APP_ID [--execute]"
   parser.on("--execute", "Run a catalog-backed known portable Windows app through the q4 Runtime/KDE lane.") { options[:execute] = true }
-  parser.on("--app APP_ID", "Known portable app id, currently: #{SUPPORTED_APP_ID}.") { |value| options[:app] = value }
+  parser.on("--app APP_ID", "Known portable app id, currently: #{SUPPORTED_APP_IDS.join(", ")}.") { |value| options[:app] = value }
   parser.on("--local-shell PATH", "Local shell used for SSH alias resolution.") { |value| options[:local_shell] = value }
   parser.on("--remote HOST", "Remote SSH target, default: #{DEFAULT_REMOTE_HOST}.") { |value| options[:remote_host] = value }
   parser.on("--remote-materials-root PATH", "Remote materials root under /home/xnix-* or /tmp/xnix-*.") { |value| options[:remote_materials_root] = value }
@@ -77,7 +84,7 @@ end
 def ensure_supported_app!(app_id)
   clean = app_id.to_s.strip
   abort "known portable app id must be non-empty" if clean.empty?
-  abort "unsupported known portable app #{clean}; currently supported: #{SUPPORTED_APP_ID}" unless clean == SUPPORTED_APP_ID
+  abort "unsupported known portable app #{clean}; currently supported: #{SUPPORTED_APP_IDS.join(", ")}" unless SUPPORTED_APP_IDS.include?(clean)
 
   clean
 end
@@ -196,15 +203,23 @@ end
 
 execute = options.fetch(:execute)
 app_id = ensure_supported_app!(options.fetch(:app))
+display_name = SUPPORTED_DISPLAY_NAMES.fetch(app_id)
+notepadpp_lane = app_id == SUPPORTED_NOTEPADPP_APP_ID
+putty_lane = app_id == SUPPORTED_PUTTY_APP_ID
 output_path = ensure_local_output_path!("output path", options.fetch(:output))
 markdown_output_path = ensure_local_output_path!("markdown output path", options.fetch(:markdown_output))
 remote_materials_root = ensure_remote_xnix_path!("remote materials root", options.fetch(:remote_materials_root))
 remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetch(:remote_source_root))
 remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
 artifact_root = PROJECT_ROOT.join("output", "artifacts")
-delegated_output_path = artifact_root.join("q4-known-portable-winapp-run-notepadpp-smoke-#{VERSION}.json")
-delegated_markdown_output_path = artifact_root.join("q4-known-portable-winapp-run-notepadpp-smoke-#{VERSION}.md")
-remote_acceptance_root = "#{remote_materials_root}/operator-run/notepad-plus-plus/8.9.7"
+delegated_slug = notepadpp_lane ? "notepadpp" : "putty"
+delegated_output_path = artifact_root.join("q4-known-portable-winapp-run-#{delegated_slug}-smoke-#{VERSION}.json")
+delegated_markdown_output_path = artifact_root.join("q4-known-portable-winapp-run-#{delegated_slug}-smoke-#{VERSION}.md")
+remote_acceptance_root = if notepadpp_lane
+                           "#{remote_materials_root}/operator-run/notepad-plus-plus/8.9.7"
+                         else
+                           "#{remote_materials_root}/operator-run/putty/0.84"
+                         end
 remote_acceptance_input = "#{remote_acceptance_root}/q4-known-portable-winapp-run-acceptance-input.json"
 remote_acceptance_output = "#{remote_acceptance_root}/q4-known-portable-winapp-run-acceptance.json"
 remote_operator_detail = "#{remote_acceptance_root}/q4-known-portable-winapp-run-application-detail.json"
@@ -213,7 +228,15 @@ acceptance_local_path = artifact_root.join("q4-known-portable-winapp-run-accepta
 operator_detail_local_path = artifact_root.join("q4-known-portable-winapp-run-application-detail-#{VERSION}.json")
 operator_kde_page_local_path = artifact_root.join("q4-known-portable-winapp-run-kde-page-#{VERSION}.json")
 
-delegated_command = [
+delegated_script = notepadpp_lane ? "scripts/q4_notepadpp_portable_winapp_smoke.rb" : "scripts/q4_putty_external_winapp_smoke.rb"
+delegated_request_type = notepadpp_lane ? "q4-notepadpp-portable-winapp-smoke" : "q4-putty-external-winapp-smoke"
+operator_acceptance_type = notepadpp_lane ? "q4-known-portable-bundle-winapp-acceptance-preview" : "q4-staged-external-winapp-acceptance-preview"
+catalog_artifact_kind = notepadpp_lane ? "portable-zip-bundle" : "single-executable"
+download_artifact_name = notepadpp_lane ? "npp.8.9.7.portable.zip" : "putty.exe"
+executable_relative_path = notepadpp_lane ? "notepad++.exe" : "putty.exe"
+
+delegated_command = if notepadpp_lane
+                      [
   "ruby",
   "scripts/q4_notepadpp_portable_winapp_smoke.rb",
   "--remote", options.fetch(:remote_host),
@@ -224,7 +247,18 @@ delegated_command = [
   "--remote-timeout-seconds", options.fetch(:remote_timeout_seconds).to_s,
   "--output", delegated_output_path.to_s,
   "--markdown-output", delegated_markdown_output_path.to_s
-]
+                      ]
+                    else
+                      [
+                        "ruby",
+                        "scripts/q4_putty_external_winapp_smoke.rb",
+                        "--remote", options.fetch(:remote_host),
+                        "--remote-materials-root", remote_materials_root,
+                        "--remote-timeout-seconds", options.fetch(:remote_timeout_seconds).to_s,
+                        "--output", delegated_output_path.to_s,
+                        "--markdown-output", delegated_markdown_output_path.to_s
+                      ]
+                    end
 delegated_command << "--execute" if execute
 
 plan = {
@@ -234,9 +268,13 @@ plan = {
   "status" => execute ? "running" : "planned",
   "execute" => execute,
   "app_id" => app_id,
-  "display_name" => SUPPORTED_DISPLAY_NAME,
+  "display_name" => display_name,
   "known_catalog_app" => true,
-  "portable_directory_external_app" => true,
+  "portable_directory_external_app" => notepadpp_lane,
+  "single_file_external_app" => putty_lane,
+  "q4_execute_supported" => notepadpp_lane,
+  "argumentless_desktop_launch_lane_required" => putty_lane,
+  "argumentless_desktop_launch_lane_reason" => putty_lane ? PUTTY_ARGUMENTLESS_LANE_REASON : "",
   "official_download_required" => true,
   "pinned_checksum_required" => true,
   "remote_host" => options.fetch(:remote_host),
@@ -260,13 +298,14 @@ plan = {
     "--output", output_path.to_s,
     "--markdown-output", markdown_output_path.to_s
   ],
-  "delegated_script" => "scripts/q4_notepadpp_portable_winapp_smoke.rb",
-  "delegated_request_type" => "q4-notepadpp-portable-winapp-smoke",
+  "delegated_script" => delegated_script,
+  "delegated_request_type" => delegated_request_type,
   "delegated_command" => delegated_command,
   "delegated_output_path" => delegated_output_path.to_s,
   "delegated_markdown_output_path" => delegated_markdown_output_path.to_s,
   "operator_run_acceptance_planned" => true,
   "operator_run_acceptance_request_type" => "q4-known-portable-winapp-run-acceptance-preview",
+  "operator_run_underlying_acceptance_request_type" => operator_acceptance_type,
   "operator_run_acceptance_report" => remote_acceptance_output,
   "operator_run_acceptance_status" => "planned",
   "operator_run_application_detail_planned" => true,
@@ -281,7 +320,7 @@ plan = {
   "go_runtime_backed" => true,
   "kde_policy_owner" => false,
   "q4_download_required" => true,
-  "q4_extract_required" => true,
+  "q4_extract_required" => notepadpp_lane,
   "q4_compile_required" => true,
   "q4_execution_required" => true,
   "host_compilation_avoided" => true,
@@ -300,8 +339,24 @@ unless execute
   exit 0
 end
 
+if putty_lane
+  blocked = plan.merge(
+    "status" => "blocked",
+    "operator_run_acceptance_status" => "blocked",
+    "operator_run_application_detail_status" => "blocked",
+    "operator_run_kde_page_status" => "blocked",
+    "q4_execution_required" => false,
+    "blocked_reason" => PUTTY_ARGUMENTLESS_LANE_REASON,
+    "host_compilation_avoided" => true,
+    "host_download_avoided" => true
+  )
+  write_markdown(blocked, markdown_output_path)
+  emit_json(blocked, output_path)
+  exit 1
+end
+
 delegated_args = delegated_command.dup
-delegated_args[1] = NOTEPADPP_SMOKE.to_s
+delegated_args[1] = (notepadpp_lane ? NOTEPADPP_SMOKE : PUTTY_SMOKE).to_s
 stdout, stderr, status = Open3.capture3(*delegated_args, chdir: PROJECT_ROOT.to_s)
 unless status.success?
   warn stdout unless stdout.empty?
@@ -310,45 +365,89 @@ unless status.success?
 end
 
 delegated = JSON.parse(stdout)
-unless delegated.fetch("status") == "passed" &&
-       delegated.fetch("app_id") == app_id &&
-       delegated.fetch("display_name") == SUPPORTED_DISPLAY_NAME &&
-       bool(delegated, "notepadpp_sha256_verified") &&
-       bool(delegated, "known_portable_bundle_archive_verified") &&
-       bool(delegated, "known_portable_bundle_stage_launch_existing_import_record_consumed") &&
-       bool(delegated, "known_portable_bundle_stage_launch_windows_process_file_argument_window_observed") &&
-       bool(delegated, "known_portable_bundle_acceptance_ready") &&
-       bool(delegated, "known_portable_bundle_acceptance_runtime_accepted_chain_verified") &&
-       delegated.fetch("known_portable_bundle_acceptance_launch_source_request_type") == "windows-known-app-bundle-stage-and-launch" &&
-       delegated.fetch("accepted_application_detail_state") == "runtime-accepted-real-app-run" &&
-       delegated.fetch("kde_accepted_page_state") == "runtime-accepted-real-app-run" &&
-       bool(delegated, "host_compilation_avoided") &&
-       bool(delegated, "host_download_avoided") &&
-       !bool(delegated, "host_root_modified") &&
-       !bool(delegated, "privileged_container_required") &&
-       !bool(delegated, "host_networking_required") &&
-       !bool(delegated, "docker_socket_mounted") &&
-       !bool(delegated, "broad_host_mount_required")
+notepadpp_passed = notepadpp_lane &&
+                   delegated.fetch("status") == "passed" &&
+                   delegated.fetch("app_id") == app_id &&
+                   delegated.fetch("display_name") == display_name &&
+                   bool(delegated, "notepadpp_sha256_verified") &&
+                   bool(delegated, "known_portable_bundle_archive_verified") &&
+                   bool(delegated, "known_portable_bundle_stage_launch_existing_import_record_consumed") &&
+                   bool(delegated, "known_portable_bundle_stage_launch_windows_process_file_argument_window_observed") &&
+                   bool(delegated, "known_portable_bundle_acceptance_ready") &&
+                   bool(delegated, "known_portable_bundle_acceptance_runtime_accepted_chain_verified") &&
+                   delegated.fetch("known_portable_bundle_acceptance_launch_source_request_type") == "windows-known-app-bundle-stage-and-launch" &&
+                   delegated.fetch("accepted_application_detail_state") == "runtime-accepted-real-app-run" &&
+                   delegated.fetch("kde_accepted_page_state") == "runtime-accepted-real-app-run"
+putty_passed = putty_lane &&
+               delegated.fetch("status") == "passed" &&
+               delegated.fetch("app_id") == app_id &&
+               delegated.fetch("display_name") == display_name &&
+               bool(delegated, "putty_sha256_verified") &&
+               bool(delegated, "single_file_windows_app") &&
+               bool(delegated, "external_file_bridge_ready") &&
+               bool(delegated, "windows_process_file_argument_window_observed") &&
+               bool(delegated, "staged_external_winapp_acceptance_ready") &&
+               delegated.fetch("staged_external_winapp_acceptance_request_type") == "q4-staged-external-winapp-acceptance-preview" &&
+               delegated.fetch("accepted_application_detail_state") == "runtime-accepted-real-app-run" &&
+               delegated.fetch("kde_accepted_page_state") == "runtime-accepted-real-app-run"
+common_delegated_passed = bool(delegated, "host_compilation_avoided") &&
+                          bool(delegated, "host_download_avoided") &&
+                          !bool(delegated, "host_root_modified") &&
+                          !bool(delegated, "privileged_container_required") &&
+                          !bool(delegated, "host_networking_required") &&
+                          !bool(delegated, "docker_socket_mounted") &&
+                          !bool(delegated, "broad_host_mount_required")
+unless (notepadpp_passed || putty_passed) && common_delegated_passed
   warn stdout
   abort "q4 known portable Windows app run did not reach accepted state"
 end
+
+lane_result = if notepadpp_lane
+                {
+                  "official_archive_checksum_verified" => bool(delegated, "notepadpp_sha256_verified"),
+                  "official_executable_checksum_verified" => false,
+                  "known_portable_bundle_imported" => bool(delegated, "known_portable_bundle_import_recorded"),
+                  "known_portable_bundle_stage_launch_status" => delegated.fetch("known_portable_bundle_stage_launch_status"),
+                  "known_portable_bundle_acceptance_request_type" => delegated.fetch("known_portable_bundle_acceptance_request_type"),
+                  "known_portable_bundle_acceptance_ready" => bool(delegated, "known_portable_bundle_acceptance_ready"),
+                  "staged_external_winapp_acceptance_request_type" => "",
+                  "staged_external_winapp_acceptance_ready" => false,
+                  "external_file_bridge_ready" => false,
+                  "windows_process_file_argument_window_observed" => bool(delegated, "known_portable_bundle_stage_launch_windows_process_file_argument_window_observed"),
+                  "runtime_accepted_chain_verified" => bool(delegated, "known_portable_bundle_acceptance_runtime_accepted_chain_verified"),
+                  "compatibility_evidence_bundle_report" => delegated.fetch("known_portable_bundle_compatibility_bundle_report")
+                }
+              else
+                {
+                  "official_archive_checksum_verified" => false,
+                  "official_executable_checksum_verified" => bool(delegated, "putty_sha256_verified"),
+                  "known_portable_bundle_imported" => false,
+                  "known_portable_bundle_stage_launch_status" => "",
+                  "known_portable_bundle_acceptance_request_type" => "",
+                  "known_portable_bundle_acceptance_ready" => false,
+                  "staged_external_winapp_acceptance_request_type" => delegated.fetch("staged_external_winapp_acceptance_request_type"),
+                  "staged_external_winapp_acceptance_ready" => bool(delegated, "staged_external_winapp_acceptance_ready"),
+                  "external_file_bridge_ready" => bool(delegated, "external_file_bridge_ready"),
+                  "windows_process_file_argument_window_observed" => bool(delegated, "windows_process_file_argument_window_observed"),
+                  "runtime_accepted_chain_verified" => bool(delegated, "staged_external_winapp_acceptance_ready"),
+                  "compatibility_evidence_bundle_report" => delegated.fetch("compatibility_evidence_bundle_report")
+                }
+              end
 
 result = plan.merge(
   "status" => "passed",
   "delegated_status" => delegated.fetch("status"),
   "delegated_artifact_fetch_count" => delegated.fetch("artifact_fetch_count"),
-  "official_archive_checksum_verified" => bool(delegated, "notepadpp_sha256_verified"),
-  "known_portable_bundle_imported" => bool(delegated, "known_portable_bundle_import_recorded"),
-  "known_portable_bundle_stage_launch_status" => delegated.fetch("known_portable_bundle_stage_launch_status"),
-  "known_portable_bundle_acceptance_request_type" => delegated.fetch("known_portable_bundle_acceptance_request_type"),
-  "known_portable_bundle_acceptance_ready" => bool(delegated, "known_portable_bundle_acceptance_ready"),
-  "runtime_accepted_chain_verified" => bool(delegated, "known_portable_bundle_acceptance_runtime_accepted_chain_verified"),
+  "catalog_artifact_kind" => catalog_artifact_kind,
+  "download_artifact_name" => download_artifact_name,
+  "executable_relative_path" => executable_relative_path,
   "accepted_application_detail_state" => delegated.fetch("accepted_application_detail_state"),
   "kde_accepted_page_state" => delegated.fetch("kde_accepted_page_state"),
   "operator_run_ready" => true
-)
+).merge(lane_result)
 
 remote_runtime_binary = delegated.fetch("remote_runtime_binary")
+remote_runtime_source_root = delegated.fetch("remote_runtime_source_root", remote_source_root)
 runtime_plan_command = [
   remote_runtime_binary,
   "q4-known-portable-winapp-run-plan-preview",
@@ -360,7 +459,7 @@ runtime_plan_command = [
 ]
 runtime_plan_stdout, runtime_plan_stderr, runtime_plan_status = run_shell(
   options.fetch(:local_shell),
-  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_source_root, runtime_plan_command))),
+  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_runtime_source_root, runtime_plan_command))),
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
 unless runtime_plan_status.zero?
@@ -371,14 +470,16 @@ end
 runtime_plan = JSON.parse(runtime_plan_stdout)
 unless runtime_plan.fetch("request_type") == "q4-known-portable-winapp-run-plan-preview" &&
        runtime_plan.fetch("app_id") == app_id &&
-       runtime_plan.fetch("display_name") == SUPPORTED_DISPLAY_NAME &&
-       runtime_plan.fetch("catalog_artifact_kind") == "portable-zip-bundle" &&
-       runtime_plan.fetch("download_artifact_name") == "npp.8.9.7.portable.zip" &&
-       runtime_plan.fetch("executable_relative_path") == "notepad++.exe" &&
+       runtime_plan.fetch("display_name") == display_name &&
+       runtime_plan.fetch("catalog_artifact_kind") == catalog_artifact_kind &&
+       runtime_plan.fetch("download_artifact_name") == download_artifact_name &&
+       runtime_plan.fetch("executable_relative_path") == executable_relative_path &&
        runtime_plan.fetch("supported_known_portable_app_ids").include?(app_id) &&
        bool(runtime_plan, "known_catalog_app") &&
-       bool(runtime_plan, "portable_directory_external_app") &&
+       bool(runtime_plan, "portable_directory_external_app") == notepadpp_lane &&
+       bool(runtime_plan, "single_file_external_app") == putty_lane &&
        bool(runtime_plan, "q4_compile_required") &&
+       bool(runtime_plan, "q4_extract_required") == notepadpp_lane &&
        bool(runtime_plan, "host_compilation_avoided") &&
        !bool(runtime_plan, "remote_paths_exposed_to_desktop") &&
        !bool(runtime_plan, "host_root_modified")
@@ -423,7 +524,7 @@ acceptance_command = [
 ]
 acceptance_stdout, acceptance_stderr, acceptance_status = run_shell(
   options.fetch(:local_shell),
-  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_source_root, acceptance_command))),
+  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_runtime_source_root, acceptance_command))),
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
 unless acceptance_status.zero?
@@ -434,7 +535,7 @@ end
 operator_acceptance = JSON.parse(acceptance_stdout)
 unless operator_acceptance.fetch("request_type") == "q4-known-portable-winapp-run-acceptance-preview" &&
        operator_acceptance.fetch("app_id") == app_id &&
-       operator_acceptance.fetch("display_name") == SUPPORTED_DISPLAY_NAME &&
+       operator_acceptance.fetch("display_name") == display_name &&
        bool(operator_acceptance, "operator_run_ready") &&
        bool(operator_acceptance, "runtime_accepted_chain_verified") &&
        bool(operator_acceptance, "acceptance_ready") &&
@@ -454,13 +555,13 @@ acceptance_fetched = fetch_remote_artifact(
 operator_detail_command = [
   remote_runtime_binary,
   "external-winapp-application-detail-preview",
-  "--compatibility-evidence-bundle", delegated.fetch("known_portable_bundle_compatibility_bundle_report"),
+  "--compatibility-evidence-bundle", result.fetch("compatibility_evidence_bundle_report"),
   "--q4-known-portable-winapp-run-acceptance", remote_acceptance_output,
   "--output", remote_operator_detail
 ]
 operator_detail_stdout, operator_detail_stderr, operator_detail_status = run_shell(
   options.fetch(:local_shell),
-  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_source_root, operator_detail_command))),
+  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_runtime_source_root, operator_detail_command))),
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
 unless operator_detail_status.zero?
@@ -471,7 +572,7 @@ end
 operator_detail = JSON.parse(operator_detail_stdout)
 unless operator_detail.fetch("request_type") == "external-winapp-application-detail-preview" &&
        operator_detail.fetch("application_id") == app_id &&
-       operator_detail.fetch("display_name") == SUPPORTED_DISPLAY_NAME &&
+       operator_detail.fetch("display_name") == display_name &&
        operator_detail.fetch("compatibility_state") == "runtime-accepted-real-app-run" &&
        bool(operator_detail, "q4_known_portable_winapp_run_acceptance_consumed") &&
        bool(operator_detail, "q4_known_portable_winapp_run_acceptance_ready") &&
@@ -499,7 +600,7 @@ operator_kde_page_command = [
 ]
 operator_kde_stdout, operator_kde_stderr, operator_kde_status = run_shell(
   options.fetch(:local_shell),
-  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_source_root, operator_kde_page_command))),
+  shell_join(ssh_command(options.fetch(:remote_host), remote_project_command(remote_runtime_source_root, operator_kde_page_command))),
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
 unless operator_kde_status.zero?

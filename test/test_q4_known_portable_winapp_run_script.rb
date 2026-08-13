@@ -20,6 +20,11 @@ assert(source.include?("xnix.scripts.q4_known_portable_winapp_run.v1"), "known p
 assert(source.include?("q4-known-portable-winapp-run"), "known portable run must expose a stable request type")
 assert(source.include?("org.xnix.external.notepadplusplus"), "known portable run must target the Notepad++ catalog app")
 assert(source.include?("scripts/q4_notepadpp_portable_winapp_smoke.rb"), "known portable run must delegate to the proven q4 Notepad++ path")
+assert(source.include?("org.xnix.external.putty"), "known portable run must support the PuTTY catalog app")
+assert(source.include?("scripts/q4_putty_external_winapp_smoke.rb"), "known portable run must keep the q4 PuTTY path visible for the future single-exe lane")
+assert(source.include?("single_file_external_app"), "known portable run must model single-executable catalog apps")
+assert(source.include?("argumentless_desktop_launch_lane_required"), "known portable run must block PuTTY execute mode until argumentless desktop launch exists")
+assert(source.include?("q4-staged-external-winapp-acceptance-preview"), "known portable run must preserve single-exe staged external acceptance")
 assert(source.include?("q4-known-portable-winapp-run-plan-preview"), "known portable run must advertise its Go Runtime plan")
 assert(source.include?("go_runtime_plan_catalog_consumed"), "known portable run must consume Go Runtime catalog-backed plan metadata")
 assert(source.include?("supported_known_portable_app_ids"), "known portable run must preserve Go Runtime supported portable app ids")
@@ -85,6 +90,44 @@ assert(payload.fetch("host_networking_required") == false, "plan must not requir
 assert(payload.fetch("docker_socket_mounted") == false, "plan must not mount Docker socket")
 assert(payload.fetch("broad_host_mount_required") == false, "plan must not require broad host mounts")
 assert(Pathname.new("/tmp/xnix-known-portable-run-plan.md").file?, "plan must write markdown output")
+
+stdout, stderr, status = Open3.capture3(
+  "ruby",
+  script.to_s,
+  "--app", "org.xnix.external.putty",
+  "--output", "/tmp/xnix-known-portable-putty-run-plan.json",
+  "--markdown-output", "/tmp/xnix-known-portable-putty-run-plan.md"
+)
+assert(status.success?, "known portable PuTTY run plan must exit successfully: #{stderr}")
+putty_payload = JSON.parse(stdout)
+assert(putty_payload.fetch("app_id") == "org.xnix.external.putty", "PuTTY plan must preserve app id")
+assert(putty_payload.fetch("display_name") == "PuTTY", "PuTTY plan must expose display name")
+assert(putty_payload.fetch("portable_directory_external_app") == false, "PuTTY plan must not claim portable directory handling")
+assert(putty_payload.fetch("single_file_external_app") == true, "PuTTY plan must model the single-executable lane")
+assert(putty_payload.fetch("q4_execute_supported") == false, "PuTTY plan must not claim execute support before the argumentless desktop lane exists")
+assert(putty_payload.fetch("argumentless_desktop_launch_lane_required") == true, "PuTTY plan must require the argumentless desktop launch lane")
+assert(putty_payload.fetch("operator_run_underlying_acceptance_request_type") == "q4-staged-external-winapp-acceptance-preview", "PuTTY plan must preserve staged external acceptance")
+assert(putty_payload.fetch("delegated_request_type") == "q4-putty-external-winapp-smoke", "PuTTY plan must delegate to q4 PuTTY runner")
+assert(putty_payload.fetch("delegated_command").include?("scripts/q4_putty_external_winapp_smoke.rb"), "PuTTY plan must include delegated script")
+assert(putty_payload.fetch("q4_download_required") == true, "PuTTY plan must require q4 download")
+assert(putty_payload.fetch("q4_extract_required") == false, "PuTTY plan must not require q4 extraction")
+assert(putty_payload.fetch("q4_compile_required") == true, "PuTTY plan must require q4 compile")
+assert(putty_payload.fetch("host_compilation_avoided") == true, "PuTTY plan must avoid host compilation")
+assert(putty_payload.fetch("host_download_avoided") == true, "PuTTY plan must avoid host download")
+
+stdout, stderr, status = Open3.capture3(
+  "ruby",
+  script.to_s,
+  "--app", "org.xnix.external.putty",
+  "--execute",
+  "--output", "/tmp/xnix-known-portable-putty-run-blocked.json",
+  "--markdown-output", "/tmp/xnix-known-portable-putty-run-blocked.md"
+)
+assert(!status.success?, "known portable PuTTY execute must stay blocked until argumentless desktop launch exists")
+putty_blocked = JSON.parse(stdout)
+assert(putty_blocked.fetch("status") == "blocked", "blocked PuTTY execute must emit structured blocked status")
+assert(putty_blocked.fetch("q4_execution_required") == false, "blocked PuTTY execute must not require q4 execution")
+assert(putty_blocked.fetch("blocked_reason").include?("argumentless desktop launch lane"), "blocked PuTTY execute must explain the missing lane")
 
 stdout, stderr, status = Open3.capture3(
   "ruby",
