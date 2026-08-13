@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc268`.
+The project is currently at `v0.2.640-rc269`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc268`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc269 moves the run-oriented Notepad++ Portable final acceptance back into Go Runtime product logic. `q4-known-portable-winapp-run-acceptance-preview` consumes the `q4-known-portable-winapp-run` result, verifies the catalog-backed app identity, official archive checksum, known bundle import, staged launch, delegated artifact set, Go-owned bundle acceptance, accepted Runtime/KDE states, q4-only work placement, and closed unsafe gates, then emits a redacted operator-run acceptance artifact.
 
 v0.2.640-rc268 adds a run-oriented q4 entry for known portable Windows apps. `scripts/q4_known_portable_winapp_run.rb --app org.xnix.external.notepadplusplus --execute` now presents Notepad++ Portable as a catalog-backed app run instead of only as a smoke harness, while delegating to the proven q4 Runtime/KDE Notepad++ lane. The Go Runtime command `q4-known-portable-winapp-run-plan-preview` owns the run plan, q4-only download/extract/compile/execute requirements, staged launch requirement, and final Go-owned acceptance requirement.
 

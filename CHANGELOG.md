@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc269] - 2026-08-13
+
+### Added
+
+- Added the Go Runtime `q4-known-portable-winapp-run-acceptance-preview` command to consume a passed known portable Windows app operator run and emit a redacted Runtime-owned acceptance artifact.
+- Updated `scripts/q4_known_portable_winapp_run.rb --execute` to hand the real Notepad++ Portable operator run result back to q4 `xnix-runtime-go`, require Go-owned operator acceptance, and fetch `q4-known-portable-winapp-run-acceptance-<version>.json`.
+
+### Changed
+
+- Moved the run-oriented Notepad++ Portable final decision out of the Ruby wrapper summary and into Runtime product logic while preserving q4-only download, extraction, compilation, execution, and closed host/container safety gates.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, product overview, and Claude guide to `0.2.640-rc269`.
+
 ## [0.2.640-rc268] - 2026-08-13
 
 ### Added

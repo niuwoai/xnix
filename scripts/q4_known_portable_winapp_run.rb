@@ -6,6 +6,8 @@ require "json"
 require "open3"
 require "optparse"
 require "pathname"
+require "shellwords"
+require "timeout"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
@@ -87,6 +89,78 @@ def emit_json(payload, output_path)
   puts text
 end
 
+def shell_join(argv)
+  Shellwords.join(argv)
+end
+
+def ssh_command(remote_host, remote_command)
+  [
+    "ssh",
+    "-o", "BatchMode=yes",
+    "-o", "ConnectTimeout=15",
+    "-o", "ServerAliveInterval=15",
+    "-o", "ServerAliveCountMax=4",
+    remote_host,
+    remote_command
+  ]
+end
+
+def run_shell(shell, command, timeout_seconds:)
+  stdout = +""
+  stderr = +""
+  status = nil
+  timed_out = false
+  Open3.popen3(shell, "-lc", command, chdir: PROJECT_ROOT.to_s, pgroup: true) do |_stdin, out, err, wait_thread|
+    out_reader = Thread.new { stdout = out.read }
+    err_reader = Thread.new { stderr = err.read }
+    begin
+      Timeout.timeout(timeout_seconds) { status = wait_thread.value }
+    rescue Timeout::Error
+      timed_out = true
+      begin
+        Process.kill("TERM", -wait_thread.pid)
+      rescue Errno::ESRCH
+        nil
+      end
+      sleep 2
+      begin
+        Process.kill("KILL", -wait_thread.pid)
+      rescue Errno::ESRCH
+        nil
+      end
+      status = wait_thread.value
+    ensure
+      out_reader.join
+      err_reader.join
+    end
+  end
+  stderr = [stderr, "q4 known portable Windows app run operation timed out after #{timeout_seconds}s"].reject(&:empty?).join("\n") if timed_out
+  [stdout, stderr, timed_out ? 124 : status.exitstatus]
+end
+
+def push_remote_artifact(shell, remote_host, local_path, remote_path, timeout_seconds:)
+  _stdout, stderr, status = run_shell(
+    shell,
+    shell_join(["scp", "-q", local_path.to_s, "#{remote_host}:#{remote_path}"]),
+    timeout_seconds: timeout_seconds
+  )
+  abort "failed to push q4 known portable run artifact #{remote_path}: #{stderr}" unless status.zero?
+
+  true
+end
+
+def fetch_remote_artifact(shell, remote_host, remote_path, local_path, timeout_seconds:)
+  FileUtils.mkdir_p(local_path.dirname)
+  _stdout, stderr, status = run_shell(
+    shell,
+    shell_join(["scp", "-q", "#{remote_host}:#{remote_path}", local_path.to_s]),
+    timeout_seconds: timeout_seconds
+  )
+  abort "failed to fetch q4 known portable run artifact #{remote_path}: #{stderr}" unless status.zero?
+
+  true
+end
+
 def write_markdown(payload, markdown_output_path)
   lines = [
     "# q4 Known Portable Windows App Run",
@@ -95,6 +169,7 @@ def write_markdown(payload, markdown_output_path)
     "- App: `#{payload.fetch("display_name")}` (`#{payload.fetch("app_id")}`)",
     "- Version: `#{payload.fetch("version")}`",
     "- Operator run ready: `#{payload.fetch("operator_run_ready", false)}`",
+    "- Operator acceptance ready: `#{payload.fetch("operator_run_acceptance_ready", false)}`",
     "- Accepted application detail state: `#{payload.fetch("accepted_application_detail_state", "planned")}`",
     "- KDE accepted page state: `#{payload.fetch("kde_accepted_page_state", "planned")}`",
     "- q4 download required: `#{payload.fetch("q4_download_required")}`",
@@ -122,6 +197,10 @@ remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(
 artifact_root = PROJECT_ROOT.join("output", "artifacts")
 delegated_output_path = artifact_root.join("q4-known-portable-winapp-run-notepadpp-smoke-#{VERSION}.json")
 delegated_markdown_output_path = artifact_root.join("q4-known-portable-winapp-run-notepadpp-smoke-#{VERSION}.md")
+remote_acceptance_root = "#{remote_materials_root}/operator-run/notepad-plus-plus/8.9.7"
+remote_acceptance_input = "#{remote_acceptance_root}/q4-known-portable-winapp-run-acceptance-input.json"
+remote_acceptance_output = "#{remote_acceptance_root}/q4-known-portable-winapp-run-acceptance.json"
+acceptance_local_path = artifact_root.join("q4-known-portable-winapp-run-acceptance-#{VERSION}.json")
 
 delegated_command = [
   "ruby",
@@ -173,6 +252,10 @@ plan = {
   "delegated_command" => delegated_command,
   "delegated_output_path" => delegated_output_path.to_s,
   "delegated_markdown_output_path" => delegated_markdown_output_path.to_s,
+  "operator_run_acceptance_planned" => true,
+  "operator_run_acceptance_request_type" => "q4-known-portable-winapp-run-acceptance-preview",
+  "operator_run_acceptance_report" => remote_acceptance_output,
+  "operator_run_acceptance_status" => "planned",
   "output_path" => output_path.to_s,
   "markdown_output_path" => markdown_output_path.to_s,
   "runtime_owned" => true,
@@ -244,6 +327,73 @@ result = plan.merge(
   "accepted_application_detail_state" => delegated.fetch("accepted_application_detail_state"),
   "kde_accepted_page_state" => delegated.fetch("kde_accepted_page_state"),
   "operator_run_ready" => true
+)
+
+remote_runtime_binary = delegated.fetch("remote_runtime_binary")
+acceptance_input_path = artifact_root.join("q4-known-portable-winapp-run-acceptance-input-#{VERSION}.json")
+FileUtils.mkdir_p(acceptance_input_path.dirname)
+File.write(acceptance_input_path, JSON.pretty_generate(result) + "\n")
+
+mkdir_stdout, mkdir_stderr, mkdir_status = run_shell(
+  options.fetch(:local_shell),
+  shell_join(ssh_command(options.fetch(:remote_host), shell_join(["mkdir", "-p", remote_acceptance_root]))),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless mkdir_status.zero?
+  warn mkdir_stdout unless mkdir_stdout.empty?
+  warn mkdir_stderr unless mkdir_stderr.empty?
+  abort "q4 known portable Windows app run acceptance directory preparation failed"
+end
+push_remote_artifact(
+  options.fetch(:local_shell),
+  options.fetch(:remote_host),
+  acceptance_input_path,
+  remote_acceptance_input,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+acceptance_command = [
+  remote_runtime_binary,
+  "q4-known-portable-winapp-run-acceptance-preview",
+  "--q4-known-portable-winapp-run", remote_acceptance_input,
+  "--output", remote_acceptance_output
+]
+acceptance_stdout, acceptance_stderr, acceptance_status = run_shell(
+  options.fetch(:local_shell),
+  shell_join(ssh_command(options.fetch(:remote_host), shell_join(acceptance_command))),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+unless acceptance_status.zero?
+  warn acceptance_stdout unless acceptance_stdout.empty?
+  warn acceptance_stderr unless acceptance_stderr.empty?
+  abort "q4 known portable Windows app run Go acceptance failed"
+end
+operator_acceptance = JSON.parse(acceptance_stdout)
+unless operator_acceptance.fetch("request_type") == "q4-known-portable-winapp-run-acceptance-preview" &&
+       operator_acceptance.fetch("app_id") == app_id &&
+       operator_acceptance.fetch("display_name") == SUPPORTED_DISPLAY_NAME &&
+       bool(operator_acceptance, "operator_run_ready") &&
+       bool(operator_acceptance, "runtime_accepted_chain_verified") &&
+       bool(operator_acceptance, "acceptance_ready") &&
+       !bool(operator_acceptance, "remote_host_exposed") &&
+       !bool(operator_acceptance, "raw_path_exposed")
+  warn acceptance_stdout
+  abort "q4 known portable Windows app run Go acceptance did not accept the operator run"
+end
+acceptance_fetched = fetch_remote_artifact(
+  options.fetch(:local_shell),
+  options.fetch(:remote_host),
+  remote_acceptance_output,
+  acceptance_local_path,
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+
+result = result.merge(
+  "operator_run_acceptance_status" => "passed",
+  "operator_run_acceptance_request_type" => operator_acceptance.fetch("request_type"),
+  "operator_run_acceptance_ready" => bool(operator_acceptance, "acceptance_ready"),
+  "operator_run_acceptance_runtime_accepted_chain_verified" => bool(operator_acceptance, "runtime_accepted_chain_verified"),
+  "operator_run_acceptance_artifact_fetched" => acceptance_fetched,
+  "operator_run_acceptance_artifact_output_path" => acceptance_local_path.to_s
 )
 write_markdown(result, markdown_output_path)
 emit_json(result, output_path)

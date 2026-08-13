@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc268
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc269
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc269 checkpoint makes the catalog-backed Notepad++ Portable operator run end with a Go Runtime acceptance artifact. `scripts/q4_known_portable_winapp_run.rb --execute` now writes the passed run result, pushes it to q4, invokes `q4-known-portable-winapp-run-acceptance-preview` through the q4-built Runtime binary, requires the returned acceptance to be ready, and fetches the redacted acceptance JSON locally. This keeps Ruby as the q4 orchestration harness while the Runtime owns the final operator-run decision for the real Windows app.
 
 The v0.2.640-rc268 checkpoint gives the real Notepad++ Portable lane a run-oriented q4 entry. `scripts/q4_known_portable_winapp_run.rb --app org.xnix.external.notepadplusplus --execute` now wraps the proven q4 Notepad++ Runtime/KDE path as a catalog-backed known portable Windows app run, verifies the same official download, checksum, import, staged launch, KDE/detail, and Go-owned acceptance chain, and emits an operator run result. The new Go Runtime `q4-known-portable-winapp-run-plan-preview` read model owns the run plan and keeps q4 download, extraction, compilation, execution, and final acceptance requirements explicit while preserving closed host/container safety gates.
 
