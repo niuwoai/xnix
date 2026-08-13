@@ -85,7 +85,7 @@ end
 def source_sync_entries(mode)
   case mode
   when "runtime"
-    %w[.dockerignore Dockerfile VERSION go.mod cmd internal runtime scripts lib kde]
+    %w[.dockerignore Dockerfile VERSION go.mod CLAUDE.md cmd internal runtime scripts lib kde docs]
   when "full"
     ["."]
   else

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc270
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc271
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc271 checkpoint makes the q4-first compile strategy machine-checkable through the Go Runtime. The new `local-go-compile-policy-preview` command reads the q4 remote build policy, Claude contributor guide, and remote Go build/test runners, then reports that local Go compilation and `go run` are disabled by default, q4 is the default compile host, remote Go caches stay on q4, targeted small-version testing is enabled, twentieth-version full gates remain required, `docs/claude-code-implementation-packages.md` stays excluded from remote sync, and unsafe host/container gates are closed. This keeps compile-heavy work off the macOS host while real Windows app compatibility continues through q4-built Runtime binaries.
 
 The v0.2.640-rc270 checkpoint connects the accepted Notepad++ Portable operator run to the replaceable KDE desktop shell. `external-winapp-application-detail-preview` can now consume the Go-owned `q4-known-portable-winapp-run-acceptance` artifact, add explicit operator-run acceptance signals and review cards, and feed KDE pages whose external Windows app detail cards preserve `q4_known_portable_winapp_run_acceptance_consumed`, readiness, and Go-owned verification. The q4 known portable run wrapper now fetches both `q4-known-portable-winapp-run-application-detail-<version>.json` and `q4-known-portable-winapp-run-kde-page-<version>.json` after the real app run passes.
 

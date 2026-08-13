@@ -236,6 +236,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKRunnerQueryPreview(args[1:], stdout)
 	case "kwin-window-rule-preview":
 		return runKWinWindowRulePreview(args[1:], stdout)
+	case "local-go-compile-policy-preview":
+		return runLocalGoCompilePolicyPreview(args[1:], stdout)
 	case "known-app-launch-gate-preview":
 		return runKnownAppLaunchGatePreview(args[1:], stdout)
 	case "known-app-launch-authorization-receipt-preview":

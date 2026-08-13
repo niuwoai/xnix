@@ -8,6 +8,8 @@ Compile-heavy work runs on q4 by default. Routine development should treat q4 as
 
 The macOS host is reserved for lightweight checks, source editing, Git operations, and dry-run planning output. Do not run local Go compilation, QEMU boot tests, Wine GUI tests, Docker heavy smoke, or full milestone smoke on macOS unless a human explicitly approves that local run.
 
+Every new small version is targeted-test only unless a twentieth-version full gate is explicitly authorized.
+
 ## q4 Build Host
 
 - Default SSH target: `root@q4`

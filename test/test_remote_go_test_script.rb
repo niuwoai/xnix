@@ -50,8 +50,8 @@ assert(payload["execute"] == false, "remote Go test must not execute without --e
 assert(payload["remote_host"] == "root@q4", "remote Go test must default to q4")
 assert(payload["source_sync_planned"] == true, "remote Go test must sync source by default")
 assert(payload["source_sync_mode"] == "runtime", "remote Go test must default to Runtime source sync")
-assert(payload["source_sync_entry_count"] == 10, "remote Go test Runtime sync must expose the source entry count")
-%w[.dockerignore Dockerfile VERSION go.mod cmd internal runtime scripts lib kde].each do |entry|
+assert(payload["source_sync_entry_count"] == 12, "remote Go test Runtime sync must expose the source entry count")
+%w[.dockerignore Dockerfile VERSION go.mod CLAUDE.md cmd internal runtime scripts lib kde docs].each do |entry|
   assert(payload["source_sync_entries"].include?(entry), "remote Go test Runtime sync must include #{entry}")
 end
 assert(payload["remote_source_root"].start_with?("/home/xnix-"), "remote Go test source root must stay under /home/xnix-*")
@@ -62,6 +62,8 @@ assert(payload["packages"] == %w[./internal/runtime/owner ./cmd/xnix-runtime-own
 assert(payload["run_regex"].include?("TestCompatOpen"), "remote Go test must expose default test regex")
 assert(payload["run_regex"].include?("TestPreviewRealWinAppRunReceiptSummary"), "remote Go test must include real run receipt summary model tests")
 assert(payload["run_regex"].include?("TestRealWinAppRunReceiptSummaryPreviewCommand"), "remote Go test must include real run receipt summary CLI tests")
+assert(payload["run_regex"].include?("TestLocalGoCompilePolicyPreviewRequiresQ4ByDefault"), "remote Go test must include local Go compile policy model tests")
+assert(payload["run_regex"].include?("TestLocalGoCompilePolicyPreviewCommand"), "remote Go test must include local Go compile policy CLI tests")
 assert(payload["count"] == 1, "remote Go test must default to count 1")
 assert(payload["go_test_timeout"] == "5m", "remote Go test must default to a bounded Go test timeout")
 assert(payload["remote_test_planned"] == true, "remote Go test must plan remote test")

@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc271] - 2026-08-13
+
+### Added
+
+- Added the Go Runtime `local-go-compile-policy-preview` command to audit the q4-first compile policy, remote Go build/test runners, q4 cache placement, protected Claude package exclusion, targeted small-version testing, and twentieth-version full-gate preservation.
+- Added Runtime and CLI tests for the local Go compile policy preview, and included those tests in the q4 targeted `remote_go_test.rb` default regex.
+
+### Changed
+
+- Updated q4 Runtime source sync to carry `CLAUDE.md` and the redacted `docs/` policy inputs required by Go-owned policy audits while continuing to exclude `docs/claude-code-implementation-packages.md`.
+- Updated README, product overview, q4 remote build policy, Claude guide, Runtime metadata, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc271`.
+
 ## [0.2.640-rc270] - 2026-08-13
 
 ### Added
