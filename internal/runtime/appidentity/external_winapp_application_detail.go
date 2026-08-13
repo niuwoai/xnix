@@ -24,6 +24,7 @@ type ExternalWinAppApplicationDetail struct {
 	RequestType                                   string                                      `json:"request_type"`
 	DetailType                                    string                                      `json:"detail_type"`
 	Source                                        string                                      `json:"source"`
+	LaunchSourceRequestType                       string                                      `json:"launch_source_request_type,omitempty"`
 	RuntimeMethod                                 string                                      `json:"runtime_method"`
 	ReadMethod                                    string                                      `json:"read_method"`
 	Desktop                                       string                                      `json:"desktop"`
@@ -39,6 +40,8 @@ type ExternalWinAppApplicationDetail struct {
 	RuntimeGUIEvidenceVerified                    bool                                        `json:"runtime_gui_evidence_verified"`
 	DesktopEvidenceVerified                       bool                                        `json:"desktop_evidence_verified"`
 	KDEPageEvidenceVerified                       bool                                        `json:"kde_page_evidence_verified"`
+	KnownPortableBundleStageLaunchConsumed        bool                                        `json:"known_portable_bundle_stage_launch_consumed"`
+	KnownPortableBundleStageLaunchVerified        bool                                        `json:"known_portable_bundle_stage_launch_verified"`
 	Q4StagedExternalWinAppAcceptanceConsumed      bool                                        `json:"q4_staged_external_winapp_acceptance_consumed"`
 	Q4StagedExternalWinAppAcceptanceReady         bool                                        `json:"q4_staged_external_winapp_acceptance_ready"`
 	Q4StagedExternalWinAppAcceptanceType          string                                      `json:"q4_staged_external_winapp_acceptance_type,omitempty"`
@@ -138,6 +141,7 @@ func PreviewExternalWinAppApplicationDetail(request ExternalWinAppApplicationDet
 		RequestType:                              ExternalWinAppApplicationDetailRequestType,
 		DetailType:                               "runtime-owned-existing-windows-app-detail",
 		Source:                                   source,
+		LaunchSourceRequestType:                  strings.TrimSpace(bundle.LaunchSourceRequestType),
 		RuntimeMethod:                            "PreviewExternalWinAppApplicationDetail",
 		ReadMethod:                               "GetExternalWinAppApplicationDetail",
 		Desktop:                                  "KDE Plasma",
@@ -153,6 +157,8 @@ func PreviewExternalWinAppApplicationDetail(request ExternalWinAppApplicationDet
 		RuntimeGUIEvidenceVerified:               bundle.RuntimeGUIEvidencePacketVerified,
 		DesktopEvidenceVerified:                  bundle.DesktopLaunchPacketVerified,
 		KDEPageEvidenceVerified:                  bundle.KDEExternalAppPageVerified,
+		KnownPortableBundleStageLaunchConsumed:   bundle.KnownPortableBundleStageLaunchConsumed,
+		KnownPortableBundleStageLaunchVerified:   bundle.KnownPortableBundleStageLaunchVerified,
 		Q4StagedExternalWinAppAcceptanceConsumed: acceptance != nil,
 		Q4StagedExternalWinAppAcceptanceReady:    acceptance != nil && acceptance.AcceptanceReady,
 		Q4StagedExternalWinAppAcceptanceType:     q4StagedExternalWinAppApplicationDetailAcceptanceType(acceptance),
@@ -292,6 +298,8 @@ func validateExternalWinAppApplicationDetail(detail ExternalWinAppApplicationDet
 		return errors.New("external Windows app application detail requires verified existing app evidence")
 	case !detail.RuntimeGUIEvidenceVerified || !detail.DesktopEvidenceVerified || !detail.KDEPageEvidenceVerified:
 		return errors.New("external Windows app application detail requires complete Runtime and desktop evidence")
+	case detail.KnownPortableBundleStageLaunchConsumed && (!detail.KnownPortableBundleStageLaunchVerified || detail.LaunchSourceRequestType != "windows-known-app-bundle-stage-and-launch"):
+		return errors.New("external Windows app application detail requires verified known portable bundle launch provenance")
 	case detail.Q4StagedExternalWinAppAcceptanceConsumed && (!detail.Q4StagedExternalWinAppAcceptanceReady || !detail.GoOwnedStagedExternalWinAppAcceptanceVerified):
 		return errors.New("external Windows app application detail requires ready q4 staged external app acceptance when acceptance is consumed")
 	case !detail.SafeForKDE || !detail.SafeForAIDiagnostics || !detail.RuntimeOwned || !detail.GoRuntimeBacked || detail.KDEPolicyOwner:
@@ -354,6 +362,9 @@ func externalWinAppApplicationDetailSignals(bundle ExternalWinAppCompatibilityEv
 		{ID: "desktop-evidence", Label: "Desktop evidence", Verified: bundle.DesktopLaunchPacketVerified && bundle.KDEExternalAppPageVerified, Summary: "Runtime produced KDE-safe desktop and application page evidence."},
 		{ID: "safety-boundary", Label: "Safety boundary", Verified: bundle.SafeForKDE && !bundle.HostRootModified && !bundle.RawPathsExposed, Summary: "Runtime evidence is redacted and safe for desktop display."},
 	}
+	if bundle.KnownPortableBundleStageLaunchConsumed {
+		signals = append(signals, ExternalWinAppApplicationDetailSignal{ID: "known-portable-bundle-stage-launch", Label: "Known portable bundle launch", Verified: bundle.KnownPortableBundleStageLaunchVerified, Summary: "Runtime verified the known portable bundle staged launch as the direct product evidence source."})
+	}
 	if acceptance != nil {
 		signals = append(signals, ExternalWinAppApplicationDetailSignal{ID: "q4-staged-acceptance", Label: "q4 staged acceptance", Verified: acceptance.AcceptanceReady, Summary: "Runtime accepted the q4 staged external Windows app desktop run as product evidence."})
 	}
@@ -365,6 +376,9 @@ func externalWinAppApplicationDetailCards(bundle ExternalWinAppCompatibilityEvid
 		{ID: "compatibility", Title: "Compatibility evidence", State: "verified", Tone: "success", UserVisible: true, RuntimeOwned: true, KDEPolicyOwner: false, BackendDetailsExposed: false, Summary: "Real GUI run evidence is available for review."},
 		{ID: "file-open", Title: "File-open behavior", State: boolState(fileOpenVerified), Tone: boolTone(fileOpenVerified), UserVisible: true, RuntimeOwned: true, KDEPolicyOwner: false, BackendDetailsExposed: false, Summary: "File-open bridge evidence is recorded for this app."},
 		{ID: "safety", Title: "Desktop safety", State: boolState(bundle.SafeForKDE), Tone: boolTone(bundle.SafeForKDE), UserVisible: true, RuntimeOwned: true, KDEPolicyOwner: false, BackendDetailsExposed: false, Summary: "KDE can display this app without owning compatibility policy."},
+	}
+	if bundle.KnownPortableBundleStageLaunchConsumed {
+		cards = append(cards, ExternalWinAppApplicationDetailReviewCard{ID: "known-portable-bundle", Title: "Known bundle source", State: boolState(bundle.KnownPortableBundleStageLaunchVerified), Tone: boolTone(bundle.KnownPortableBundleStageLaunchVerified), UserVisible: true, RuntimeOwned: true, KDEPolicyOwner: false, BackendDetailsExposed: false, Summary: "The product detail is backed by the Runtime known portable bundle staged launch path."})
 	}
 	if acceptance != nil {
 		cards = append(cards, ExternalWinAppApplicationDetailReviewCard{ID: "q4-staged-acceptance", Title: "Runtime acceptance", State: boolState(acceptance.AcceptanceReady), Tone: boolTone(acceptance.AcceptanceReady), UserVisible: true, RuntimeOwned: true, KDEPolicyOwner: false, BackendDetailsExposed: false, Summary: "The q4 staged desktop run has a Go-owned acceptance artifact."})

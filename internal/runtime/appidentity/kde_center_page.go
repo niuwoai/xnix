@@ -245,6 +245,9 @@ type KDECenterPageExternalWinAppCard struct {
 	RuntimeGUIEvidenceVerified                    bool   `json:"runtime_gui_evidence_verified"`
 	DesktopEvidenceVerified                       bool   `json:"desktop_evidence_verified"`
 	KDEPageEvidenceVerified                       bool   `json:"kde_page_evidence_verified"`
+	LaunchSourceRequestType                       string `json:"launch_source_request_type,omitempty"`
+	KnownPortableBundleStageLaunchConsumed        bool   `json:"known_portable_bundle_stage_launch_consumed"`
+	KnownPortableBundleStageLaunchVerified        bool   `json:"known_portable_bundle_stage_launch_verified"`
 	Q4StagedExternalWinAppAcceptanceConsumed      bool   `json:"q4_staged_external_winapp_acceptance_consumed"`
 	Q4StagedExternalWinAppAcceptanceReady         bool   `json:"q4_staged_external_winapp_acceptance_ready"`
 	GoOwnedStagedExternalWinAppAcceptanceVerified bool   `json:"go_owned_staged_external_winapp_acceptance_verified"`
@@ -1479,6 +1482,9 @@ func kdeCenterPageExternalWinAppApplicationDetailCards(detail *ExternalWinAppApp
 		RuntimeGUIEvidenceVerified:                    detail.RuntimeGUIEvidenceVerified,
 		DesktopEvidenceVerified:                       detail.DesktopEvidenceVerified,
 		KDEPageEvidenceVerified:                       detail.KDEPageEvidenceVerified,
+		LaunchSourceRequestType:                       detail.LaunchSourceRequestType,
+		KnownPortableBundleStageLaunchConsumed:        detail.KnownPortableBundleStageLaunchConsumed,
+		KnownPortableBundleStageLaunchVerified:        detail.KnownPortableBundleStageLaunchVerified,
 		Q4StagedExternalWinAppAcceptanceConsumed:      detail.Q4StagedExternalWinAppAcceptanceConsumed,
 		Q4StagedExternalWinAppAcceptanceReady:         detail.Q4StagedExternalWinAppAcceptanceReady,
 		GoOwnedStagedExternalWinAppAcceptanceVerified: detail.GoOwnedStagedExternalWinAppAcceptanceVerified,

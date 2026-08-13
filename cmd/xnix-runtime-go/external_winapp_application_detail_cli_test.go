@@ -187,6 +187,105 @@ func TestExternalWinAppApplicationDetailPreviewCommandConsumesCompatibilityBundl
 	}
 }
 
+func TestExternalWinAppApplicationDetailPreviewCommandPreservesKnownPortableBundleProvenance(t *testing.T) {
+	tempDir := t.TempDir()
+	bundlePath := filepath.Join(tempDir, "known-portable-bundle-compatibility-evidence-bundle.json")
+	outputPath := filepath.Join(tempDir, "detail", "known-portable-bundle-detail.json")
+	writeTextFile(t, bundlePath, knownPortableExternalWinAppApplicationDetailBundleFixture())
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"external-winapp-application-detail-preview",
+		"--compatibility-evidence-bundle", bundlePath,
+		"--output", outputPath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.external_winapp_application_detail.v1" ||
+		payload["request_type"] != "external-winapp-application-detail-preview" ||
+		payload["launch_source_request_type"] != "windows-known-app-bundle-stage-and-launch" ||
+		payload["known_portable_bundle_stage_launch_consumed"] != true ||
+		payload["known_portable_bundle_stage_launch_verified"] != true ||
+		payload["compatibility_state"] != "real-app-run-verified" ||
+		payload["real_windows_app_run_verified"] != true ||
+		payload["file_open_verified"] != true ||
+		payload["runtime_gui_evidence_verified"] != true ||
+		payload["desktop_evidence_verified"] != true ||
+		payload["kde_page_evidence_verified"] != true ||
+		payload["safe_for_kde"] != true ||
+		payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_paths_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected known portable bundle external Windows app detail payload: %#v", payload)
+	}
+	signals := payload["evidence_signals"].([]any)
+	if len(signals) != 5 {
+		t.Fatalf("known portable bundle detail must expose an extra signal: %#v", signals)
+	}
+	cards := payload["review_cards"].([]any)
+	if len(cards) != 4 {
+		t.Fatalf("known portable bundle detail must expose an extra review card: %#v", cards)
+	}
+	foundSignal := false
+	for _, item := range signals {
+		signal := item.(map[string]any)
+		if signal["id"] == "known-portable-bundle-stage-launch" && signal["verified"] == true {
+			foundSignal = true
+		}
+	}
+	if !foundSignal {
+		t.Fatalf("known portable bundle detail did not preserve launch signal: %#v", signals)
+	}
+
+	var kdePageOutput bytes.Buffer
+	if err := run([]string{
+		"kde-center-page-preview",
+		"--external-app-application-detail", outputPath,
+		"--decision", "approved",
+	}, &kdePageOutput); err != nil {
+		t.Fatalf("kde-center-page-preview returned error: %v", err)
+	}
+	var kdePage map[string]any
+	if err := json.Unmarshal(kdePageOutput.Bytes(), &kdePage); err != nil {
+		t.Fatalf("Unmarshal KDE page output returned error: %v", err)
+	}
+	detailCards := kdePage["external_winapp_application_detail_cards"].([]any)
+	if len(detailCards) != 1 {
+		t.Fatalf("unexpected KDE external app detail cards: %#v", detailCards)
+	}
+	detailCard := detailCards[0].(map[string]any)
+	if detailCard["launch_source_request_type"] != "windows-known-app-bundle-stage-and-launch" ||
+		detailCard["known_portable_bundle_stage_launch_consumed"] != true ||
+		detailCard["known_portable_bundle_stage_launch_verified"] != true ||
+		detailCard["evidence_signal_count"] != float64(5) ||
+		detailCard["evidence_artifact_count"] != float64(4) ||
+		detailCard["runtime_owned"] != true ||
+		detailCard["go_runtime_backed"] != true ||
+		detailCard["kde_policy_owner"] != false ||
+		detailCard["safe_for_kde"] != true ||
+		detailCard["backend_details_exposed"] != false ||
+		detailCard["raw_paths_exposed"] != false ||
+		detailCard["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE known portable bundle external app detail card: %#v", detailCard)
+	}
+	for _, rendered := range []string{output.String(), kdePageOutput.String()} {
+		if strings.Contains(rendered, bundlePath) ||
+			strings.Contains(rendered, "docker run") ||
+			strings.Contains(rendered, "/var/run/docker.sock") ||
+			strings.Contains(rendered, ".exe") ||
+			strings.Contains(strings.ToLower(rendered), "wine ") {
+			t.Fatalf("known portable bundle external app detail exposed unsafe details: %s", rendered)
+		}
+	}
+}
+
 func TestExternalWinAppApplicationDetailPreviewCommandConsumesQ4StagedAcceptance(t *testing.T) {
 	tempDir := t.TempDir()
 	bundlePath := filepath.Join(tempDir, "compatibility-evidence-bundle.json")
@@ -320,6 +419,14 @@ func externalWinAppApplicationDetailBundleFixture() string {
   "broad_host_mount_required": false,
   "desktop_safe_summary": "External Windows app compatibility evidence is Runtime-owned and verified through a real isolated GUI run."
 }`
+}
+
+func knownPortableExternalWinAppApplicationDetailBundleFixture() string {
+	return strings.Replace(externalWinAppApplicationDetailBundleFixture(), `"desktop": "KDE Plasma",`, `"source": "windows-known-app-bundle-stage-and-launch+desktop-launch-packet+real-winapp-gui-evidence-packet+kde-center-page",
+  "launch_source_request_type": "windows-known-app-bundle-stage-and-launch",
+  "desktop": "KDE Plasma",
+  "known_portable_bundle_stage_launch_consumed": true,
+  "known_portable_bundle_stage_launch_verified": true,`, 1)
 }
 
 func externalWinAppApplicationDetailQ4StagedAcceptanceFixture(version string) string {

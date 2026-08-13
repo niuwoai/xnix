@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc266] - 2026-08-13
+
+### Added
+
+- Added known portable bundle staged-launch provenance to `external-winapp-application-detail-preview` and KDE external Windows app detail cards, preserving `launch_source_request_type=windows-known-app-bundle-stage-and-launch` through product-facing read models.
+- Added q4 Notepad++ Portable smoke coverage that generates and fetches `known-portable-bundle-application-detail.json` and `known-portable-bundle-kde-page-from-detail.json` from the Go-owned known bundle path.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, and product overview to `0.2.640-rc266`.
+
 ## [0.2.640-rc265] - 2026-08-13
 
 ### Added

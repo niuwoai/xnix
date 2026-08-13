@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc265
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc266
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc266 checkpoint carries known portable bundle provenance into the product-facing application detail surface. `external-winapp-application-detail-preview` and KDE external Windows app detail cards now preserve `launch_source_request_type=windows-known-app-bundle-stage-and-launch`, `known_portable_bundle_stage_launch_consumed`, and `known_portable_bundle_stage_launch_verified` after consuming the Runtime compatibility evidence bundle. The q4 Notepad++ Portable smoke now generates and fetches `known-portable-bundle-application-detail.json` plus `known-portable-bundle-kde-page-from-detail.json`, proving that the real Notepad++ staged launch can reach Runtime detail and KDE detail read models through the direct Go-owned known bundle path.
 
 The v0.2.640-rc265 checkpoint lets the Runtime compatibility evidence bundle consume the real known portable bundle staged launch directly. `external-winapp-compatibility-evidence-bundle-preview` now accepts a `windows-known-app-bundle-stage-and-launch` report as its launch source, validates it through the known bundle import and staged launch invariants, preserves `launch_source_request_type=windows-known-app-bundle-stage-and-launch`, and combines it with the desktop launch packet, Runtime GUI evidence packet, and KDE page. The q4 Notepad++ Portable smoke now generates and fetches `known-portable-bundle-kde-page.json` and `known-portable-bundle-compatibility-evidence-bundle.json` from the Go-owned direct path before continuing through the accepted Runtime/KDE chain.
 
