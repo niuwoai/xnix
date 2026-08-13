@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc271`.
+The project is currently at `v0.2.640-rc272`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc271`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc272 makes the q4 known portable Windows app run plan consume the Go Runtime catalog instead of hardcoding Notepad++ metadata. The plan now exposes catalog-backed app version, artifact kind, archive name, executable relative path, and the currently q4-runnable portable bundle app IDs, while rejecting known catalog apps that do not fit the portable-bundle q4 lane.
 
 v0.2.640-rc271 adds a Go-owned `local-go-compile-policy-preview` command that audits the q4-first compile policy, remote Go build/test runners, q4 cache placement, targeted small-version testing, twentieth-version full-gate preservation, protected Claude package exclusion, and closed host safety gates without compiling on the macOS host.
 

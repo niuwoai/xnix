@@ -64,6 +64,8 @@ assert(payload["run_regex"].include?("TestPreviewRealWinAppRunReceiptSummary"), 
 assert(payload["run_regex"].include?("TestRealWinAppRunReceiptSummaryPreviewCommand"), "remote Go test must include real run receipt summary CLI tests")
 assert(payload["run_regex"].include?("TestLocalGoCompilePolicyPreviewRequiresQ4ByDefault"), "remote Go test must include local Go compile policy model tests")
 assert(payload["run_regex"].include?("TestLocalGoCompilePolicyPreviewCommand"), "remote Go test must include local Go compile policy CLI tests")
+assert(payload["run_regex"].include?("TestPreviewQ4KnownPortableWinAppRunPlanConsumesRuntimeCatalog"), "remote Go test must include q4 known portable catalog-backed plan model tests")
+assert(payload["run_regex"].include?("TestQ4KnownPortableWinAppRunPlanPreviewCommand"), "remote Go test must include q4 known portable catalog-backed plan CLI tests")
 assert(payload["count"] == 1, "remote Go test must default to count 1")
 assert(payload["go_test_timeout"] == "5m", "remote Go test must default to a bounded Go test timeout")
 assert(payload["remote_test_planned"] == true, "remote Go test must plan remote test")

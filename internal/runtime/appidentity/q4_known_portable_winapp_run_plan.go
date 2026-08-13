@@ -3,6 +3,8 @@ package appidentity
 import (
 	"errors"
 	"strings"
+
+	"xnix.local/xnix/internal/runtime/winapp"
 )
 
 const (
@@ -31,6 +33,11 @@ type Q4KnownPortableWinAppRunPlanPreview struct {
 	ReadMethod                           string   `json:"read_method"`
 	AppID                                string   `json:"app_id"`
 	DisplayName                          string   `json:"display_name"`
+	AppVersion                           string   `json:"app_version"`
+	CatalogArtifactKind                  string   `json:"catalog_artifact_kind"`
+	DownloadArtifactName                 string   `json:"download_artifact_name"`
+	ExecutableRelativePath               string   `json:"executable_relative_path"`
+	SupportedKnownPortableAppIDs         []string `json:"supported_known_portable_app_ids"`
 	KnownCatalogApp                      bool     `json:"known_catalog_app"`
 	PortableDirectoryExternalApp         bool     `json:"portable_directory_external_app"`
 	OfficialDownloadRequired             bool     `json:"official_download_required"`
@@ -84,8 +91,13 @@ func PreviewQ4KnownPortableWinAppRunPlan(request Q4KnownPortableWinAppRunPlanReq
 	if err != nil {
 		return Q4KnownPortableWinAppRunPlanPreview{}, err
 	}
-	if appID != "org.xnix.external.notepadplusplus" {
-		return Q4KnownPortableWinAppRunPlanPreview{}, errors.New("q4 known portable Windows app run plan currently supports org.xnix.external.notepadplusplus")
+	app, err := winapp.LookupKnownPortableApp(appID)
+	if err != nil {
+		return Q4KnownPortableWinAppRunPlanPreview{}, err
+	}
+	supportedAppIDs := supportedQ4KnownPortableWinAppRunAppIDs()
+	if !stringSliceContains(supportedAppIDs, app.ID) {
+		return Q4KnownPortableWinAppRunPlanPreview{}, errors.New("q4 known portable Windows app run plan requires a Runtime catalog portable bundle app")
 	}
 	remoteHost, err := requiredSingleLine("remote host", request.RemoteHost)
 	if err != nil {
@@ -130,8 +142,13 @@ func PreviewQ4KnownPortableWinAppRunPlan(request Q4KnownPortableWinAppRunPlanReq
 		Source:                               "runtime-q4-known-portable-winapp-run-plan+catalog-backed-runner",
 		RuntimeMethod:                        "PlanQ4KnownPortableWinAppRun",
 		ReadMethod:                           "GetQ4KnownPortableWinAppRunPlanPreview",
-		AppID:                                appID,
-		DisplayName:                          "Notepad++ Portable",
+		AppID:                                app.ID,
+		DisplayName:                          app.DisplayName,
+		AppVersion:                           app.Version,
+		CatalogArtifactKind:                  app.ArtifactKind,
+		DownloadArtifactName:                 app.DownloadArtifactName,
+		ExecutableRelativePath:               app.ExecutableRelativePath,
+		SupportedKnownPortableAppIDs:         supportedAppIDs,
 		KnownCatalogApp:                      true,
 		PortableDirectoryExternalApp:         true,
 		OfficialDownloadRequired:             true,
@@ -178,6 +195,26 @@ func PreviewQ4KnownPortableWinAppRunPlan(request Q4KnownPortableWinAppRunPlanReq
 			"Do not bypass the known portable bundle import, staged launch, Runtime detail, KDE detail, and Go-owned acceptance chain.",
 			"Do not run privileged containers, host networking, Docker socket mounts, or broad host mounts.",
 		},
-		DesktopSafeSummary: "Notepad++ Portable is planned as a catalog-backed q4 known portable Windows app run through Runtime-owned import, staged launch, KDE detail, and Go-owned acceptance evidence.",
+		DesktopSafeSummary: app.DisplayName + " is planned as a catalog-backed q4 known portable Windows app run through Runtime-owned import, staged launch, KDE detail, and Go-owned acceptance evidence.",
 	}, nil
+}
+
+func supportedQ4KnownPortableWinAppRunAppIDs() []string {
+	apps := winapp.KnownPortableCatalog()
+	ids := make([]string, 0, len(apps))
+	for _, app := range apps {
+		if app.PortableBundleArchive && app.ArtifactKind == winapp.KnownPortableArtifactZipBundle && strings.TrimSpace(app.ExecutableRelativePath) != "" && strings.TrimSpace(app.DownloadArtifactName) != "" {
+			ids = append(ids, app.ID)
+		}
+	}
+	return ids
+}
+
+func stringSliceContains(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
