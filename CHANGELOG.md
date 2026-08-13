@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc268] - 2026-08-13
+
+### Added
+
+- Added `scripts/q4_known_portable_winapp_run.rb`, an operator-facing q4 run entry for catalog-backed known portable Windows apps, currently Notepad++ Portable.
+- Added the Go Runtime `q4-known-portable-winapp-run-plan-preview` command so Runtime product logic owns the known portable app run plan, q4-only execution boundary, official download/checksum expectations, staged launch requirement, and Go-owned acceptance requirement.
+
+### Changed
+
+- Updated the known portable app flow so Notepad++ Portable can be invoked through a run-oriented q4 entry instead of only through a smoke script name, while still reusing the already verified q4 Notepad++ Runtime/KDE acceptance lane.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, development recipe versions, README, product overview, and Claude guide to `0.2.640-rc268`.
+
 ## [0.2.640-rc267] - 2026-08-13
 
 ### Added

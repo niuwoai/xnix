@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc267`.
+The project is currently at `v0.2.640-rc268`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc267`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc268 adds a run-oriented q4 entry for known portable Windows apps. `scripts/q4_known_portable_winapp_run.rb --app org.xnix.external.notepadplusplus --execute` now presents Notepad++ Portable as a catalog-backed app run instead of only as a smoke harness, while delegating to the proven q4 Runtime/KDE Notepad++ lane. The Go Runtime command `q4-known-portable-winapp-run-plan-preview` owns the run plan, q4-only download/extract/compile/execute requirements, staged launch requirement, and final Go-owned acceptance requirement.
 
 v0.2.640-rc267 moves the final known portable bundle app-run decision into the Go Runtime. `q4-known-portable-bundle-winapp-acceptance-preview` consumes the q4 Notepad++ Portable smoke report, verifies the direct known bundle import/staged launch/GUI/KDE/detail/accepted-chain evidence, and returns a redacted desktop-safe acceptance summary. The q4 smoke now fetches `known-portable-bundle-winapp-acceptance.json`, and routine compile-heavy validation remains q4-first so the macOS host stays mostly for editing, Git, dry-run planning, and artifact review.
 

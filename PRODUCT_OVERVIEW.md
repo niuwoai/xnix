@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc267
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc268
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc268 checkpoint gives the real Notepad++ Portable lane a run-oriented q4 entry. `scripts/q4_known_portable_winapp_run.rb --app org.xnix.external.notepadplusplus --execute` now wraps the proven q4 Notepad++ Runtime/KDE path as a catalog-backed known portable Windows app run, verifies the same official download, checksum, import, staged launch, KDE/detail, and Go-owned acceptance chain, and emits an operator run result. The new Go Runtime `q4-known-portable-winapp-run-plan-preview` read model owns the run plan and keeps q4 download, extraction, compilation, execution, and final acceptance requirements explicit while preserving closed host/container safety gates.
 
 The v0.2.640-rc267 checkpoint moves the known portable bundle acceptance decision into the Go Runtime. The new `q4-known-portable-bundle-winapp-acceptance-preview` command consumes the q4 Notepad++ Portable smoke report and verifies the official archive checksum/extraction, known bundle import, direct staged launch, GUI evidence packet, KDE page, compatibility bundle, application detail, KDE page from detail, and final `runtime-accepted-real-app-run` chain before returning a redacted desktop-safe acceptance payload. The q4 wrapper now fetches `known-portable-bundle-winapp-acceptance.json`, and the q4-first compile policy is reaffirmed so compile-heavy Go validation and real Windows app smoke work use `root@q4` while the macOS host remains for lightweight checks, Git, dry-run planning, and artifact review by default.
 

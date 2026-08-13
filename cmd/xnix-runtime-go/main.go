@@ -300,6 +300,8 @@ func run(args []string, stdout io.Writer) error {
 		return runQ4WinAppAcceptancePreview(args[1:], stdout)
 	case "q4-external-winapp-run-plan-preview":
 		return runQ4ExternalWinAppRunPlanPreview(args[1:], stdout)
+	case "q4-known-portable-winapp-run-plan-preview":
+		return runQ4KnownPortableWinAppRunPlanPreview(args[1:], stdout)
 	case "q4-staged-external-winapp-acceptance-preview":
 		return runQ4StagedExternalWinAppAcceptancePreview(args[1:], stdout)
 	case "q4-known-portable-bundle-winapp-acceptance-preview":
