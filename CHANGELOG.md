@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc277] - 2026-08-13
+
+### Added
+
+- Added an argumentless desktop launch lane for q4 staged external Windows app smoke runs, allowing GUI apps that do not accept KDE file-open arguments to prove real window launch, Runtime/KDE evidence, and safety gates.
+- Enabled the PuTTY known portable q4 runner to use the argumentless lane and feed GUI-only staged acceptance into known portable operator acceptance.
+
+### Changed
+
+- Relaxed Runtime compatibility evidence, application detail, q4 staged acceptance, and known portable acceptance so file-open evidence is required only for file-open lanes, while real GUI evidence remains mandatory for all accepted existing Windows app runs.
+- Kept the default q4 SSH target as `root@q4` for home-network development and documented `q4-pub` as an explicit public-endpoint override for remote work.
+- Updated targeted tests, layout checks, README, product overview, Claude guide, Runtime metadata, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc277`.
+
 ## [0.2.640-rc276] - 2026-08-13
 
 ### Added

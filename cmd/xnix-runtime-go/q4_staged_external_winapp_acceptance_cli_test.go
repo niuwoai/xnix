@@ -32,7 +32,7 @@ func TestQ4StagedExternalWinAppAcceptancePreviewCommandConsumesWrapperEvidence(t
 	}
 	if payload["schema_version"] != "xnix.runtime.q4_staged_external_winapp_acceptance.v1" ||
 		payload["request_type"] != "q4-staged-external-winapp-acceptance-preview" ||
-		payload["acceptance_type"] != "staged-external-winapp-desktop-real-run-acceptance" ||
+		payload["acceptance_type"] != "staged-external-winapp-desktop-file-open-acceptance" ||
 		payload["smoke_report_consumed"] != true ||
 		payload["smoke_report_path_exposed"] != false ||
 		payload["delegated_command_exposed"] != false ||
@@ -91,9 +91,12 @@ func q4StagedExternalWinAppAcceptanceCLIFixture(version string) string {
   "delegated_status": "passed",
   "app_id": "org.xnix.external.desktop-notepad-file-argument",
   "display_name": "External Desktop Notepad File Argument",
+  "desktop_argument_mode": "file-uri",
+  "desktop_file_open_lane": true,
   "desktop_exec_uses_external_app_handle": true,
   "external_app_desktop_handle_ready": true,
   "desktop_exec_invocation_exact": true,
+  "external_file_open_requested": true,
   "external_file_bridge_ready": true,
   "external_file_bridge_arguments_passed": true,
   "external_file_bridge_winepath_translated": true,

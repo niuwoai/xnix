@@ -41,8 +41,11 @@ type Q4KnownPortableWinAppRunAcceptance struct {
 	KnownPortableBundleStageLaunchStatus string `json:"known_portable_bundle_stage_launch_status"`
 	KnownPortableBundleAcceptanceReady   bool   `json:"known_portable_bundle_acceptance_ready"`
 	StagedExternalWinAppAcceptanceReady  bool   `json:"staged_external_winapp_acceptance_ready"`
+	ExternalFileOpenRequested            bool   `json:"external_file_open_requested"`
 	ExternalFileBridgeReady              bool   `json:"external_file_bridge_ready"`
 	WindowsProcessFileArgumentObserved   bool   `json:"windows_process_file_argument_window_observed"`
+	WindowObserved                       bool   `json:"window_observed"`
+	XWindowObserved                      bool   `json:"x_window_observed"`
 	RuntimeAcceptedChainVerified         bool   `json:"runtime_accepted_chain_verified"`
 	AcceptedApplicationDetailState       string `json:"accepted_application_detail_state"`
 	KDEAcceptedPageState                 string `json:"kde_accepted_page_state"`
@@ -130,8 +133,11 @@ func PreviewQ4KnownPortableWinAppRunAcceptanceJSON(content []byte) (Q4KnownPorta
 		!remoteBool(report, "known_portable_bundle_imported") &&
 		remoteString(report, "staged_external_winapp_acceptance_request_type") == Q4StagedExternalWinAppAcceptanceRequestType &&
 		remoteBool(report, "staged_external_winapp_acceptance_ready") &&
-		remoteBool(report, "external_file_bridge_ready") &&
-		remoteBool(report, "windows_process_file_argument_window_observed") &&
+		!remoteBool(report, "external_file_open_requested") &&
+		!remoteBool(report, "external_file_bridge_ready") &&
+		!remoteBool(report, "windows_process_file_argument_window_observed") &&
+		remoteBool(report, "window_observed") &&
+		remoteBool(report, "x_window_observed") &&
 		remoteBool(report, "runtime_accepted_chain_verified") &&
 		remoteString(report, "accepted_application_detail_state") == "runtime-accepted-real-app-run" &&
 		remoteString(report, "kde_accepted_page_state") == "runtime-accepted-real-app-run" &&
@@ -171,8 +177,11 @@ func PreviewQ4KnownPortableWinAppRunAcceptanceJSON(content []byte) (Q4KnownPorta
 		KnownPortableBundleStageLaunchStatus: remoteString(report, "known_portable_bundle_stage_launch_status"),
 		KnownPortableBundleAcceptanceReady:   bundleReady,
 		StagedExternalWinAppAcceptanceReady:  singleExecutableReady,
-		ExternalFileBridgeReady:              singleExecutableReady,
+		ExternalFileOpenRequested:            remoteBool(report, "external_file_open_requested"),
+		ExternalFileBridgeReady:              remoteBool(report, "external_file_bridge_ready"),
 		WindowsProcessFileArgumentObserved:   remoteBool(report, "windows_process_file_argument_window_observed"),
+		WindowObserved:                       remoteBool(report, "window_observed"),
+		XWindowObserved:                      remoteBool(report, "x_window_observed"),
 		RuntimeAcceptedChainVerified:         true,
 		AcceptedApplicationDetailState:       "runtime-accepted-real-app-run",
 		KDEAcceptedPageState:                 "runtime-accepted-real-app-run",

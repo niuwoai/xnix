@@ -89,6 +89,7 @@ func TestRunExternalWinAppConsumesImportRecordAndRunsContainerGUI(t *testing.T) 
 		result.HostRootModified ||
 		result.DockerSocketMounted ||
 		result.RuntimePayload.ExternalAppImportRecordConsumed != true ||
+		result.RuntimePayload.ApplicationName != "/app/ExternalGui.exe" ||
 		result.RuntimePayload.ImportedArtifactSHA256 != record.ArtifactSHA256 {
 		t.Fatalf("unexpected external app run result: %#v", result)
 	}
@@ -188,7 +189,8 @@ func TestRunExternalWinAppConsumesHandleAndRunsContainerGUI(t *testing.T) {
 		result.ContainerHostMountCount != 0 ||
 		result.XWindowObserved != true ||
 		result.WindowObserved != true ||
-		result.RuntimePayload.ExternalAppImportRecordConsumed != true {
+		result.RuntimePayload.ExternalAppImportRecordConsumed != true ||
+		result.RuntimePayload.ApplicationName != "/app/ExternalGui.exe" {
 		t.Fatalf("unexpected external app handle run result: %#v", result)
 	}
 	payload, err := json.Marshal(result)

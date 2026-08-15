@@ -12,7 +12,7 @@ func TestPreviewQ4StagedExternalWinAppAcceptanceConsumesPassedSmoke(t *testing.T
 	}
 	if acceptance.SchemaVersion != Q4StagedExternalWinAppAcceptanceSchemaVersion ||
 		acceptance.RequestType != Q4StagedExternalWinAppAcceptanceRequestType ||
-		acceptance.AcceptanceType != "staged-external-winapp-desktop-real-run-acceptance" ||
+		acceptance.AcceptanceType != "staged-external-winapp-desktop-file-open-acceptance" ||
 		!acceptance.SmokeReportConsumed ||
 		acceptance.SmokeReportPathExposed ||
 		acceptance.OutputPathExposed ||
@@ -22,6 +22,9 @@ func TestPreviewQ4StagedExternalWinAppAcceptanceConsumesPassedSmoke(t *testing.T
 		acceptance.DisplayName != "External Desktop Notepad File Argument" ||
 		!acceptance.HostCompilationAvoided ||
 		!acceptance.DesktopExecUsesExternalAppHandle ||
+		acceptance.DesktopArgumentMode != "file-uri" ||
+		!acceptance.DesktopFileOpenLane ||
+		!acceptance.ExternalFileOpenRequested ||
 		!acceptance.ExternalFileBridgeReady ||
 		!acceptance.WindowsProcessFileArgumentWindowObserved ||
 		!acceptance.ApplicationDetailRealWindowsAppRunVerified ||
@@ -49,6 +52,47 @@ func TestPreviewQ4StagedExternalWinAppAcceptanceRejectsIncompleteEvidence(t *tes
 	}
 }
 
+func TestPreviewQ4StagedExternalWinAppAcceptanceConsumesGUIOnlySmoke(t *testing.T) {
+	fixture := q4StagedExternalWinAppAcceptanceGUIOnlyFixture(currentProjectVersion(t))
+	acceptance, err := PreviewQ4StagedExternalWinAppAcceptanceJSON([]byte(fixture))
+	if err != nil {
+		t.Fatalf("PreviewQ4StagedExternalWinAppAcceptanceJSON returned error: %v", err)
+	}
+	if acceptance.AcceptanceType != "staged-external-winapp-desktop-gui-only-acceptance" ||
+		acceptance.DesktopArgumentMode != "none" ||
+		acceptance.DesktopFileOpenLane ||
+		acceptance.ExternalFileOpenRequested ||
+		acceptance.ExternalFileBridgeReady ||
+		acceptance.WindowsProcessFileArgumentWindowObserved ||
+		acceptance.ApplicationDetailFileOpenVerified ||
+		!acceptance.WindowObserved ||
+		!acceptance.XWindowObserved ||
+		!acceptance.AcceptanceReady {
+		t.Fatalf("unexpected q4 staged external Windows app GUI-only acceptance: %#v", acceptance)
+	}
+
+	missingWindow := strings.Replace(fixture, `"window_observed": true`, `"window_observed": false`, 1)
+	if _, err := PreviewQ4StagedExternalWinAppAcceptanceJSON([]byte(missingWindow)); err == nil {
+		t.Fatalf("GUI-only acceptance must reject missing window evidence")
+	}
+}
+
+func q4StagedExternalWinAppAcceptanceGUIOnlyFixture(version string) string {
+	replacer := strings.NewReplacer(
+		`"app_id": "org.xnix.external.desktop-notepad-file-argument"`, `"app_id": "org.xnix.external.putty"`,
+		`"display_name": "External Desktop Notepad File Argument"`, `"display_name": "PuTTY"`,
+		`"desktop_argument_mode": "file-uri"`, `"desktop_argument_mode": "none"`,
+		`"desktop_file_open_lane": true`, `"desktop_file_open_lane": false`,
+		`"external_file_open_requested": true`, `"external_file_open_requested": false`,
+		`"external_file_bridge_ready": true`, `"external_file_bridge_ready": false`,
+		`"external_file_bridge_arguments_passed": true`, `"external_file_bridge_arguments_passed": false`,
+		`"external_file_bridge_winepath_translated": true`, `"external_file_bridge_winepath_translated": false`,
+		`"windows_process_file_argument_window_observed": true`, `"windows_process_file_argument_window_observed": false`,
+		`"application_detail_file_open_verified": true`, `"application_detail_file_open_verified": false`,
+	)
+	return replacer.Replace(q4StagedExternalWinAppAcceptanceFixture(version))
+}
+
 func q4StagedExternalWinAppAcceptanceFixture(version string) string {
 	return strings.ReplaceAll(`{
   "schema_version": "xnix.scripts.q4_staged_desktop_external_winapp_smoke.v1",
@@ -64,9 +108,12 @@ func q4StagedExternalWinAppAcceptanceFixture(version string) string {
   "delegated_status": "passed",
   "app_id": "org.xnix.external.desktop-notepad-file-argument",
   "display_name": "External Desktop Notepad File Argument",
+  "desktop_argument_mode": "file-uri",
+  "desktop_file_open_lane": true,
   "desktop_exec_uses_external_app_handle": true,
   "external_app_desktop_handle_ready": true,
   "desktop_exec_invocation_exact": true,
+  "external_file_open_requested": true,
   "external_file_bridge_ready": true,
   "external_file_bridge_arguments_passed": true,
   "external_file_bridge_winepath_translated": true,

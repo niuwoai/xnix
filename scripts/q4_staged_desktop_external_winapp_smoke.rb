@@ -42,6 +42,7 @@ options = {
   app_id: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_APP_ID", ""),
   display_name: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_DISPLAY_NAME", ""),
   window_match: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_WINDOW_MATCH", ""),
+  desktop_argument_mode: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_DESKTOP_ARGUMENT_MODE", "file-uri"),
   image: DEFAULT_IMAGE,
   timeout: ENV.fetch("XNIX_Q4_STAGED_EXTERNAL_GUI_TIMEOUT", "120s")
 }
@@ -62,6 +63,7 @@ OptionParser.new do |parser|
   parser.on("--app-id ID", "Application id for an operator-supplied external executable.") { |value| options[:app_id] = value }
   parser.on("--display-name NAME", "Display name for an operator-supplied external executable.") { |value| options[:display_name] = value }
   parser.on("--window-match TEXT", "Optional observed-window text required for the external executable.") { |value| options[:window_match] = value }
+  parser.on("--desktop-argument-mode MODE", "Delegated desktop argument mode: file-uri or none.") { |value| options[:desktop_argument_mode] = value }
   parser.on("--image IMAGE", "q4-local Wine GUI smoke image, default: #{DEFAULT_IMAGE}.") { |value| options[:image] = value }
   parser.on("--timeout DURATION", "Delegated GUI timeout, default: #{options.fetch(:timeout)}.") { |value| options[:timeout] = value }
   parser.on("--remote-timeout-seconds SECONDS", Integer, "Timeout for q4 build, remote smoke, and report fetch.") { |value| options[:remote_timeout_seconds] = value }
@@ -213,6 +215,9 @@ remote_executable = ensure_remote_xnix_path!("remote executable", remote_executa
 remote_bundle_root = options.fetch(:remote_bundle_root).to_s.strip
 remote_bundle_root = ensure_remote_xnix_path!("remote bundle root", remote_bundle_root) unless remote_bundle_root.empty?
 executable_relative_path = options.fetch(:executable_relative_path).to_s.strip
+desktop_argument_mode = options.fetch(:desktop_argument_mode).to_s.strip
+abort "desktop argument mode must be file-uri or none" unless %w[file-uri none].include?(desktop_argument_mode)
+file_open_lane = desktop_argument_mode == "file-uri"
 remote_import_record = options.fetch(:remote_import_record).to_s.strip
 remote_import_record = ensure_remote_xnix_path!("remote import record", remote_import_record) unless remote_import_record.empty?
 remote_source_count = [!remote_executable.empty?, !remote_bundle_root.empty?, !remote_import_record.empty?].count(true)
@@ -261,7 +266,15 @@ delegated_command = [
   "--run-root", "#{remote_run_root}/run",
   "--report-output", remote_report,
   "--markdown-output", remote_markdown,
+  "--delegated-output", "#{remote_run_root}/delegated-launcher-payload.json",
+  "--activation-status-output", "#{remote_run_root}/activation-status.json",
+  "--launch-packet-output", "#{remote_run_root}/desktop-launch-packet.json",
+  "--one-shot-output", "#{remote_run_root}/one-shot-import-stage-launch.json",
+  "--one-shot-launch-packet-output", "#{remote_run_root}/one-shot-desktop-launch-packet.json",
+  "--runtime-packet-output", "#{remote_run_root}/runtime-gui-evidence-packet.json",
+  "--kde-page-output", "#{remote_run_root}/kde-external-app-page.json",
   "--image", options.fetch(:image),
+  "--desktop-argument-mode", desktop_argument_mode,
   "--timeout", options.fetch(:timeout)
 ]
 delegated_command.concat(["--executable", remote_executable]) unless remote_executable.empty?
@@ -304,6 +317,8 @@ plan = {
   "operator_app_id_supplied" => !options.fetch(:app_id).to_s.strip.empty?,
   "operator_display_name_supplied" => !options.fetch(:display_name).to_s.strip.empty?,
   "operator_window_match_supplied" => !options.fetch(:window_match).to_s.strip.empty?,
+  "desktop_argument_mode" => desktop_argument_mode,
+  "desktop_file_open_lane" => file_open_lane,
   "image" => options.fetch(:image),
   "output_path" => output_path.to_s,
   "markdown_output_path" => markdown_output_path.to_s,
@@ -390,7 +405,7 @@ unless delegated.fetch("status") == "passed" &&
        bool(delegated, "window_observed") &&
        bool(delegated, "desktop_exec_uses_external_app_handle") &&
        bool(delegated, "external_app_handle_consumed") &&
-       bool(delegated, "external_file_bridge_ready") &&
+       bool(delegated, "external_file_bridge_ready") == file_open_lane &&
        delegated.fetch("one_shot_status") == "passed" &&
        bool(delegated, "one_shot_staged_launcher_invoked") &&
        bool(delegated, "one_shot_runtime_launch_executed") &&
@@ -451,7 +466,7 @@ unless application_detail.fetch("request_type") == "external-winapp-application-
        application_detail.fetch("safe_for_kde") == true &&
        application_detail.fetch("safe_for_ai_diagnostics") == true &&
        application_detail.fetch("real_windows_app_run_verified") == true &&
-       application_detail.fetch("file_open_verified") == true &&
+       application_detail.fetch("file_open_verified") == file_open_lane &&
        application_detail.fetch("runtime_owned") == true &&
        application_detail.fetch("go_runtime_backed") == true &&
        application_detail.fetch("kde_policy_owner") == false
@@ -597,6 +612,7 @@ result = plan.merge(
   "kde_page_card_x_window_observed" => delegated.fetch("kde_page_card_x_window_observed"),
   "remote_report_fetched" => true,
   "remote_markdown_fetched" => true,
+  "compatibility_evidence_bundle_path" => remote_compatibility_bundle,
   "compatibility_evidence_bundle_generated" => true,
   "compatibility_evidence_bundle_request_type" => compatibility_bundle.fetch("request_type"),
   "compatibility_evidence_bundle_safe_for_kde" => compatibility_bundle.fetch("safe_for_kde"),

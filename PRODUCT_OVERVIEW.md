@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-08-13 | Current version: v0.2.640-rc276
+> Last updated: 2026-08-13 | Current version: v0.2.640-rc277
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc277 checkpoint adds an argumentless desktop launch lane for real single-executable Windows GUI apps. PuTTY can now use the q4 staged Runtime/KDE path with `desktop_argument_mode=none`, allowing the runner to prove a real Wine/Xvfb GUI window, digest-verified imported executable, handle-only desktop activation, Go-owned staged acceptance, Runtime application detail, KDE page consumption, and known portable operator acceptance without pretending that an SSH client supports KDE file-open behavior. Editor-style apps such as Notepad++ Portable still use the file-open lane and must continue proving copied file arguments, Wine path translation, and document-window evidence. Remote build, test, and Windows app smoke scripts default to `root@q4` for home-network development; operators outside that network can pass a configured `q4-pub` SSH alias explicitly while keeping q4 compilation first and avoiding local Mac compile pressure.
 
 The v0.2.640-rc276 checkpoint makes q4 the practical default for compile-heavy follow-up work and records a fresh q4 real desktop Windows app validation. The unified q4 known portable Windows app runner passed with Notepad++ Portable using q4-hosted download, extraction, Go Runtime compilation, Wine/Xvfb GUI execution, operator acceptance, Runtime application detail, and KDE page generation while keeping host compilation and host download avoided. PuTTY remains visible in the Runtime catalog-backed single-executable plan, but execute mode is now explicitly blocked until an argumentless desktop launch lane exists because PuTTY does not satisfy the current KDE file-open contract.
 

@@ -67,6 +67,7 @@ assert(payload["run_regex"].include?("TestLocalGoCompilePolicyPreviewCommand"), 
 assert(payload["run_regex"].include?("TestPreviewQ4KnownPortableWinAppRunPlanConsumesRuntimeCatalog"), "remote Go test must include q4 known portable catalog-backed plan model tests")
 assert(payload["run_regex"].include?("TestPreviewQ4KnownPortableWinAppRunPlanSelectsPuttySingleExecutableLane"), "remote Go test must include q4 known portable PuTTY single-executable plan model tests")
 assert(payload["run_regex"].include?("TestPreviewQ4KnownPortableWinAppRunPlanRejectsKnownNonRunnableCatalogApp"), "remote Go test must include q4 known portable non-runnable rejection model tests")
+assert(payload["run_regex"].include?("TestPreviewQ4StagedExternalWinAppAcceptanceConsumesGUIOnlySmoke"), "remote Go test must include q4 staged external GUI-only acceptance model tests")
 assert(payload["run_regex"].include?("TestQ4KnownPortableWinAppRunPlanPreviewCommand"), "remote Go test must include q4 known portable catalog-backed plan CLI tests")
 assert(payload["run_regex"].include?("TestQ4KnownPortableWinAppRunPlanPreviewCommandRendersPuttySingleExecutableLane"), "remote Go test must include q4 known portable PuTTY single-executable plan CLI tests")
 assert(payload["run_regex"].include?("TestQ4KnownPortableWinAppRunAcceptancePreviewCommandConsumesPuttyOperatorRun"), "remote Go test must include q4 known portable PuTTY operator acceptance CLI tests")

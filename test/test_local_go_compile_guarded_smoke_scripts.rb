@@ -26,6 +26,12 @@ guarded_scripts.each do |label, script|
   assert(source.include?("scripts/remote_go_build.rb --execute"), "#{label} must point compile-heavy work to q4")
 end
 
+staged_external_source = project_root.join("scripts/staged_desktop_external_winapp_smoke.rb").read
+assert(
+  staged_external_source.include?('"windows_process_file_argument_window_observed" => file_open_lane &&'),
+  "staged desktop external smoke must only claim file-argument window evidence on file-open lanes"
+)
+
 minimal_env = {
   "PATH" => "/usr/bin:/bin",
   "XNIX_ALLOW_LOCAL_GO_COMPILE" => nil,

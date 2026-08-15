@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc276`.
+The project is currently at `v0.2.640-rc277`.
 
 ## Product Direction
 
@@ -13,6 +13,8 @@ The project is currently at `v0.2.640-rc276`.
 - Host impact must stay narrow: no privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation in normal development checks.
 
 ## Current Checkpoint
+
+v0.2.640-rc277 adds the argumentless desktop launch lane for single-executable Windows GUI apps. PuTTY is wired as a real q4 known portable Windows app run without a KDE file-open argument: `scripts/q4_putty_external_winapp_smoke.rb --execute` delegates to the staged Runtime/KDE path with `--desktop-argument-mode none`, and `scripts/q4_known_portable_winapp_run.rb --app org.xnix.external.putty --execute` can feed that GUI-only evidence into Go-owned staged acceptance, Runtime application detail, KDE page generation, and operator acceptance while preserving q4 compilation and host download avoidance. File-open evidence remains required for editor-style apps such as Notepad++ Portable. Remote build, test, and Windows app smoke scripts default to `root@q4` for home-network development; operators outside that network can pass a configured `q4-pub` SSH alias explicitly.
 
 v0.2.640-rc276 tightens the q4-first workflow for compile-heavy work and records a fresh real desktop Windows app run on q4. `scripts/q4_known_portable_winapp_run.rb --app org.xnix.external.notepadplusplus --execute` passed with q4 download, extraction, Go Runtime compilation, Wine/Xvfb GUI execution, operator acceptance, Runtime application detail, and KDE page generation while preserving `host_compilation_avoided=true` and `host_download_avoided=true`. The same runner now keeps PuTTY visible as a catalog-backed single-executable plan but blocks `--execute` with an explicit argumentless-desktop-lane reason until PuTTY can be launched without the current KDE file-open contract.
 

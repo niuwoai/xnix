@@ -199,7 +199,7 @@ func PreviewExternalWinAppCompatibilityEvidenceBundle(request ExternalWinAppComp
 		ExternalAppImportRecordConsumed:        oneShot.ExternalAppImportRecordConsumed && launchPacket.ExternalAppImportRecordConsumed && runtimePacket.ExternalAppImportRecordConsumed,
 		ExternalAppHandleConsumed:              oneShot.ExternalAppHandleConsumed && launchPacket.ExternalAppHandleConsumed && runtimePacket.ExternalAppHandleConsumed,
 		ImportedArtifactDigestVerified:         oneShot.ImportedArtifactDigestVerified && launchPacket.ImportedArtifactDigestVerified && runtimePacket.ImportedArtifactDigestVerified,
-		ExternalFileBridgeReady:                oneShot.ExternalFileBridgeReady && launchPacket.ExternalFileBridgeReady,
+		ExternalFileBridgeReady:                launchPacket.ExternalFileOpenRequested && oneShot.ExternalFileBridgeReady && launchPacket.ExternalFileBridgeReady,
 		ExternalFileOpenRequested:              launchPacket.ExternalFileOpenRequested,
 		ExternalDesktopArgumentCount:           launchPacket.ExternalDesktopArgumentCount,
 		WindowObserved:                         oneShot.WindowObserved && launchPacket.WindowObserved && runtimePacket.WindowObserved,
@@ -293,6 +293,9 @@ func loadExternalWinAppCompatibilityArtifact[T any](path string, label string) (
 }
 
 func validateExternalWinAppCompatibilityBundleInputs(appID string, displayName string, oneShot externalWinAppCompatibilityOneShotResult, launchPacket DesktopExternalWinAppLaunchPacket, runtimePacket RealWinAppGUIEvidencePacket, kdePage KDECenterPagePreview) error {
+	fileOpenLane := launchPacket.ExternalFileOpenRequested
+	fileEvidenceReady := (!fileOpenLane && !oneShot.ExternalFileBridgeReady && !launchPacket.ExternalFileBridgeReady && launchPacket.ExternalDesktopArgumentCount == 0) ||
+		(fileOpenLane && oneShot.ExternalFileBridgeReady && launchPacket.ExternalFileBridgeReady && launchPacket.ExternalDesktopArgumentCount > 0)
 	switch {
 	case oneShot.SchemaVersion != "xnix.runtime.external_winapp_import_stage_launch.v1" || oneShot.RequestType != "external-winapp-import-stage-and-launch":
 		return errors.New("external Windows app compatibility evidence bundle requires a one-shot import-stage-and-launch result")
@@ -302,8 +305,10 @@ func validateExternalWinAppCompatibilityBundleInputs(appID string, displayName s
 		return errors.New("external Windows app compatibility evidence bundle requires one-shot import and staged launcher evidence")
 	case !oneShot.DesktopExecUsesExternalAppHandle || !oneShot.ExternalAppDesktopHandleReady || !oneShot.DesktopLaunchPacketWritten:
 		return errors.New("external Windows app compatibility evidence bundle requires handle-only desktop activation")
-	case !oneShot.RuntimeLaunchExecuted || !oneShot.WindowObserved || !oneShot.XWindowObserved || !oneShot.ExternalFileBridgeReady:
-		return errors.New("external Windows app compatibility evidence bundle requires one-shot real GUI and file bridge evidence")
+	case !oneShot.RuntimeLaunchExecuted || !oneShot.WindowObserved || !oneShot.XWindowObserved:
+		return errors.New("external Windows app compatibility evidence bundle requires one-shot real GUI evidence")
+	case !fileEvidenceReady:
+		return errors.New("external Windows app compatibility evidence bundle requires lane-appropriate file-open evidence")
 	case launchPacket.SchemaVersion != DesktopExternalWinAppLaunchPacketSchemaVersion || launchPacket.RequestType != DesktopExternalWinAppLaunchPacketRequestType:
 		return errors.New("external Windows app compatibility evidence bundle requires a desktop external Windows app launch packet")
 	case launchPacket.ApplicationID != appID || launchPacket.DisplayName != displayName || launchPacket.ExternalAppHandle != appID:

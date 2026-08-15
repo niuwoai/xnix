@@ -38,9 +38,12 @@ type Q4StagedExternalWinAppAcceptance struct {
 	DelegatedSmokePassed                                          bool   `json:"delegated_smoke_passed"`
 	DesktopExecUsesExternalAppHandle                              bool   `json:"desktop_exec_uses_external_app_handle"`
 	DesktopExecInvocationExact                                    bool   `json:"desktop_exec_invocation_exact"`
+	DesktopArgumentMode                                           string `json:"desktop_argument_mode"`
+	DesktopFileOpenLane                                           bool   `json:"desktop_file_open_lane"`
 	ExternalAppDesktopHandleReady                                 bool   `json:"external_app_desktop_handle_ready"`
 	ExternalAppHandleConsumed                                     bool   `json:"external_app_handle_consumed"`
 	ImportedArtifactDigestVerified                                bool   `json:"imported_artifact_digest_verified"`
+	ExternalFileOpenRequested                                     bool   `json:"external_file_open_requested"`
 	ExternalFileBridgeReady                                       bool   `json:"external_file_bridge_ready"`
 	ExternalFileBridgeArgumentsPassed                             bool   `json:"external_file_bridge_arguments_passed"`
 	ExternalFileBridgeWinepathTranslated                          bool   `json:"external_file_bridge_winepath_translated"`
@@ -104,6 +107,24 @@ func PreviewQ4StagedExternalWinAppAcceptanceJSON(content []byte) (Q4StagedExtern
 
 	appID := remoteString(report, "app_id")
 	displayName := remoteString(report, "display_name")
+	fileOpenLane := remoteBool(report, "desktop_file_open_lane")
+	desktopArgumentMode := remoteString(report, "desktop_argument_mode")
+	fileEvidenceReady := (!fileOpenLane &&
+		desktopArgumentMode == "none" &&
+		!remoteBool(report, "external_file_open_requested") &&
+		!remoteBool(report, "external_file_bridge_ready") &&
+		!remoteBool(report, "external_file_bridge_arguments_passed") &&
+		!remoteBool(report, "external_file_bridge_winepath_translated") &&
+		!remoteBool(report, "windows_process_file_argument_window_observed") &&
+		!remoteBool(report, "application_detail_file_open_verified")) ||
+		(fileOpenLane &&
+			desktopArgumentMode == "file-uri" &&
+			remoteBool(report, "external_file_open_requested") &&
+			remoteBool(report, "external_file_bridge_ready") &&
+			remoteBool(report, "external_file_bridge_arguments_passed") &&
+			remoteBool(report, "external_file_bridge_winepath_translated") &&
+			remoteBool(report, "windows_process_file_argument_window_observed") &&
+			remoteBool(report, "application_detail_file_open_verified"))
 	unsafeGateOpen := remoteBool(report, "host_root_modified") ||
 		remoteBool(report, "privileged_container_required") ||
 		remoteBool(report, "host_networking_required") ||
@@ -136,10 +157,7 @@ func PreviewQ4StagedExternalWinAppAcceptanceJSON(content []byte) (Q4StagedExtern
 		remoteBool(report, "external_app_desktop_handle_ready") &&
 		remoteBool(report, "external_app_handle_consumed") &&
 		remoteBool(report, "imported_artifact_digest_verified") &&
-		remoteBool(report, "external_file_bridge_ready") &&
-		remoteBool(report, "external_file_bridge_arguments_passed") &&
-		remoteBool(report, "external_file_bridge_winepath_translated") &&
-		remoteBool(report, "windows_process_file_argument_window_observed") &&
+		fileEvidenceReady &&
 		remoteBool(report, "window_observed") &&
 		remoteBool(report, "x_window_observed") &&
 		remoteBool(report, "one_shot_runtime_launch_executed") &&
@@ -150,7 +168,6 @@ func PreviewQ4StagedExternalWinAppAcceptanceJSON(content []byte) (Q4StagedExtern
 		remoteBool(report, "compatibility_evidence_bundle_real_windows_app_run_verified") &&
 		remoteBool(report, "application_detail_generated") &&
 		remoteBool(report, "application_detail_real_windows_app_run_verified") &&
-		remoteBool(report, "application_detail_file_open_verified") &&
 		remoteBool(report, "kde_page_from_application_detail_generated") &&
 		remoteBool(report, "kde_page_from_application_detail_consumed") &&
 		kdeVerifiedStateReady &&
@@ -159,7 +176,11 @@ func PreviewQ4StagedExternalWinAppAcceptanceJSON(content []byte) (Q4StagedExtern
 		remoteInt(report, "container_host_mount_count") == 0 &&
 		!unsafeGateOpen
 	if !acceptanceReady {
-		return Q4StagedExternalWinAppAcceptance{}, errors.New("q4 staged external Windows app acceptance requires handle-only desktop launch, real file-open GUI evidence, Runtime/KDE detail consumption, q4 compilation, fetched artifacts, and closed safety gates")
+		return Q4StagedExternalWinAppAcceptance{}, errors.New("q4 staged external Windows app acceptance requires handle-only desktop launch, real GUI evidence, lane-appropriate file-open evidence, Runtime/KDE detail consumption, q4 compilation, fetched artifacts, and closed safety gates")
+	}
+	acceptanceType := "staged-external-winapp-desktop-gui-only-acceptance"
+	if fileOpenLane {
+		acceptanceType = "staged-external-winapp-desktop-file-open-acceptance"
 	}
 
 	acceptance := Q4StagedExternalWinAppAcceptance{
@@ -169,7 +190,7 @@ func PreviewQ4StagedExternalWinAppAcceptanceJSON(content []byte) (Q4StagedExtern
 		Source:                                    "q4-staged-desktop-external-winapp-smoke+go-runtime-acceptance",
 		RuntimeMethod:                             "PreviewQ4StagedExternalWinAppAcceptance",
 		ReadMethod:                                "GetQ4StagedExternalWinAppAcceptance",
-		AcceptanceType:                            "staged-external-winapp-desktop-real-run-acceptance",
+		AcceptanceType:                            acceptanceType,
 		SmokeReportConsumed:                       true,
 		SmokeReportPathExposed:                    false,
 		OutputPathExposed:                         false,
@@ -183,13 +204,16 @@ func PreviewQ4StagedExternalWinAppAcceptanceJSON(content []byte) (Q4StagedExtern
 		DelegatedSmokePassed:                      true,
 		DesktopExecUsesExternalAppHandle:          true,
 		DesktopExecInvocationExact:                true,
+		DesktopArgumentMode:                       desktopArgumentMode,
+		DesktopFileOpenLane:                       fileOpenLane,
 		ExternalAppDesktopHandleReady:             true,
 		ExternalAppHandleConsumed:                 true,
 		ImportedArtifactDigestVerified:            true,
-		ExternalFileBridgeReady:                   true,
-		ExternalFileBridgeArgumentsPassed:         true,
-		ExternalFileBridgeWinepathTranslated:      true,
-		WindowsProcessFileArgumentWindowObserved:  true,
+		ExternalFileOpenRequested:                 remoteBool(report, "external_file_open_requested"),
+		ExternalFileBridgeReady:                   remoteBool(report, "external_file_bridge_ready"),
+		ExternalFileBridgeArgumentsPassed:         remoteBool(report, "external_file_bridge_arguments_passed"),
+		ExternalFileBridgeWinepathTranslated:      remoteBool(report, "external_file_bridge_winepath_translated"),
+		WindowsProcessFileArgumentWindowObserved:  remoteBool(report, "windows_process_file_argument_window_observed"),
 		WindowObserved:                            true,
 		XWindowObserved:                           true,
 		OneShotRuntimeLaunchExecuted:              true,
@@ -200,7 +224,7 @@ func PreviewQ4StagedExternalWinAppAcceptanceJSON(content []byte) (Q4StagedExtern
 		CompatibilityEvidenceBundleRealWindowsAppRunVerified:          true,
 		ApplicationDetailGenerated:                                    true,
 		ApplicationDetailRealWindowsAppRunVerified:                    true,
-		ApplicationDetailFileOpenVerified:                             true,
+		ApplicationDetailFileOpenVerified:                             remoteBool(report, "application_detail_file_open_verified"),
 		KDEPageFromApplicationDetailGenerated:                         true,
 		KDEPageFromApplicationDetailConsumed:                          true,
 		KDEPageFromApplicationDetailHeaderBadge:                       "Verified real app run",
@@ -219,7 +243,7 @@ func PreviewQ4StagedExternalWinAppAcceptanceJSON(content []byte) (Q4StagedExtern
 		BackendDetailsExposed:                                         false,
 		RawPathExposed:                                                false,
 		AcceptanceReady:                                               true,
-		DesktopSafeSummary:                                            "A q4 staged external Windows GUI app completed the handle-only desktop launch, file-open, Runtime detail, and KDE detail acceptance lane.",
+		DesktopSafeSummary:                                            "A q4 staged external Windows GUI app completed the handle-only desktop launch, Runtime detail, and KDE detail acceptance lane.",
 	}
 	if err := validateNoBackendTerms(acceptance, "q4 staged external Windows app acceptance"); err != nil {
 		return Q4StagedExternalWinAppAcceptance{}, err

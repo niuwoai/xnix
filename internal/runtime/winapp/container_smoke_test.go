@@ -233,6 +233,7 @@ func TestRunContainerXGUISmokeObservesWindowWithRestrictedDockerRunner(t *testin
 		"--platform linux/amd64",
 		"local/wine-x-gui:test sh -lc",
 		"Xvfb \"$DISPLAY\"",
+		"seq 1 60",
 		"xwininfo -root -tree",
 		"wine \"$XNIX_GUI_APP\"",
 	} {

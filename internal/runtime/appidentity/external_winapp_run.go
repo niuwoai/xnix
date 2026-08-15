@@ -130,7 +130,7 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 	}
 	windowMatch := externalWinAppWindowMatch(request.WindowMatch, fileArgumentPaths, record.ExecutableName)
 	applicationName := "/" + record.ExecutableName
-	if record.ArtifactKind == ExternalWinAppArtifactKindPortableDirectory {
+	if strings.TrimSpace(importedWorkspacePath) != "" || record.ArtifactKind == ExternalWinAppArtifactKindPortableDirectory {
 		applicationName = "/app/" + filepath.ToSlash(importedExecutableRelativePath)
 	}
 	runtimePayload, err := winapp.RunContainerXGUISmoke(ctx, winapp.ContainerXGUIRequest{

@@ -621,7 +621,7 @@ func restrictedDockerXGUIContainerArgs(appName string, windowMatch string, image
 		"if [ -f \"$XNIX_GUI_APP\" ]; then wine start /unix \"$XNIX_GUI_APP\" \"$@\" >/tmp/wine-gui.log 2>&1 & else wine \"$XNIX_GUI_APP\" \"$@\" >/tmp/wine-gui.log 2>&1 & fi",
 		"app_pid=$!",
 		"observed=0",
-		"for _attempt in $(seq 1 20); do",
+		"for _attempt in $(seq 1 60); do",
 		"  if xwininfo -root -tree 2>/dev/null | grep -i -- \"$XNIX_WINDOW_MATCH\" >/dev/null; then observed=1; break; fi",
 		"  sleep 1",
 		"done",

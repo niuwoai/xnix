@@ -155,6 +155,7 @@ staged_command = [
   "--app-id", "org.xnix.external.putty",
   "--display-name", "PuTTY",
   "--window-match", PUTTY_WINDOW_MATCH,
+  "--desktop-argument-mode", "none",
   "--remote", remote_host,
   "--remote-timeout-seconds", options.fetch(:remote_timeout_seconds).to_s,
   "--output", output_path.to_s,
@@ -185,6 +186,8 @@ plan = {
   "app_id" => "org.xnix.external.putty",
   "display_name" => "PuTTY",
   "window_match" => PUTTY_WINDOW_MATCH,
+  "desktop_argument_mode" => "none",
+  "desktop_file_open_lane" => false,
   "real_third_party_windows_app" => true,
   "single_file_windows_app" => true,
   "delegated_script" => "scripts/q4_staged_desktop_external_winapp_smoke.rb",
@@ -250,8 +253,10 @@ end
 
 delegated = JSON.parse(staged_stdout)
 passed = delegated.fetch("status") == "passed" &&
-         bool(delegated, "external_file_bridge_ready") &&
-         bool(delegated, "windows_process_file_argument_window_observed") &&
+         delegated.fetch("desktop_argument_mode") == "none" &&
+         !bool(delegated, "external_file_open_requested") &&
+         bool(delegated, "window_observed") &&
+         bool(delegated, "x_window_observed") &&
          bool(delegated, "go_owned_q4_staged_external_winapp_acceptance_ready") &&
          delegated.fetch("accepted_application_detail_compatibility_state", "") == "runtime-accepted-real-app-run" &&
          delegated.fetch("kde_page_from_accepted_application_detail_compatibility_state", "") == "runtime-accepted-real-app-run"
@@ -265,8 +270,13 @@ result = plan.merge(
   "remote_runtime_source_root" => delegated.fetch("remote_source_root"),
   "compatibility_evidence_bundle_report" => delegated.fetch("compatibility_evidence_bundle_path", ""),
   "remote_build_completed" => bool(delegated, "remote_build_completed"),
+  "desktop_argument_mode" => delegated.fetch("desktop_argument_mode", ""),
+  "desktop_file_open_lane" => bool(delegated, "desktop_file_open_lane"),
+  "external_file_open_requested" => bool(delegated, "external_file_open_requested"),
   "external_file_bridge_ready" => bool(delegated, "external_file_bridge_ready"),
   "windows_process_file_argument_window_observed" => bool(delegated, "windows_process_file_argument_window_observed"),
+  "window_observed" => bool(delegated, "window_observed"),
+  "x_window_observed" => bool(delegated, "x_window_observed"),
   "acceptance_ready" => bool(delegated, "go_owned_q4_staged_external_winapp_acceptance_ready"),
   "staged_external_winapp_acceptance_request_type" => "q4-staged-external-winapp-acceptance-preview",
   "staged_external_winapp_acceptance_ready" => bool(delegated, "go_owned_q4_staged_external_winapp_acceptance_ready"),

@@ -344,7 +344,7 @@ func validateExternalWinAppApplicationDetail(detail ExternalWinAppApplicationDet
 		return errors.New("external Windows app application detail requires a Runtime application detail payload")
 	case strings.TrimSpace(detail.ApplicationID) == "" || strings.TrimSpace(detail.DisplayName) == "":
 		return errors.New("external Windows app application detail requires application identity")
-	case !detail.EvidenceBundleConsumed || !detail.ExistingWindowsAppVerified || !detail.RealWindowsAppRunVerified || !detail.FileOpenVerified:
+	case !detail.EvidenceBundleConsumed || !detail.ExistingWindowsAppVerified || !detail.RealWindowsAppRunVerified:
 		return errors.New("external Windows app application detail requires verified existing app evidence")
 	case !detail.RuntimeGUIEvidenceVerified || !detail.DesktopEvidenceVerified || !detail.KDEPageEvidenceVerified:
 		return errors.New("external Windows app application detail requires complete Runtime and desktop evidence")
@@ -376,8 +376,12 @@ func validateExternalWinAppApplicationDetailAcceptance(bundle ExternalWinAppComp
 		return errors.New("external Windows app application detail acceptance must match bundle application identity")
 	case !acceptance.DesktopExecUsesExternalAppHandle || !acceptance.ExternalAppHandleConsumed || !acceptance.ImportedArtifactDigestVerified:
 		return errors.New("external Windows app application detail acceptance requires handle and digest evidence")
-	case !acceptance.WindowsProcessFileArgumentWindowObserved || !acceptance.ApplicationDetailRealWindowsAppRunVerified || !acceptance.ApplicationDetailFileOpenVerified:
-		return errors.New("external Windows app application detail acceptance requires real file-open application detail evidence")
+	case !acceptance.ApplicationDetailRealWindowsAppRunVerified:
+		return errors.New("external Windows app application detail acceptance requires real application detail evidence")
+	case acceptance.DesktopFileOpenLane && (!acceptance.WindowsProcessFileArgumentWindowObserved || !acceptance.ApplicationDetailFileOpenVerified || !acceptance.ExternalFileBridgeReady):
+		return errors.New("external Windows app application detail acceptance requires file-open evidence for file-open lanes")
+	case !acceptance.DesktopFileOpenLane && (acceptance.WindowsProcessFileArgumentWindowObserved || acceptance.ApplicationDetailFileOpenVerified || acceptance.ExternalFileBridgeReady || acceptance.ExternalFileOpenRequested):
+		return errors.New("external Windows app application detail acceptance must not claim file-open evidence for GUI-only lanes")
 	case acceptance.KDEPageFromApplicationDetailSummaryCompatibilityState != "real-app-run-verified" ||
 		acceptance.KDEPageFromApplicationDetailHeaderBadge != "Verified real app run":
 		return errors.New("external Windows app application detail acceptance requires KDE verified app state")
@@ -422,8 +426,11 @@ func validateExternalWinAppApplicationDetailKnownPortableRunAcceptance(bundle Ex
 	case acceptance.SingleFileExternalApp:
 		if !acceptance.OfficialExecutableChecksumVerified ||
 			!acceptance.StagedExternalWinAppAcceptanceReady ||
-			!acceptance.ExternalFileBridgeReady ||
-			!acceptance.WindowsProcessFileArgumentObserved ||
+			acceptance.ExternalFileOpenRequested ||
+			acceptance.ExternalFileBridgeReady ||
+			acceptance.WindowsProcessFileArgumentObserved ||
+			!acceptance.WindowObserved ||
+			!acceptance.XWindowObserved ||
 			bundle.LaunchSourceRequestType != "external-winapp-import-stage-and-launch" {
 			return errors.New("external Windows app application detail known portable acceptance requires verified catalog single-executable evidence")
 		}

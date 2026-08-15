@@ -58,6 +58,7 @@ options = {
   app_id: "",
   display_name: "",
   window_match: "",
+  desktop_argument_mode: ENV.fetch("XNIX_EXTERNAL_APP_DESKTOP_ARGUMENT_MODE", "file-uri"),
   fixture: "notepad",
   image: ENV.fetch("XNIX_WINE_IMAGE", DEFAULT_IMAGE),
   runtime_image: ENV.fetch(RUNTIME_IMAGE_ENV, "xnix-builder:#{VERSION}"),
@@ -84,6 +85,7 @@ OptionParser.new do |parser|
   parser.on("--app-id ID", "Application id for an operator-supplied external executable") { |value| options[:app_id] = value }
   parser.on("--display-name NAME", "Display name for an operator-supplied external executable") { |value| options[:display_name] = value }
   parser.on("--window-match TEXT", "Optional observed-window text required for the external executable") { |value| options[:window_match] = value }
+  parser.on("--desktop-argument-mode MODE", "Desktop argument mode: file-uri or none") { |value| options[:desktop_argument_mode] = value }
   parser.on("--fixture NAME", "Executable fixture: notepad, notepad-file-argument, or external") { |value| options[:fixture] = value }
   parser.on("--image IMAGE", "Local Wine GUI smoke image") { |value| options[:image] = value }
   parser.on("--runtime-image IMAGE", "Runtime image with prebuilt Xnix command binaries") { |value| options[:runtime_image] = value }
@@ -391,6 +393,10 @@ end
 app_id = options.fetch(:app_id).to_s.strip unless options.fetch(:app_id).to_s.strip.empty?
 app_name = options.fetch(:display_name).to_s.strip unless options.fetch(:display_name).to_s.strip.empty?
 window_match = options.fetch(:window_match).to_s.strip unless options.fetch(:window_match).to_s.strip.empty?
+desktop_argument_mode = options.fetch(:desktop_argument_mode).to_s.strip
+abort "desktop argument mode must be file-uri or none" unless %w[file-uri none].include?(desktop_argument_mode)
+file_open_lane = desktop_argument_mode == "file-uri"
+desktop_arguments = file_open_lane ? [sample_document_uri] : []
 docker_bin = resolve_executable(options.fetch(:docker))
 
 go_env = {
@@ -407,7 +413,7 @@ FileUtils.mkdir_p(one_shot_state_root)
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("tmp"))
-File.write(sample_document_path, "Xnix external Windows app file-open smoke document\n")
+File.write(sample_document_path, "Xnix external Windows app file-open smoke document\n") if file_open_lane
 FileUtils.mkdir_p(report_output.dirname)
 FileUtils.mkdir_p(markdown_output.dirname)
 FileUtils.mkdir_p(delegated_output.dirname)
@@ -598,9 +604,9 @@ launcher_env["XNIX_EXTERNAL_APP_WINDOW_MATCH"] = window_match unless window_matc
 launcher_argv = [
   staged_launcher.to_s,
   *desktop_tokens.drop(1),
-  sample_document_uri
+  *desktop_arguments
 ]
-assert(launcher_argv == [staged_launcher.to_s, "--external-app-handle", app_id, sample_document_uri], "staged launcher invocation must match the desktop Exec handle route plus one KDE file URI without extra launcher options")
+assert(launcher_argv == [staged_launcher.to_s, "--external-app-handle", app_id, *desktop_arguments], "staged launcher invocation must match the desktop Exec handle route plus the configured KDE desktop arguments without extra launcher options")
 
 launcher_stdout, launcher_stderr, launcher_status = run_command(launcher_env, *launcher_argv)
 abort "staged external app launcher failed:\n#{launcher_stderr}\n#{launcher_stdout}" unless launcher_status.success?
@@ -612,16 +618,22 @@ assert(payload.fetch("status") == "passed", "launcher smoke must pass")
 assert(payload.fetch("application_id") == app_id, "launcher smoke must preserve imported app id")
 assert(payload.fetch("external_app_import_record_consumed") == true, "launcher smoke must consume the import record")
 assert(payload.fetch("external_app_handle_consumed") == true, "launcher smoke must consume the desktop handle")
-assert(payload.fetch("external_desktop_argument_count") == 1, "launcher smoke must accept one KDE file URI desktop argument")
-assert(payload.fetch("external_file_uri_arguments_accepted") == true, "launcher smoke must accept KDE file URI arguments")
-assert(payload.fetch("external_file_open_requested") == true, "launcher smoke must record the external file-open request")
-assert(payload.fetch("external_file_bridge_copy_enabled") == true, "launcher smoke must enable copy-only file bridging")
-assert(payload.fetch("external_file_bridge_copied_count") == 1, "launcher smoke must copy one file-open argument into the container")
-assert(payload.fetch("external_file_bridge_arguments_passed") == true, "launcher smoke must observe file-open arguments at the container launch boundary")
-assert(payload.fetch("external_file_bridge_argument_observed_count") == 1, "launcher smoke must observe one file-open argument at the container launch boundary")
-assert(payload.fetch("external_file_bridge_winepath_translated") == true, "launcher smoke must translate copied file arguments to Wine paths")
-assert(payload.fetch("external_file_bridge_winepath_translated_count") == 1, "launcher smoke must translate one copied file argument to a Wine path")
-assert(payload.fetch("external_file_bridge_ready") == true, "launcher smoke must mark the copied, translated, and passed file bridge ready")
+assert(payload.fetch("external_desktop_argument_count") == desktop_arguments.length, "launcher smoke must preserve the configured KDE desktop argument count")
+assert(payload.fetch("external_file_uri_arguments_accepted") == file_open_lane, "launcher smoke must report file URI argument acceptance only for the file-open lane")
+assert(payload.fetch("external_file_open_requested") == file_open_lane, "launcher smoke must report file-open requests only for the file-open lane")
+assert(payload.fetch("external_file_bridge_copy_enabled") == file_open_lane, "launcher smoke must enable copy-only file bridging only for the file-open lane")
+assert(payload.fetch("external_file_bridge_copied_count") == desktop_arguments.length, "launcher smoke must copy exactly the configured file-open arguments")
+assert(payload.fetch("external_file_bridge_argument_observed_count") == desktop_arguments.length, "launcher smoke must observe exactly the configured file-open arguments")
+assert(payload.fetch("external_file_bridge_winepath_translated_count") == desktop_arguments.length, "launcher smoke must translate exactly the configured file-open arguments")
+if file_open_lane
+  assert(payload.fetch("external_file_bridge_arguments_passed") == true, "launcher smoke must observe file-open arguments at the container launch boundary")
+  assert(payload.fetch("external_file_bridge_winepath_translated") == true, "launcher smoke must translate copied file arguments to Wine paths")
+  assert(payload.fetch("external_file_bridge_ready") == true, "launcher smoke must mark the copied, translated, and passed file bridge ready")
+else
+  assert(payload.fetch("external_file_bridge_arguments_passed") == false, "launcher smoke must not claim file argument passing when no file-open argument was supplied")
+  assert(payload.fetch("external_file_bridge_winepath_translated") == false, "launcher smoke must not claim Wine path translation when no file-open argument was supplied")
+  assert(payload.fetch("external_file_bridge_ready") == false, "launcher smoke must not claim file bridge readiness when no file-open argument was supplied")
+end
 assert(payload.fetch("external_file_bridge_mount_enabled") == false, "launcher smoke must keep file bridge mounts disabled before policy")
 assert(payload.fetch("raw_file_uri_arguments_exposed") == false, "launcher smoke must not expose raw file URI arguments")
 assert(payload.fetch("imported_artifact_digest_verified") == true, "launcher smoke must verify the imported artifact digest")
@@ -639,8 +651,8 @@ assert(payload.fetch("x_window_observed") == true, "launcher smoke must observe 
 assert(payload.fetch("window_observed") == true, "launcher smoke must expose generic observed-window evidence")
 if !window_match.empty?
   runtime_payload = payload.fetch("runtime_payload")
-  assert(runtime_payload.fetch("window_match") == window_match, "launcher smoke must use the fixture file-argument window match")
-  assert(payload.fetch("window_evidence_summary").include?(window_match), "launcher smoke must observe the Windows process file-argument window title")
+  assert(runtime_payload.fetch("window_match") == window_match, "launcher smoke must use the configured window match")
+  assert(payload.fetch("window_evidence_summary").include?(window_match), "launcher smoke must observe the configured Windows process window title")
 end
 assert(payload.fetch("container_network_mode") == "none", "launcher smoke must disable container networking")
 assert(payload.fetch("container_host_mount_count") == 0, "launcher smoke must not mount host directories")
@@ -667,16 +679,22 @@ assert(launch_packet.fetch("run_record_consumed") == true, "desktop launch packe
 assert(launch_packet.fetch("external_app_run_record_consumed") == true, "desktop launch packet must mark the external run record consumed")
 assert(launch_packet.fetch("external_app_import_record_consumed") == true, "desktop launch packet must preserve import-record consumption")
 assert(launch_packet.fetch("external_app_handle_consumed") == true, "desktop launch packet must preserve handle consumption")
-assert(launch_packet.fetch("external_desktop_argument_count") == 1, "desktop launch packet must preserve KDE file URI argument count")
-assert(launch_packet.fetch("external_file_uri_arguments_accepted") == true, "desktop launch packet must preserve KDE file URI argument acceptance")
-assert(launch_packet.fetch("external_file_open_requested") == true, "desktop launch packet must preserve file-open request evidence")
-assert(launch_packet.fetch("external_file_bridge_copy_enabled") == true, "desktop launch packet must preserve copy-only file bridge evidence")
-assert(launch_packet.fetch("external_file_bridge_copied_count") == 1, "desktop launch packet must preserve copied file-open count")
-assert(launch_packet.fetch("external_file_bridge_arguments_passed") == true, "desktop launch packet must preserve observed file-open argument passing")
-assert(launch_packet.fetch("external_file_bridge_argument_observed_count") == 1, "desktop launch packet must preserve observed file-open argument count")
-assert(launch_packet.fetch("external_file_bridge_winepath_translated") == true, "desktop launch packet must preserve Wine path translation evidence")
-assert(launch_packet.fetch("external_file_bridge_winepath_translated_count") == 1, "desktop launch packet must preserve Wine path translation count")
-assert(launch_packet.fetch("external_file_bridge_ready") == true, "desktop launch packet must preserve copied, translated, and passed file bridge readiness")
+assert(launch_packet.fetch("external_desktop_argument_count") == desktop_arguments.length, "desktop launch packet must preserve the configured KDE desktop argument count")
+assert(launch_packet.fetch("external_file_uri_arguments_accepted") == file_open_lane, "desktop launch packet must preserve file URI argument acceptance only for the file-open lane")
+assert(launch_packet.fetch("external_file_open_requested") == file_open_lane, "desktop launch packet must preserve file-open request evidence only for the file-open lane")
+assert(launch_packet.fetch("external_file_bridge_copy_enabled") == file_open_lane, "desktop launch packet must preserve copy-only file bridge evidence only for the file-open lane")
+assert(launch_packet.fetch("external_file_bridge_copied_count") == desktop_arguments.length, "desktop launch packet must preserve copied file-open count")
+assert(launch_packet.fetch("external_file_bridge_argument_observed_count") == desktop_arguments.length, "desktop launch packet must preserve observed file-open argument count")
+assert(launch_packet.fetch("external_file_bridge_winepath_translated_count") == desktop_arguments.length, "desktop launch packet must preserve Wine path translation count")
+if file_open_lane
+  assert(launch_packet.fetch("external_file_bridge_arguments_passed") == true, "desktop launch packet must preserve observed file-open argument passing")
+  assert(launch_packet.fetch("external_file_bridge_winepath_translated") == true, "desktop launch packet must preserve Wine path translation evidence")
+  assert(launch_packet.fetch("external_file_bridge_ready") == true, "desktop launch packet must preserve copied, translated, and passed file bridge readiness")
+else
+  assert(launch_packet.fetch("external_file_bridge_arguments_passed") == false, "desktop launch packet must not claim file-open argument passing when no argument was supplied")
+  assert(launch_packet.fetch("external_file_bridge_winepath_translated") == false, "desktop launch packet must not claim Wine path translation when no argument was supplied")
+  assert(launch_packet.fetch("external_file_bridge_ready") == false, "desktop launch packet must not claim file bridge readiness when no argument was supplied")
+end
 assert(launch_packet.fetch("external_file_bridge_mount_enabled") == false, "desktop launch packet must keep file bridge mounts disabled before policy")
 assert(launch_packet.fetch("raw_file_uri_arguments_exposed") == false, "desktop launch packet must not expose raw file URI arguments")
 assert(launch_packet.fetch("imported_artifact_digest_verified") == true, "desktop launch packet must preserve imported artifact digest verification")
@@ -727,7 +745,7 @@ one_shot_command.concat([
   "--timeout", options.fetch(:timeout)
 ])
 one_shot_command.concat(["--window-match", window_match]) unless window_match.empty?
-one_shot_command << sample_document_uri
+one_shot_command.concat(desktop_arguments)
 one_shot, one_shot_stdout = run_json(go_env, *one_shot_command)
 File.write(one_shot_output, JSON.pretty_generate(one_shot) + "\n")
 assert(one_shot.fetch("request_type") == "external-winapp-import-stage-and-launch", "one-shot Runtime command must use the import-stage-and-launch request type")
@@ -748,9 +766,9 @@ assert(one_shot.fetch("launcher_request_type") == "windows-external-app-run", "o
 assert(one_shot.fetch("launcher_status") == "passed", "one-shot Runtime command must receive a passed launcher result")
 assert(one_shot.fetch("external_app_import_record_consumed") == true, "one-shot Runtime command must consume the import record through the launcher")
 assert(one_shot.fetch("external_app_handle_consumed") == true, "one-shot Runtime command must consume the desktop handle through the launcher")
-assert(one_shot.fetch("external_desktop_argument_count") == 1, "one-shot Runtime command must pass one KDE file URI")
-assert(one_shot.fetch("external_file_uri_arguments_accepted") == true, "one-shot Runtime command must accept KDE file URI arguments")
-assert(one_shot.fetch("external_file_bridge_ready") == true, "one-shot Runtime command must prove copied, translated, and passed file bridging")
+assert(one_shot.fetch("external_desktop_argument_count") == desktop_arguments.length, "one-shot Runtime command must preserve the configured KDE desktop argument count")
+assert(one_shot.fetch("external_file_uri_arguments_accepted") == file_open_lane, "one-shot Runtime command must accept KDE file URI arguments only for the file-open lane")
+assert(one_shot.fetch("external_file_bridge_ready") == file_open_lane, "one-shot Runtime command must prove file bridging only for the file-open lane")
 assert(one_shot.fetch("imported_artifact_digest_verified") == true, "one-shot Runtime command must verify the imported artifact digest")
 if bundle_mode
   assert(one_shot.fetch("launcher_result").fetch("artifact_kind") == "portable-directory", "one-shot Runtime command must preserve portable-directory artifact kind")
@@ -828,6 +846,8 @@ packet = {
   "app_id" => app_id,
   "display_name" => app_name,
   "version" => VERSION,
+  "desktop_argument_mode" => desktop_argument_mode,
+  "desktop_file_open_lane" => file_open_lane,
   "portable_directory_external_app" => import_record.fetch("artifact_kind", "") == "portable-directory",
   "portable_directory_bundle_import_recorded" => import_record.fetch("request_type") == "external-winapp-bundle-import-record",
   "existing_import_record_consumed" => record_mode,
@@ -841,7 +861,7 @@ packet = {
   "external_app_desktop_handle_ready" => stage.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_external_app_desktop_handle_ready" => receipt_evidence.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_safe_for_kde" => receipt_evidence.fetch("safe_for_kde"),
-  "desktop_exec_invocation_exact" => launcher_argv == [staged_launcher.to_s, "--external-app-handle", app_id, sample_document_uri],
+  "desktop_exec_invocation_exact" => launcher_argv == [staged_launcher.to_s, "--external-app-handle", app_id, *desktop_arguments],
   "launcher_context_from_environment" => true,
   "launcher_extra_arguments_appended" => false,
   "external_desktop_argument_count" => payload.fetch("external_desktop_argument_count"),
@@ -854,7 +874,7 @@ packet = {
   "external_file_bridge_winepath_translated" => payload.fetch("external_file_bridge_winepath_translated"),
   "external_file_bridge_winepath_translated_count" => payload.fetch("external_file_bridge_winepath_translated_count"),
   "external_file_bridge_ready" => payload.fetch("external_file_bridge_ready"),
-  "windows_process_file_argument_window_observed" => !window_match.empty? && payload.fetch("window_evidence_summary").include?(window_match),
+  "windows_process_file_argument_window_observed" => file_open_lane && !window_match.empty? && payload.fetch("window_evidence_summary").include?(window_match),
   "external_file_bridge_mount_enabled" => payload.fetch("external_file_bridge_mount_enabled"),
   "raw_file_uri_arguments_exposed" => payload.fetch("raw_file_uri_arguments_exposed"),
   "desktop_launch_packet_output_written" => launch_packet_output.file?,

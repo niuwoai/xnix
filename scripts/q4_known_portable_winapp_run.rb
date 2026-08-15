@@ -13,7 +13,6 @@ PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
 NOTEPADPP_SMOKE = PROJECT_ROOT.join("scripts/q4_notepadpp_portable_winapp_smoke.rb")
 PUTTY_SMOKE = PROJECT_ROOT.join("scripts/q4_putty_external_winapp_smoke.rb")
-PUTTY_ARGUMENTLESS_LANE_REASON = "PuTTY is a single-executable GUI app that does not implement the current KDE file-open contract; execute mode needs an argumentless desktop launch lane before it can be accepted."
 
 SCHEMA_VERSION = "xnix.scripts.q4_known_portable_winapp_run.v1"
 REQUEST_TYPE = "q4-known-portable-winapp-run"
@@ -272,9 +271,10 @@ plan = {
   "known_catalog_app" => true,
   "portable_directory_external_app" => notepadpp_lane,
   "single_file_external_app" => putty_lane,
-  "q4_execute_supported" => notepadpp_lane,
-  "argumentless_desktop_launch_lane_required" => putty_lane,
-  "argumentless_desktop_launch_lane_reason" => putty_lane ? PUTTY_ARGUMENTLESS_LANE_REASON : "",
+  "q4_execute_supported" => true,
+  "argumentless_desktop_launch_lane_required" => false,
+  "argumentless_desktop_launch_lane_ready" => putty_lane,
+  "argumentless_desktop_launch_lane_reason" => putty_lane ? "PuTTY uses the argumentless desktop launch lane because it is a GUI SSH client rather than a file-open editor." : "",
   "official_download_required" => true,
   "pinned_checksum_required" => true,
   "remote_host" => options.fetch(:remote_host),
@@ -339,22 +339,6 @@ unless execute
   exit 0
 end
 
-if putty_lane
-  blocked = plan.merge(
-    "status" => "blocked",
-    "operator_run_acceptance_status" => "blocked",
-    "operator_run_application_detail_status" => "blocked",
-    "operator_run_kde_page_status" => "blocked",
-    "q4_execution_required" => false,
-    "blocked_reason" => PUTTY_ARGUMENTLESS_LANE_REASON,
-    "host_compilation_avoided" => true,
-    "host_download_avoided" => true
-  )
-  write_markdown(blocked, markdown_output_path)
-  emit_json(blocked, output_path)
-  exit 1
-end
-
 delegated_args = delegated_command.dup
 delegated_args[1] = (notepadpp_lane ? NOTEPADPP_SMOKE : PUTTY_SMOKE).to_s
 stdout, stderr, status = Open3.capture3(*delegated_args, chdir: PROJECT_ROOT.to_s)
@@ -384,8 +368,10 @@ putty_passed = putty_lane &&
                delegated.fetch("display_name") == display_name &&
                bool(delegated, "putty_sha256_verified") &&
                bool(delegated, "single_file_windows_app") &&
-               bool(delegated, "external_file_bridge_ready") &&
-               bool(delegated, "windows_process_file_argument_window_observed") &&
+               delegated.fetch("desktop_argument_mode", "") == "none" &&
+               !bool(delegated, "external_file_open_requested") &&
+               bool(delegated, "window_observed") &&
+               bool(delegated, "x_window_observed") &&
                bool(delegated, "staged_external_winapp_acceptance_ready") &&
                delegated.fetch("staged_external_winapp_acceptance_request_type") == "q4-staged-external-winapp-acceptance-preview" &&
                delegated.fetch("accepted_application_detail_state") == "runtime-accepted-real-app-run" &&
@@ -429,6 +415,9 @@ lane_result = if notepadpp_lane
                   "staged_external_winapp_acceptance_ready" => bool(delegated, "staged_external_winapp_acceptance_ready"),
                   "external_file_bridge_ready" => bool(delegated, "external_file_bridge_ready"),
                   "windows_process_file_argument_window_observed" => bool(delegated, "windows_process_file_argument_window_observed"),
+                  "external_file_open_requested" => bool(delegated, "external_file_open_requested"),
+                  "window_observed" => bool(delegated, "window_observed"),
+                  "x_window_observed" => bool(delegated, "x_window_observed"),
                   "runtime_accepted_chain_verified" => bool(delegated, "staged_external_winapp_acceptance_ready"),
                   "compatibility_evidence_bundle_report" => delegated.fetch("compatibility_evidence_bundle_report")
                 }
@@ -445,6 +434,8 @@ result = plan.merge(
   "kde_accepted_page_state" => delegated.fetch("kde_accepted_page_state"),
   "operator_run_ready" => true
 ).merge(lane_result)
+
+abort "q4 known portable Windows app run missing compatibility evidence bundle report" if result.fetch("compatibility_evidence_bundle_report").to_s.empty?
 
 remote_runtime_binary = delegated.fetch("remote_runtime_binary")
 remote_runtime_source_root = delegated.fetch("remote_runtime_source_root", remote_source_root)

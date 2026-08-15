@@ -14,6 +14,7 @@ Every new small version is targeted-test only unless a twentieth-version full ga
 
 - Default SSH target: `root@q4`
 - Override target: `XNIX_REMOTE_HOST`
+- Public endpoint override, when the workstation is outside the home network: configure an SSH alias such as `q4-pub` for `root@h1.niuwoai.com:40022`, then pass `--remote q4-pub` or `XNIX_REMOTE_HOST=q4-pub`.
 - Remote source roots must stay under `/home/xnix-*` or `/tmp/xnix-*`.
 - Remote build caches must stay under `/home/xnix-*` or `/tmp/xnix-*`.
 - Do not sync secrets, private keys, host-only private material, broad host directories, `.git`, local caches, or build artifacts to q4.

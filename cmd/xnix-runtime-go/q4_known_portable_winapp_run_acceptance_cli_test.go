@@ -104,8 +104,11 @@ func TestQ4KnownPortableWinAppRunAcceptancePreviewCommandConsumesPuttyOperatorRu
 		payload["official_executable_checksum_verified"] != true ||
 		payload["known_portable_bundle_imported"] != false ||
 		payload["staged_external_winapp_acceptance_ready"] != true ||
-		payload["external_file_bridge_ready"] != true ||
-		payload["windows_process_file_argument_window_observed"] != true ||
+		payload["external_file_open_requested"] != false ||
+		payload["external_file_bridge_ready"] != false ||
+		payload["windows_process_file_argument_window_observed"] != false ||
+		payload["window_observed"] != true ||
+		payload["x_window_observed"] != true ||
 		payload["q4_extract_required"] != false ||
 		payload["runtime_accepted_chain_verified"] != true ||
 		payload["acceptance_ready"] != true {
@@ -173,8 +176,11 @@ func q4KnownPortableWinAppRunAcceptancePuttyFixture(version string) string {
   "known_portable_bundle_imported": false,
   "staged_external_winapp_acceptance_request_type": "q4-staged-external-winapp-acceptance-preview",
   "staged_external_winapp_acceptance_ready": true,
-  "external_file_bridge_ready": true,
-  "windows_process_file_argument_window_observed": true,
+  "external_file_open_requested": false,
+  "external_file_bridge_ready": false,
+  "windows_process_file_argument_window_observed": false,
+  "window_observed": true,
+  "x_window_observed": true,
   "runtime_accepted_chain_verified": true,
   "accepted_application_detail_state": "runtime-accepted-real-app-run",
   "kde_accepted_page_state": "runtime-accepted-real-app-run",
